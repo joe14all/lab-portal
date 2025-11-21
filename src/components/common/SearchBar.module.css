@@ -1,0 +1,53 @@
+.wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  /* Sets the initial color for the icon */
+  color: var(--text-secondary);
+}
+
+.icon {
+  position: absolute;
+  left: 1rem; /* 16px fixed spacing from left */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.125rem; /* 18px */
+  height: 1.125rem;
+  pointer-events: none;
+  z-index: 10;
+  transition: color 0.2s ease;
+}
+
+.input {
+  width: 100%;
+  /* PADDING FIX: 3rem (48px) ensures text starts well after the icon */
+  padding-left: 3rem; 
+  padding-right: 1rem;
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
+  
+  border-radius: 99px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-body);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  transition: all 0.2s ease;
+  
+  /* Reset native styles */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.input:focus {
+  background-color: var(--bg-surface);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-50);
+  outline: none;
+}
+
+/* Optimization: Highlight icon when user interacts with the wrapper */
+.wrapper:focus-within .icon {
+  color: var(--primary);
+}

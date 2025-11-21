@@ -1,42 +1,65 @@
-/* Base Header Layout (Mobile First) */
+/* --- BASE HEADER --- */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   height: 64px;
-  padding: 0 1rem;
+  padding: 0 1.5rem;
   background-color: var(--bg-surface);
   border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
   z-index: 40;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 /* --- LEFT SECTION --- */
 .leftSection {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
+  min-width: 200px;
 }
 
+/* Mobile Menu Trigger */
 .menuBtn {
   color: var(--text-secondary);
-  /* Visible on mobile, typically hidden on desktop via Sidebar logic, 
-     but useful here if sidebar is collapsible */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+}
+
+.menuBtn:hover {
+  color: var(--primary);
+  background-color: var(--bg-surface-hover);
+  border-radius: 0.5rem;
 }
 
 .brand {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
+}
+
+.logoPlaceholder {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+  color: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: -0.02em;
 }
 
 .brandText {
-  font-size: 1.1rem;
+  font-size: 1.125rem;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--text-primary);
   letter-spacing: -0.02em;
-  white-space: nowrap;
 }
 
 /* --- CENTER SECTION (Search) --- */
@@ -45,99 +68,50 @@
   display: flex;
   justify-content: center;
   padding: 0 1rem;
+  max-width: 640px; 
 }
 
 .searchWrapper {
   position: relative;
   width: 100%;
-  max-width: 480px;
-  display: none; /* Hidden by default on Mobile */
-}
-
-.searchIcon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-secondary);
-  width: 18px;
-  height: 18px;
-  pointer-events: none;
-}
-
-.searchInput {
-  width: 100%;
-  padding: 0.6rem 1rem 0.6rem 2.5rem;
-  border-radius: 99px;
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-body);
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-}
-
-.searchInput:focus {
-  background-color: var(--bg-surface);
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-light); /* Fallback */
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); /* Tailwind-ish ring */
-  outline: none;
+  display: none; /* Hidden on Mobile */
 }
 
 /* --- RIGHT SECTION --- */
 .rightSection {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  min-width: 200px;
   gap: 0.5rem;
 }
 
-/* User Menu */
 .userMenuWrapper {
   position: relative;
 }
 
+/* User Button Styles */
 .userBtn {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   background: transparent;
-  border: none;
-  padding: 0.25rem;
-  border-radius: 2rem;
+  border: 1px solid transparent; /* Invisible border normally */
+  padding: 0.35rem 0.5rem 0.35rem 0.75rem;
+  border-radius: 99px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
-.userBtn:hover {
-  background-color: var(--bg-surface-hover);
-}
-
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: var(--primary);
-  color: var(--text-inverted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.85rem;
-  border: 2px solid var(--bg-surface);
-  box-shadow: 0 0 0 1px var(--border-color);
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+/* Contrast Fix: Explicit border and background on hover */
+.userBtn:hover, .userBtn.active {
+  background-color: var(--neutral-100);
+  border-color: var(--neutral-200);
 }
 
 .userInfo {
-  display: none; /* Hidden on Mobile */
-  text-align: left;
+  display: none;
+  text-align: right;
 }
 
 .userName {
@@ -154,31 +128,63 @@
   color: var(--text-secondary);
 }
 
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: var(--text-inverted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border: 2px solid var(--bg-surface); 
+  box-shadow: 0 0 0 1px var(--border-color);
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 /* --- DROPDOWN --- */
 .dropdown {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 10px);
   right: 0;
-  width: 220px;
-  padding: 0;
+  width: 240px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
   z-index: 50;
-  animation: slideDown 0.2s ease-out;
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-surface);
-  border-radius: 0.75rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  
+  /* Default Hidden State */
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  visibility: hidden;
+  
+  /* Transitions */
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
 }
 
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Visible State - Defined separately to ensure export */
+.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  visibility: visible;
 }
 
 .dropdownHeader {
   padding: 1rem;
   border-bottom: 1px solid var(--border-color);
-  background-color: var(--bg-surface-hover);
+  background-color: var(--neutral-50); /* Slight contrast for header */
 }
 
 .dropdownHeader strong {
@@ -190,7 +196,7 @@
   margin-bottom: 0.25rem;
 }
 
-.dropdownHeader span {
+.emailText {
   display: block;
   font-size: 0.9rem;
   font-weight: 500;
@@ -220,12 +226,7 @@
 
 .dropdownList li a:hover {
   background-color: var(--bg-surface-hover);
-}
-
-.dropdownList li a svg {
-  color: var(--text-secondary);
-  width: 18px;
-  height: 18px;
+  color: var(--primary);
 }
 
 .dropdownFooter {
@@ -248,42 +249,26 @@
   transition: background-color 0.2s;
 }
 
-.logoutBtn svg {
-  width: 18px;
-  height: 18px;
-}
-
 .logoutBtn:hover {
-  background-color: var(--error-100);
+  background-color: var(--error-bg);
 }
 
-:global(body.dark) .logoutBtn:hover {
-  background-color: rgba(239, 68, 68, 0.15);
-}
-
-/* --- DESKTOP BREAKPOINT --- */
-@media (min-width: 768px) {
+/* --- MEDIA QUERIES --- */
+@media (min-width: 1024px) {
   .header {
-    padding: 0 1.5rem;
+    padding: 0 2rem;
   }
 
-  .brandText {
-    font-size: 1.25rem;
+  .menuBtn {
+    display: none; 
   }
 
   .searchWrapper {
-    display: block; /* Show Search */
+    display: block; 
   }
-}
 
-@media (min-width: 1024px) {
   .userInfo {
-    display: flex; /* Show User Info */
+    display: flex;
     flex-direction: column;
-  }
-  
-  .avatar {
-    width: 36px;
-    height: 36px;
   }
 }

@@ -1,0 +1,232 @@
+/* --- LAYOUT --- */
+.pageContainer {
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- HEADER --- */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.titleGroup h1 {
+  font-size: 1.5rem;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.headerActions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+}
+
+/* --- FILTERS BAR --- */
+.filterBar {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.searchWrapper {
+  position: relative;
+  flex: 1;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 14px; /* Adjusted for better alignment */
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.searchInput {
+  width: 100%;
+  /* FIX: Increased padding-left to 2.75rem to clear the icon */
+  padding: 0.6rem 1rem 0.6rem 2.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-body);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.searchInput:focus {
+  background-color: var(--bg-surface);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-50);
+  outline: none;
+}
+
+.filterGroup {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+}
+
+.selectInput {
+  padding: 0.6rem 2rem 0.6rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-body);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  min-width: 160px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.selectInput:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+@media (min-width: 1024px) {
+  .filterBar {
+    flex-direction: row;
+    align-items: center;
+  }
+  .filterGroup {
+    margin-left: auto;
+  }
+}
+
+/* --- TABLE --- */
+.tableCard {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.tableContainer {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.table th {
+  text-align: left;
+  padding: 1rem 1.5rem;
+  background-color: var(--bg-surface-hover);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.tableRow {
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+}
+
+.tableRow:hover {
+  background-color: var(--bg-surface-hover);
+}
+
+/* Column Specifics */
+.caseId {
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.patientName {
+  font-weight: 500;
+  display: block;
+}
+.patientMeta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.dateText {
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+.overdue {
+  color: var(--error-500);
+  font-weight: 600;
+}
+.warning {
+  color: var(--warning-500);
+}
+
+/* --- STATUS BADGES --- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background-color: var(--neutral-100);
+  color: var(--neutral-700);
+}
+
+/* Map colors from JSON to CSS Variables roughly */
+.badge.blue    { background: #dbeafe; color: #1e40af; } /* New */
+.badge.indigo  { background: #e0e7ff; color: #3730a3; } /* Received */
+.badge.purple  { background: #f3e8ff; color: #6b21a8; } /* Design */
+.badge.orange  { background: #ffedd5; color: #9a3412; } /* Milling */
+.badge.pink    { background: #fce7f3; color: #9d174d; } /* Finish */
+.badge.teal    { background: #ccfbf1; color: #115e59; } /* QC */
+.badge.green   { background: #dcfce7; color: #166534; } /* Shipped */
+.badge.red     { background: #fee2e2; color: #991b1b; } /* Hold */
+
+/* --- EMPTY STATE --- */
+.emptyState {
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+}

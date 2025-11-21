@@ -78,7 +78,6 @@ export const IconCase = (props) => (
 
 export const IconTooth = (props) => (
   <svg {...defaultProps} {...props}>
-    {/* Abstract tooth shape */}
     <path d="M7 3C7 3 4 8 4 12C4 16 6 21 7 21C8 21 9 19 9 17C9 17 10 21 12 21C14 21 15 17 15 17C15 19 16 21 17 21C18 21 20 16 20 12C20 8 17 3 17 3C17 3 15 6 12 6C9 6 7 3 7 3Z" />
   </svg>
 );
@@ -96,8 +95,22 @@ export const IconMicroscope = (props) => (
 
 export const IconDrill = (props) => (
   <svg {...defaultProps} {...props}>
-    {/* Represents milling/manufacturing */}
     <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+  </svg>
+);
+
+export const IconFile = (props) => (
+  <svg {...defaultProps} {...props}>
+    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+    <polyline points="13 2 13 9 20 9"></polyline>
+  </svg>
+);
+
+export const IconPrinter = (props) => (
+  <svg {...defaultProps} {...props}>
+    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+    <rect x="6" y="14" width="12" height="8"></rect>
   </svg>
 );
 
