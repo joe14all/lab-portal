@@ -1,0 +1,40 @@
+[
+  {
+    "id": "mill-01",
+    "name": "VHF K5 #1",
+    "type": "Dry Mill",
+    "serialNumber": "VHF-1001",
+    "status": "Running",
+    "currentJobId": "batch-mill-900",
+    "maintenance": {
+      "lastServiceDate": "2025-10-01",
+      "nextServiceDue": "2025-12-01",
+      "notes": "Spindle calibration required soon."
+    }
+  },
+  {
+    "id": "mill-02",
+    "name": "Roland DWX-52D",
+    "type": "Dry Mill",
+    "serialNumber": "ROL-2002",
+    "status": "Idle",
+    "currentJobId": null,
+    "maintenance": {
+      "lastServiceDate": "2025-11-15",
+      "nextServiceDue": "2026-02-15"
+    }
+  },
+  {
+    "id": "printer-01",
+    "name": "Formlabs 3B",
+    "type": "3D Printer",
+    "serialNumber": "FL-3B-555",
+    "status": "Maintenance",
+    "currentJobId": null,
+    "maintenance": {
+      "lastServiceDate": "2025-09-01",
+      "nextServiceDue": "2025-11-20",
+      "notes": "Tank replacement needed."
+    }
+  }
+]

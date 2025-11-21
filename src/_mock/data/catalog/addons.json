@@ -1,0 +1,30 @@
+[
+  {
+    "id": "addon-margin-porc",
+    "name": "Porcelain Butt Margin",
+    "applicableProducts": ["prod-pfm"],
+    "defaultPrice": 15.00,
+    "currency": "USD"
+  },
+  {
+    "id": "addon-anodize",
+    "name": "Gold Hue Anodization",
+    "applicableProducts": ["prod-imp-custom", "prod-imp-screw"],
+    "defaultPrice": 25.00,
+    "currency": "USD"
+  },
+  {
+    "id": "addon-premium-teeth",
+    "name": "Premium Teeth Upgrade (Phonares)",
+    "applicableProducts": ["prod-denture-comp", "prod-partial-cast"],
+    "defaultPrice": 40.00,
+    "currency": "USD"
+  },
+  {
+    "id": "addon-mesh-reinforce",
+    "name": "Metal Mesh Reinforcement",
+    "applicableProducts": ["prod-denture-comp"],
+    "defaultPrice": 35.00,
+    "currency": "USD"
+  }
+]

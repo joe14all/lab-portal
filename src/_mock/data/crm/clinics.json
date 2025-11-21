@@ -1,0 +1,74 @@
+[
+  {
+    "id": "clinic-001",
+    "name": "Downtown Dental Center",
+    "accountNumber": "DDC-1001",
+    "status": "Active",
+    "priceListId": "pl-standard-2025",
+    "contacts": {
+      "primary": {
+        "name": "Sarah Admin",
+        "phone": "+15550101",
+        "email": "admin@downtowndental.com"
+      },
+      "billing": {
+        "name": "Billing Dept",
+        "email": "billing@downtowndental.com"
+      }
+    },
+    "addresses": {
+      "shipping": {
+        "line1": "123 Main St",
+        "city": "Metropolis",
+        "state": "NY",
+        "zip": "10012",
+        "country": "US"
+      },
+      "billing": {
+        "line1": "PO Box 445",
+        "city": "Metropolis",
+        "state": "NY",
+        "zip": "10012",
+        "country": "US"
+      }
+    },
+    "preferences": {
+      "shippingProvider": "UPS",
+      "invoiceDelivery": "Email",
+      "autoPay": true
+    },
+    "systemInfo": {
+      "createdAt": "2020-01-15T09:00:00Z",
+      "salesRepId": "user-sales-01"
+    }
+  },
+  {
+    "id": "clinic-005",
+    "name": "Smile Bright Orthodontics",
+    "accountNumber": "SBO-2020",
+    "status": "OnHold",
+    "statusReason": "Overdue Balance",
+    "priceListId": "pl-group-discount",
+    "contacts": {
+      "primary": {
+        "name": "Dr. Robert Brown",
+        "phone": "+15550202",
+        "email": "rbrown@smilebright.com"
+      }
+    },
+    "addresses": {
+      "shipping": {
+        "line1": "456 Oak Ave",
+        "suite": "Ste 200",
+        "city": "Smallville",
+        "state": "KS",
+        "zip": "66002",
+        "country": "US"
+      }
+    },
+    "preferences": {
+      "shippingProvider": "FedEx",
+      "invoiceDelivery": "Mail"
+    }
+  }
+]

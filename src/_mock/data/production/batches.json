@@ -1,0 +1,32 @@
+[
+  {
+    "id": "batch-mill-900",
+    "type": "Milling",
+    "machineId": "mill-01",
+    "materialId": "mat-zirc-A2",
+    "operatorId": "user-tech-01",
+    "status": "InProgress",
+    "startTime": "2025-11-20T09:00:00Z",
+    "estimatedEndTime": "2025-11-20T11:30:00Z",
+    "nestingFileUrl": "/production/nc-files/900.nc",
+    "caseIds": ["case-5001", "case-5005", "case-5012"],
+    "materialConsumed": {
+      "units": 3,
+      "percentage": 15
+    }
+  },
+  {
+    "id": "batch-print-101",
+    "type": "Printing",
+    "machineId": "printer-01",
+    "materialId": "mat-resin-model",
+    "operatorId": "user-tech-01",
+    "status": "Completed",
+    "startTime": "2025-11-19T14:00:00Z",
+    "endTime": "2025-11-19T16:00:00Z",
+    "caseIds": ["case-5002", "case-5003"],
+    "materialConsumed": {
+      "volumeMl": 120
+    }
+  }
+]

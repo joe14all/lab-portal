@@ -1,0 +1,99 @@
+[
+  {
+    "id": "prod-zirc-crn",
+    "sku": "ZIRC-FULL",
+    "name": "Zirconia Crown (Full Contour)",
+    "description": "High strength monolithic zirconia.",
+    "category": "Crown & Bridge",
+    "materialId": "mat-zirc-disk",
+    "isTaxable": true,
+    "turnaroundDays": 5,
+    "requires": ["impression", "opposing", "bite", "shade"]
+  },
+  {
+    "id": "prod-pfm",
+    "sku": "PFM-STD",
+    "name": "Porcelain Fused to Metal",
+    "description": "Classic PFM with standard alloy.",
+    "category": "Crown & Bridge",
+    "materialId": "mat-alloy-base",
+    "isTaxable": true,
+    "turnaroundDays": 7,
+    "requires": ["impression", "opposing", "bite", "shade"]
+  },
+  {
+    "id": "prod-imp-screw",
+    "sku": "IMP-SCREW-RET",
+    "name": "Implant Crown (Screw-Retained)",
+    "description": "Direct to fixture with access hole.",
+    "category": "Implants",
+    "materialId": "mat-zirc-disk",
+    "isTaxable": true,
+    "turnaroundDays": 10,
+    "requires": ["impression", "opposing", "bite", "shade", "implant_parts"]
+  },
+  {
+    "id": "prod-imp-custom",
+    "sku": "IMP-CUST-ABUT",
+    "name": "Custom Abutment & Crown",
+    "description": "Titanium or Zirconia custom abutment with cemented crown.",
+    "category": "Implants",
+    "materialId": "mat-ti-blank",
+    "isTaxable": true,
+    "turnaroundDays": 12,
+    "requires": ["impression", "opposing", "bite", "shade", "implant_parts"]
+  },
+  {
+    "id": "prod-denture-comp",
+    "sku": "REM-DENT-COMP",
+    "name": "Complete Denture (Upper/Lower)",
+    "description": "High impact acrylic with standard teeth.",
+    "category": "Removables",
+    "materialId": "mat-acrylic-base",
+    "isTaxable": false,
+    "turnaroundDays": 10,
+    "requires": ["impression", "bite", "shade", "mold_selection"]
+  },
+  {
+    "id": "prod-partial-cast",
+    "sku": "REM-PART-CAST",
+    "name": "Cast Metal Partial Denture",
+    "description": "Chrome-Cobalt framework with acrylic saddles.",
+    "category": "Removables",
+    "materialId": "mat-chrome-cobalt",
+    "isTaxable": false,
+    "turnaroundDays": 12,
+    "requires": ["impression", "opposing", "bite", "shade", "design_drawing"]
+  },
+  {
+    "id": "prod-nightguard",
+    "sku": "SPL-HARD-SOFT",
+    "name": "Nightguard (Hard/Soft)",
+    "description": "Dual layer splint for bruxism.",
+    "category": "Orthodontics",
+    "materialId": "mat-thermo-disk",
+    "isTaxable": false,
+    "turnaroundDays": 5,
+    "requires": ["impression", "opposing"]
+  },
+  {
+    "id": "srv-custom-shade",
+    "sku": "SRV-SHADE",
+    "name": "Custom Shade Appointment",
+    "description": "Patient visits lab for shade taking.",
+    "category": "Services",
+    "materialId": null,
+    "isTaxable": false,
+    "turnaroundDays": 0
+  },
+  {
+    "id": "fee-rush",
+    "sku": "FEE-RUSH",
+    "name": "Rush Fee",
+    "description": "Expedited production (< 3 days).",
+    "category": "Fees",
+    "materialId": null,
+    "isTaxable": false,
+    "turnaroundDays": 0
+  }
+]

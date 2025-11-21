@@ -1,0 +1,28 @@
+[
+  {
+    "id": "pay-8801",
+    "paymentNumber": "RCT-1001",
+    "clinicId": "clinic-001",
+    "invoiceIds": ["inv-2025-001"],
+    "amount": 99.00,
+    "currency": "USD",
+    "date": "2025-12-05T10:30:00Z",
+    "method": "CreditCard",
+    "referenceNumber": "ch_stripe_12345",
+    "status": "Completed",
+    "notes": "Partial payment for Invoice #1001"
+  },
+  {
+    "id": "pay-8802",
+    "paymentNumber": "RCT-1002",
+    "clinicId": "clinic-005",
+    "invoiceIds": [], 
+    "amount": 500.00,
+    "currency": "USD",
+    "date": "2025-11-21T11:00:00Z",
+    "method": "Check",
+    "referenceNumber": "CHK-9090",
+    "status": "Pending_Clearance",
+    "notes": "Lump sum account credit, not applied to invoice yet."
+  }
+]

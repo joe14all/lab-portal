@@ -1,0 +1,71 @@
+[
+  {
+    "id": "role-admin",
+    "name": "Lab Administrator",
+    "description": "Full system access, including settings and user management.",
+    "permissions": [
+      "ALL_ACCESS"
+    ],
+    "isSystem": true
+  },
+  {
+    "id": "role-manager",
+    "name": "Lab Manager",
+    "description": "Can manage operations, financials, and pricing overrides.",
+    "permissions": [
+      "CASE_MANAGE",
+      "CASE_APPROVE",
+      "FINANCE_VIEW",
+      "FINANCE_EDIT",
+      "CRM_VIEW",
+      "CRM_EDIT",
+      "REPORT_VIEW"
+    ],
+    "isSystem": false
+  },
+  {
+    "id": "role-tech-cad",
+    "name": "CAD Technician",
+    "description": "Focus on digital design workflows.",
+    "permissions": [
+      "CASE_VIEW",
+      "CASE_EDIT_DESIGN",
+      "FILE_UPLOAD",
+      "COMMUNICATION_SEND"
+    ],
+    "isSystem": false
+  },
+  {
+    "id": "role-tech-ceram",
+    "name": "Ceramist / Finisher",
+    "description": "Focus on physical production stages.",
+    "permissions": [
+      "CASE_VIEW",
+      "CASE_EDIT_PRODUCTION",
+      "QC_CHECK"
+    ],
+    "isSystem": false
+  },
+  {
+    "id": "role-driver",
+    "name": "Logistics Driver",
+    "description": "Access to route and pickup modules only.",
+    "permissions": [
+      "LOGISTICS_VIEW",
+      "LOGISTICS_UPDATE"
+    ],
+    "isSystem": false
+  },
+  {
+    "id": "role-client",
+    "name": "Doctor / Clinic Staff",
+    "description": "External access for submitting and tracking cases.",
+    "permissions": [
+      "ORDER_CREATE",
+      "CASE_VIEW_OWN",
+      "FINANCE_VIEW_OWN",
+      "FINANCE_PAY"
+    ],
+    "isSystem": false
+  }
+]

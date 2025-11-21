@@ -1,0 +1,37 @@
+[
+  {
+    "id": "log-uuid-1001",
+    "timestamp": "2025-11-20T08:30:00Z",
+    "actorId": "user-admin-01",
+    "action": "LOGIN_SUCCESS",
+    "resource": "AUTH",
+    "details": { "ip": "192.168.1.10", "method": "email/password" }
+  },
+  {
+    "id": "log-uuid-1002",
+    "timestamp": "2025-11-20T09:15:00Z",
+    "actorId": "user-tech-01",
+    "action": "UPDATE_STATUS",
+    "resource": "CASE",
+    "resourceId": "case-5001",
+    "details": { "oldStatus": "New", "newStatus": "In Design" }
+  },
+  {
+    "id": "log-uuid-1003",
+    "timestamp": "2025-11-20T10:00:00Z",
+    "actorId": "user-manager-01",
+    "action": "OVERRIDE_PRICE",
+    "resource": "INVOICE",
+    "resourceId": "inv-2025-001",
+    "details": { "reason": "VIP Client Discount", "amount": -20.00 }
+  },
+  {
+    "id": "log-uuid-1004",
+    "timestamp": "2025-11-19T14:20:00Z",
+    "actorId": "user-driver-01",
+    "action": "COMPLETE_PICKUP",
+    "resource": "LOGISTICS",
+    "resourceId": "pickup-901",
+    "details": { "location": "Clinic 001 Front Desk" }
+  }
+]

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "doc-001",
+    "clinicId": "clinic-001",
+    "userId": "user-doc-01", 
+    "firstName": "Sarah",
+    "lastName": "Connor",
+    "title": "DDS",
+    "licenseNumber": "NY-123456",
+    "npi": "1234567890",
+    "specialty": "General",
+    "preferences": {
+      "contacts": "Broad & Tight",
+      "occlusion": "Light",
+      "ponticDesign": "Modified Ridge Lap",
+      "nightGuardMaterial": "Hard/Soft"
+    },
+    "isActive": true
+  },
+  {
+    "id": "doc-002",
+    "clinicId": "clinic-001",
+    "firstName": "Kyle",
+    "lastName": "Reese",
+    "title": "DMD",
+    "specialty": "Prosthodontist",
+    "preferences": {
+      "contacts": "Point",
+      "occlusion": "Heavy",
+      "notes": "Prefers printed models for all cases."
+    },
+    "isActive": true
+  }
+]

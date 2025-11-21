@@ -1,0 +1,35 @@
+[
+  {
+    "id": "msg-1",
+    "caseId": "case-5002",
+    "senderId": "user-tech-01",
+    "senderName": "Sarah (CAD)",
+    "senderRole": "Lab",
+    "content": "Dr. Connor, the margin on the facial of #8 is slightly sub-gingival and obscured by tissue in the scan. Can you re-scan or should I trim the die manually?",
+    "createdAt": "2025-11-18T15:00:00Z",
+    "readAt": null,
+    "isInternal": false
+  },
+  {
+    "id": "msg-2",
+    "caseId": "case-5002",
+    "senderId": "user-doc-01",
+    "senderName": "Dr. Sarah Connor",
+    "senderRole": "Client",
+    "content": "Hi Sarah. I see what you mean. The patient is coming back tomorrow at 2 PM. I will re-scan and upload. Please put the case on hold.",
+    "createdAt": "2025-11-18T16:30:00Z",
+    "readAt": "2025-11-18T16:35:00Z",
+    "isInternal": false
+  },
+  {
+    "id": "msg-3",
+    "caseId": "case-5001",
+    "senderId": "user-tech-01",
+    "senderName": "Sarah (CAD)",
+    "senderRole": "Lab",
+    "content": "Internal Note: This doctor prefers really tight contacts. I added +0.05mm offset.",
+    "createdAt": "2025-11-19T11:00:00Z",
+    "readAt": null,
+    "isInternal": true
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "pl-standard-2025",
+    "name": "Standard List 2025",
+    "currency": "USD",
+    "effectiveDate": "2025-01-01",
+    "description": "Base pricing for all new accounts.",
+    "items": [
+      { "productId": "prod-zirc-crn", "price": 99.00 },
+      { "productId": "prod-pfm", "price": 129.00 },
+      { "productId": "prod-imp-screw", "price": 299.00 },
+      { "productId": "prod-imp-custom", "price": 349.00 },
+      { "productId": "prod-denture-comp", "price": 199.00 },
+      { "productId": "prod-partial-cast", "price": 289.00 },
+      { "productId": "prod-nightguard", "price": 89.00 },
+      { "productId": "srv-custom-shade", "price": 50.00 },
+      { "productId": "fee-rush", "price": 25.00 },
+      { "addonId": "addon-margin-porc", "price": 15.00 },
+      { "addonId": "addon-anodize", "price": 25.00 },
+      { "addonId": "addon-premium-teeth", "price": 40.00 }
+    ]
+  },
+  {
+    "id": "pl-group-discount",
+    "name": "Corporate Dental Group",
+    "currency": "USD",
+    "effectiveDate": "2025-01-01",
+    "description": "Negotiated rate for Smile Bright chain.",
+    "items": [
+      { "productId": "prod-zirc-crn", "price": 79.00 }, 
+      { "productId": "prod-pfm", "price": 99.00 },
+      { "productId": "prod-imp-screw", "price": 250.00 },
+      { "productId": "prod-denture-comp", "price": 175.00 },
+      { "productId": "prod-nightguard", "price": 75.00 },
+      { "productId": "fee-rush", "price": 0.00 }
+    ]
+  }
+]

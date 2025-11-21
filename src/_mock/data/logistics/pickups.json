@@ -1,0 +1,28 @@
+[
+  {
+    "id": "pickup-901",
+    "clinicId": "clinic-001",
+    "requestedBy": "doc-001",
+    "requestTime": "2025-11-20T08:00:00Z",
+    "windowStart": "2025-11-20T13:00:00Z",
+    "windowEnd": "2025-11-20T15:00:00Z",
+    "status": "Assigned",
+    "driverId": "user-driver-01",
+    "notes": "Package is at the front desk, ask for Sarah.",
+    "packageCount": 2,
+    "isRush": false
+  },
+  {
+    "id": "pickup-902",
+    "clinicId": "clinic-005",
+    "requestedBy": "user-doc-01", 
+    "requestTime": "2025-11-20T09:30:00Z",
+    "windowStart": "2025-11-20T10:00:00Z",
+    "windowEnd": "2025-11-20T12:00:00Z",
+    "status": "Pending",
+    "driverId": null,
+    "notes": "Rush case for patient Brown.",
+    "packageCount": 1,
+    "isRush": true
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "id": "file-101",
+    "caseId": "case-5001",
+    "uploaderId": "user-doc-01",
+    "category": "SCAN",
+    "fileType": "STL",
+    "fileName": "smith_john_upper.stl",
+    "size": "12MB",
+    "url": "https://mock-s3.com/bucket/cases/5001/upper.stl",
+    "createdAt": "2025-11-19T09:05:00Z"
+  },
+  {
+    "id": "file-102",
+    "caseId": "case-5001",
+    "uploaderId": "user-doc-01",
+    "category": "SCAN",
+    "fileType": "STL",
+    "fileName": "smith_john_lower.stl",
+    "size": "10MB",
+    "url": "https://mock-s3.com/bucket/cases/5001/lower.stl",
+    "createdAt": "2025-11-19T09:05:00Z"
+  },
+  {
+    "id": "file-103",
+    "caseId": "case-5001",
+    "uploaderId": "user-doc-01",
+    "category": "RX_FORM",
+    "fileType": "PDF",
+    "fileName": "prescription.pdf",
+    "size": "250KB",
+    "url": "https://mock-s3.com/bucket/cases/5001/rx.pdf",
+    "createdAt": "2025-11-19T09:00:00Z"
+  },
+  {
+    "id": "file-201",
+    "caseId": "case-5002",
+    "uploaderId": "user-doc-01",
+    "category": "PHOTO",
+    "fileType": "JPG",
+    "fileName": "shade_match.jpg",
+    "size": "4MB",
+    "url": "https://mock-s3.com/bucket/cases/5002/shade.jpg",
+    "createdAt": "2025-11-18T14:05:00Z"
+  }
+]

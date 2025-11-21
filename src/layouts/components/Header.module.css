@@ -1,0 +1,289 @@
+/* Base Header Layout (Mobile First) */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 64px;
+  padding: 0 1rem;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* --- LEFT SECTION --- */
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.menuBtn {
+  color: var(--text-secondary);
+  /* Visible on mobile, typically hidden on desktop via Sidebar logic, 
+     but useful here if sidebar is collapsible */
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+}
+
+.brandText {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+/* --- CENTER SECTION (Search) --- */
+.centerSection {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 1rem;
+}
+
+.searchWrapper {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  display: none; /* Hidden by default on Mobile */
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.6rem 1rem 0.6rem 2.5rem;
+  border-radius: 99px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-body);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.searchInput:focus {
+  background-color: var(--bg-surface);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light); /* Fallback */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); /* Tailwind-ish ring */
+  outline: none;
+}
+
+/* --- RIGHT SECTION --- */
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* User Menu */
+.userMenuWrapper {
+  position: relative;
+}
+
+.userBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: transparent;
+  border: none;
+  padding: 0.25rem;
+  border-radius: 2rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.userBtn:hover {
+  background-color: var(--bg-surface-hover);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: var(--text-inverted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border: 2px solid var(--bg-surface);
+  box-shadow: 0 0 0 1px var(--border-color);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.userInfo {
+  display: none; /* Hidden on Mobile */
+  text-align: left;
+}
+
+.userName {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.userRole {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* --- DROPDOWN --- */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  padding: 0;
+  overflow: hidden;
+  z-index: 50;
+  animation: slideDown 0.2s ease-out;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownHeader {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-surface-hover);
+}
+
+.dropdownHeader strong {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.dropdownHeader span {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdownList {
+  list-style: none;
+  padding: 0.5rem;
+  margin: 0;
+}
+
+.dropdownList li a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.dropdownList li a:hover {
+  background-color: var(--bg-surface-hover);
+}
+
+.dropdownList li a svg {
+  color: var(--text-secondary);
+  width: 18px;
+  height: 18px;
+}
+
+.dropdownFooter {
+  padding: 0.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.logoutBtn {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background-color: transparent;
+  color: var(--error-500);
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.logoutBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.logoutBtn:hover {
+  background-color: var(--error-100);
+}
+
+:global(body.dark) .logoutBtn:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+}
+
+/* --- DESKTOP BREAKPOINT --- */
+@media (min-width: 768px) {
+  .header {
+    padding: 0 1.5rem;
+  }
+
+  .brandText {
+    font-size: 1.25rem;
+  }
+
+  .searchWrapper {
+    display: block; /* Show Search */
+  }
+}
+
+@media (min-width: 1024px) {
+  .userInfo {
+    display: flex; /* Show User Info */
+    flex-direction: column;
+  }
+  
+  .avatar {
+    width: 36px;
+    height: 36px;
+  }
+}

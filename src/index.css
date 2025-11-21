@@ -1,68 +1,339 @@
+/* 1. FONT & BASE RESET */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  /* Set base font for the entire app */
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
+  /* Font smoothing */
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Basic reset */
+  box-sizing: border-box;
+}
+
+/* Add box-sizing to all elements */
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+/* Remove default margin/padding */
+body, #root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  /* Add overflow-x safeguard */
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* #root should manage the app layout */
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* 2. COMPREHENSIVE COLOR PALETTE (CSS Variables) */
+:root {
+  /* --- RAW COLOR PALETTE --- */
+  /* Primary (Lab Teal/Blue) - Adjusted slightly for Lab feel if desired, 
+     keeping compatible with reference structure */
+  --primary-50: #eff6ff;
+  --primary-100: #dbeafe;
+  --primary-300: #93c5fd;
+  --primary-500: #3b82f6;
+  --primary-600: #2563eb;
+  --primary-700: #1d4ed8;
+
+  /* Neutral (Grays) */
+  --neutral-0: #ffffff;
+  --neutral-50: #f8fafc;
+  --neutral-100: #f1f5f9;
+  --neutral-200: #e2e8f0;
+  --neutral-300: #cbd5e1;
+  --neutral-400: #94a3b8;
+  --neutral-500: #64748b;
+  --neutral-700: #334155;
+  --neutral-800: #1e293b;
+  --neutral-900: #0f172a;
+
+  /* Semantic (Success, Warning, Error) */
+  --success-500: #10b981;
+  --warning-500: #f59e0b;
+  --error-500: #ef4444;
+  --success-100: #d1fae5;
+  --warning-100: #fef3c7;
+  --error-100: #fee2e2;
+
+  /* --- SEMANTIC THEME VARIABLES (Light Theme by Default) --- */
+  /* This maps raw colors to their purpose */
+  --bg-body: var(--neutral-50);         /* Page background */
+  --bg-surface: var(--neutral-0);       /* Card/modal background */
+  --bg-surface-hover: var(--neutral-100);/* Hover for lists/items */
+  
+  --text-primary: var(--neutral-900);   /* Main text, headings */
+  --text-secondary: var(--neutral-500); /* Subtext, labels */
+  --text-inverted: var(--neutral-0);    /* Text on primary buttons */
+  
+  --border-color: var(--neutral-200);   /* Card borders, dividers */
+  
+  --primary: var(--primary-600);          /* Main button/link color */
+  --primary-hover: var(--primary-700);    /* Hover for main button */
+  --primary-light: var(--primary-50);     /* Light background for info boxes */
+
+  --success: var(--success-500);
+  --warning: var(--warning-500);
+  --error: var(--error-500);
+  --success-bg: var(--success-100);
+  --warning-bg: var(--warning-100);
+  --error-bg: var(--error-100);
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+
+/* 3. DARK THEME OVERRIDE */
+/* When ThemeContext adds 'dark' to <body>, these variables take over */
+body.dark {
+  --bg-body: var(--neutral-900);
+  --bg-surface: var(--neutral-800);
+  --bg-surface-hover: var(--neutral-700);
+  
+  --text-primary: var(--neutral-100);
+  --text-secondary: var(--neutral-400);
+  --text-inverted: var(--neutral-0);
+  
+  --border-color: var(--neutral-700);
+  
+  --primary: var(--primary-500);
+  --primary-hover: var(--primary-300);
+  --primary-light: #1e293b; /* --neutral-800, but explicit */
+
+  --success-bg: #112a23;
+  --warning-bg: #2f200c;
+  --error-bg: #301616;
+}
+
+
+/* 4. GLOBAL ELEMENT STYLES */
+body {
+  background-color: var(--bg-body);
+  color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+  margin: 0 0 0.75rem 0;
+  font-weight: 600;
+}
+
+h1 { font-size: 1.875rem; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.25rem; }
+
+p {
+  color: var(--text-secondary);
+  margin: 0 0 1rem 0;
+  max-width: 65ch; /* Improve readability */
 }
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: var(--primary);
   text-decoration: inherit;
+  transition: color 0.2s ease;
 }
 a:hover {
-  color: #535bf2;
+  color: var(--primary-hover);
+  text-decoration: underline;
 }
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
+/* Buttons */
 button {
-  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem; /* 8px */
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s, background-color 0.25s, color 0.25s;
+  
+  /* Primary Button Style */
+  background-color: var(--primary);
+  color: var(--text-inverted);
 }
-button:hover {
-  border-color: #646cff;
+button:hover:not(:disabled) {
+  background-color: var(--primary-hover);
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 4px auto var(--primary);
+  outline-offset: 2px;
+}
+button:disabled,
+button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* Secondary/Ghost Button Style */
+button.secondary {
+  background-color: var(--bg-surface);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+button.secondary:hover:not(:disabled) {
+  background-color: var(--bg-surface-hover); 
+}
+button.secondary.danger {
+  color: var(--error-500);
+  border-color: var(--error-500);
+}
+button.secondary.danger:hover:not(:disabled) {
+  background-color: var(--error-bg);
+}
+
+/* 5. GLOBAL FORM & INPUT STYLES */
+fieldset {
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+  border-radius: 0.75rem; /* 12px */
+  padding: 1.5rem;
+  margin: 0 0 1.5rem 0;
+}
+
+legend {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 0 0.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+label {
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem; /* 8px */
+  font-size: 0.95rem;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="date"],
+input[type="number"],
+select,
+textarea {
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+  width: 100%;
+  padding: 0.75rem; /* 12px */
+  color: var(--text-primary);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem; /* 8px */
+  box-sizing: border-box; /* Ensures padding doesn't affect width */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* Focus state for inputs */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+body.dark input:focus,
+body.dark select:focus,
+body.dark textarea:focus {
+  box-shadow: 0 0 0 3px var(--neutral-700);
+}
+
+/* Validation & Helper Text */
+.form-helper-text {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+.is-invalid {
+  border-color: var(--error-500);
+}
+
+.error-text {
+  color: var(--error-500);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* 6. GLOBAL UTILITIES */
+
+/* Card Utility */
+.card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem; /* 12px */
+  padding: 1.5rem; /* 24px */
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+body.dark .card {
+  box-shadow: none;
+}
+
+/* Icon Button Utility */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 0; 
+  width: 40px;
+  height: 40px;
+  border-radius: 0.5rem; 
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.icon-button:hover:not(:disabled) {
+  background-color: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.icon-button.danger {
+  color: var(--error-500);
+}
+.icon-button.danger:hover:not(:disabled) {
+  background-color: var(--error-bg);
+  color: var(--error-500);
 }

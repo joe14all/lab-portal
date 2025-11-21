@@ -1,0 +1,100 @@
+[
+  {
+    "id": "case-5001",
+    "caseNumber": "2025-1001",
+    "clinicId": "clinic-001",
+    "doctorId": "doc-001",
+    "patient": {
+      "name": "John Smith",
+      "age": 45,
+      "gender": "Male",
+      "chartNumber": "P-9988"
+    },
+    "status": "stage-design",
+    "dates": {
+      "created": "2025-11-19T09:00:00Z",
+      "received": "2025-11-19T10:15:00Z",
+      "due": "2025-11-26T17:00:00Z",
+      "shipped": null
+    },
+    "items": [
+      {
+        "tooth": 14,
+        "type": "Crown",
+        "material": "Zirconia Full Contour",
+        "shade": "A2",
+        "stumpShade": "ND1",
+        "instructions": "Light occlusion, broad contacts."
+      }
+    ],
+    "panNumbers": ["A12", "B4"], 
+    "financial": {
+      "priceListId": "pl-standard",
+      "estimatedTotal": 99.00,
+      "currency": "USD",
+      "invoiceId": null
+    },
+    "tags": ["Digital Impression", "Rush"]
+  },
+  {
+    "id": "case-5002",
+    "caseNumber": "2025-1002",
+    "clinicId": "clinic-001",
+    "doctorId": "doc-001",
+    "patient": {
+      "name": "Alice Johnson",
+      "age": 32,
+      "gender": "Female"
+    },
+    "status": "stage-hold",
+    "dates": {
+      "created": "2025-11-18T14:00:00Z",
+      "received": "2025-11-18T14:30:00Z",
+      "due": "2025-11-25T17:00:00Z"
+    },
+    "items": [
+      {
+        "tooth": 8,
+        "type": "Veneer",
+        "material": "E.max",
+        "shade": "BL1",
+        "instructions": "Match texture of adjacent #9."
+      }
+    ],
+    "holdReason": "Margin unclear on scan. Waiting for new scan.",
+    "financial": {
+      "priceListId": "pl-standard",
+      "estimatedTotal": 129.00,
+      "currency": "USD"
+    }
+  },
+  {
+    "id": "case-5003",
+    "caseNumber": "2025-0998",
+    "clinicId": "clinic-005",
+    "doctorId": "user-doc-01",
+    "patient": {
+      "name": "Robert Brown",
+      "age": 60
+    },
+    "status": "stage-shipped",
+    "dates": {
+      "created": "2025-11-10T09:00:00Z",
+      "received": "2025-11-10T11:00:00Z",
+      "due": "2025-11-17T17:00:00Z",
+      "shipped": "2025-11-17T15:30:00Z"
+    },
+    "shipping": {
+      "carrier": "UPS",
+      "trackingNumber": "1Z999AA10123456784"
+    },
+    "items": [
+      { "tooth": 30, "type": "Implant Crown", "material": "Zirconia w/ TiBase" }
+    ],
+    "financial": {
+      "invoiceId": "inv-2025-005",
+      "finalTotal": 250.00,
+      "currency": "USD"
+    }
+  }
+]

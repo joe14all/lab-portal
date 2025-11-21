@@ -1,0 +1,57 @@
+[
+  {
+    "id": "inv-2025-001",
+    "invoiceNumber": "INV-2025-1001",
+    "clinicId": "clinic-001",
+    "status": "Sent",
+    "issueDate": "2025-11-30",
+    "dueDate": "2025-12-30",
+    "currency": "USD",
+    "items": [
+      {
+        "caseId": "case-5001",
+        "patientName": "John Smith",
+        "description": "Zirconia Crown (Full Contour) - Tooth #14",
+        "quantity": 1,
+        "unitPrice": 99.00,
+        "total": 99.00
+      },
+      {
+        "caseId": "case-5002",
+        "patientName": "Alice Johnson",
+        "description": "E.max Veneer - Tooth #8",
+        "quantity": 1,
+        "unitPrice": 149.00,
+        "total": 149.00
+      }
+    ],
+    "subtotal": 248.00,
+    "taxRate": 0.00,
+    "taxAmount": 0.00,
+    "totalAmount": 248.00,
+    "balanceDue": 149.00, 
+    "notes": "Please pay by check or portal."
+  },
+  {
+    "id": "inv-2025-005",
+    "invoiceNumber": "INV-2025-1005",
+    "clinicId": "clinic-005",
+    "status": "Overdue",
+    "issueDate": "2025-10-30",
+    "dueDate": "2025-11-29",
+    "currency": "USD",
+    "items": [
+      {
+        "caseId": "case-5003",
+        "patientName": "Robert Brown",
+        "description": "Implant Crown (Titanium Base)",
+        "quantity": 1,
+        "unitPrice": 250.00,
+        "total": 250.00
+      }
+    ],
+    "subtotal": 250.00,
+    "totalAmount": 250.00,
+    "balanceDue": 250.00
+  }
+]

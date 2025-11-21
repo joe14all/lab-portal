@@ -1,0 +1,33 @@
+[
+  {
+    "id": "route-morning-A",
+    "name": "Morning Route - Downtown",
+    "driverId": "user-driver-01",
+    "vehicleId": "van-01",
+    "date": "2025-11-20",
+    "status": "InProgress",
+    "startTime": "2025-11-20T08:00:00Z",
+    "endTime": null,
+    "stops": [
+      {
+        "id": "stop-001",
+        "sequence": 1,
+        "clinicId": "clinic-001",
+        "type": "Delivery",
+        "caseIds": ["case-5003"], 
+        "status": "Completed",
+        "completedAt": "2025-11-20T08:45:00Z",
+        "signatureUrl": "/assets/signatures/sig-001.png"
+      },
+      {
+        "id": "stop-002",
+        "sequence": 2,
+        "clinicId": "clinic-001",
+        "type": "Pickup",
+        "pickupId": "pickup-901",
+        "status": "Pending",
+        "estimatedArrival": "2025-11-20T13:30:00Z"
+      }
+    ]
+  }
+]

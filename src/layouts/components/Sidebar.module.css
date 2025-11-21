@@ -1,0 +1,68 @@
+/* Desktop Sidebar Styles */
+.sidebar {
+  display: none; /* Hidden on mobile */
+  flex-direction: column;
+  width: 260px;
+  height: calc(100vh - 64px); /* Full height minus header */
+  position: sticky;
+  top: 64px;
+  background-color: var(--bg-surface);
+  border-right: 1px solid var(--border-color);
+  padding: 1.5rem;
+}
+
+.nav {
+  flex: 1;
+}
+
+.navList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.navLink:hover {
+  background-color: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.navLink.active {
+  background-color: var(--primary-50);
+  color: var(--primary-700);
+}
+
+:global(body.dark) .navLink.active {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: var(--primary-300);
+}
+
+.footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* Show on Desktop */
+@media (min-width: 1024px) {
+  .sidebar {
+    display: flex;
+  }
+}

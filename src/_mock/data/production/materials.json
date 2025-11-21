@@ -1,0 +1,45 @@
+[
+  {
+    "id": "mat-zirc-A2",
+    "name": "Zirconia Disc - 98mm - Shade A2",
+    "type": "Disc",
+    "manufacturer": "Aidite",
+    "sku": "AID-Z-A2-98-14",
+    "lotNumber": "LOT-998877",
+    "expiryDate": "2026-05-20",
+    "stockLevel": 12,
+    "reorderThreshold": 5,
+    "unitCost": 45.00,
+    "currency": "USD",
+    "status": "InStock"
+  },
+  {
+    "id": "mat-emax-ingot-BL1",
+    "name": "IPS e.max Press Ingot - BL1",
+    "type": "Ingot",
+    "manufacturer": "Ivoclar",
+    "sku": "IVO-P-BL1",
+    "lotNumber": "LOT-112233",
+    "expiryDate": "2027-01-15",
+    "stockLevel": 3,
+    "reorderThreshold": 10,
+    "unitCost": 18.50,
+    "currency": "USD",
+    "status": "LowStock"
+  },
+  {
+    "id": "mat-resin-model",
+    "name": "Model Resin - Grey",
+    "type": "Liquid",
+    "manufacturer": "Formlabs",
+    "sku": "FL-MOD-01",
+    "lotNumber": "LOT-554466",
+    "expiryDate": "2025-08-10",
+    "stockLevel": 2,
+    "unit": "Liters",
+    "reorderThreshold": 2,
+    "unitCost": 149.00,
+    "currency": "USD",
+    "status": "ReorderNow"
+  }
+]
