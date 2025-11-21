@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 
@@ -6,6 +5,9 @@ import React, { createContext, useContext, useState, useCallback, useMemo, useEf
 import clinicsData from '../_mock/data/crm/clinics.json';
 import doctorsData from '../_mock/data/crm/doctors.json';
 import priceListsData from '../_mock/data/crm/price_lists.json';
+// CATALOG DATA INTEGRATED HERE
+import productsData from '../_mock/data/catalog/products.json';
+import addonsData from '../_mock/data/catalog/addons.json';
 
 const CrmContext = createContext(null);
 
@@ -14,20 +16,23 @@ export const CrmProvider = ({ children }) => {
   const [clinics, setClinics] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [priceLists, setPriceLists] = useState([]);
+  const [products, setProducts] = useState([]); // CATALOG
+  const [addons, setAddons] = useState([]);     // CATALOG
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   // --- Initialize Data ---
   useEffect(() => {
-    // Simulate initial fetch
     const initData = async () => {
       setLoading(true);
       try {
-        await new Promise(resolve => setTimeout(resolve, 600)); // Simulate latency
+        await new Promise(resolve => setTimeout(resolve, 600)); 
         setClinics(clinicsData);
         setDoctors(doctorsData);
         setPriceLists(priceListsData);
+        setProducts(productsData); // LOADED
+        setAddons(addonsData);     // LOADED
       } catch (err) {
         console.error("Failed to load CRM data", err);
         setError("Failed to load CRM data");
@@ -62,16 +67,10 @@ export const CrmProvider = ({ children }) => {
   // 1. CLINIC HANDLERS
   // ============================================================
 
-  /**
-   * (READ) Get a single clinic by ID
-   */
   const getClinicById = useCallback((clinicId) => {
     return clinics.find(c => c.id === clinicId);
   }, [clinics]);
 
-  /**
-   * (CREATE) Onboard a new clinic
-   */
   const addClinic = useCallback(async (newClinicData) => {
     return await simulateApi(() => {
       const newClinic = {
@@ -85,9 +84,6 @@ export const CrmProvider = ({ children }) => {
     });
   }, []);
 
-  /**
-   * (UPDATE) Update clinic details (e.g., address, settings)
-   */
   const updateClinic = useCallback(async (clinicId, updates) => {
     return await simulateApi(() => {
       let updatedClinic = null;
@@ -107,16 +103,10 @@ export const CrmProvider = ({ children }) => {
   // 2. DOCTOR HANDLERS
   // ============================================================
 
-  /**
-   * (READ) Get all doctors associated with a specific clinic
-   */
   const getDoctorsByClinic = useCallback((clinicId) => {
     return doctors.filter(d => d.clinicId === clinicId);
   }, [doctors]);
 
-  /**
-   * (CREATE) Add a doctor to a clinic
-   */
   const addDoctor = useCallback(async (clinicId, doctorData) => {
     return await simulateApi(() => {
       const newDoctor = {
@@ -130,9 +120,6 @@ export const CrmProvider = ({ children }) => {
     });
   }, []);
 
-  /**
-   * (UPDATE) Update doctor preferences or details
-   */
   const updateDoctor = useCallback(async (doctorId, updates) => {
     return await simulateApi(() => {
       setDoctors(prev => prev.map(doc => 
@@ -141,9 +128,6 @@ export const CrmProvider = ({ children }) => {
     });
   }, []);
 
-  /**
-   * (DELETE) Soft-delete / Deactivate a doctor
-   */
   const removeDoctor = useCallback(async (doctorId) => {
     return await simulateApi(() => {
       setDoctors(prev => prev.map(doc => 
@@ -156,16 +140,10 @@ export const CrmProvider = ({ children }) => {
   // 3. PRICE LIST HANDLERS
   // ============================================================
 
-  /**
-   * (READ) Get a specific price list
-   */
   const getPriceListById = useCallback((priceListId) => {
     return priceLists.find(pl => pl.id === priceListId);
   }, [priceLists]);
 
-  /**
-   * (CREATE) Create a new custom price list (e.g. "2026 VIP")
-   */
   const createPriceList = useCallback(async (priceListData) => {
     return await simulateApi(() => {
       const newList = {
@@ -178,9 +156,6 @@ export const CrmProvider = ({ children }) => {
     });
   }, []);
 
-  /**
-   * (UPDATE) Modify prices in a list
-   */
   const updatePriceList = useCallback(async (priceListId, updates) => {
     return await simulateApi(() => {
       setPriceLists(prev => prev.map(pl => 
@@ -188,6 +163,30 @@ export const CrmProvider = ({ children }) => {
       ));
     });
   }, []);
+
+  // ============================================================
+  // 4. CATALOG HANDLERS (Used for dynamic pricing in CaseForm)
+  // ============================================================
+  
+  /**
+   * Calculates the price of a product for a given clinic.
+   */
+  const calculateProductPrice = useCallback((productId, clinicId) => {
+    const clinic = clinics.find(c => c.id === clinicId);
+    if (!clinic) return null;
+
+    const priceList = priceLists.find(pl => pl.id === clinic.priceListId);
+    if (!priceList) return products.find(p => p.id === productId)?.defaultPrice || null;
+
+    const priceItem = priceList.items.find(item => item.productId === productId);
+    
+    if (priceItem) {
+      return priceItem.price;
+    }
+    
+    return products.find(p => p.id === productId)?.defaultPrice || null;
+  }, [clinics, priceLists, products]);
+
 
   // ============================================================
   // EXPORT VALUE
@@ -198,6 +197,8 @@ export const CrmProvider = ({ children }) => {
     clinics,
     doctors,
     priceLists,
+    products, // EXPORTED CATALOG STATE
+    addons,   // EXPORTED CATALOG STATE
     loading,
     error,
 
@@ -216,11 +217,15 @@ export const CrmProvider = ({ children }) => {
     getPriceListById,
     createPriceList,
     updatePriceList,
+    
+    // Catalog Actions
+    calculateProductPrice
   }), [
-    clinics, doctors, priceLists, loading, error,
+    clinics, doctors, priceLists, products, addons, loading, error,
     getClinicById, addClinic, updateClinic,
     getDoctorsByClinic, addDoctor, updateDoctor, removeDoctor,
-    getPriceListById, createPriceList, updatePriceList
+    getPriceListById, createPriceList, updatePriceList,
+    calculateProductPrice
   ]);
 
   return (

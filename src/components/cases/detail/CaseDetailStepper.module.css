@@ -1,0 +1,95 @@
+/* --- STEPPER / PROGRESS --- */
+.stepperCard {
+  background-color: var(--bg-surface);
+  padding: 1.5rem 2rem; 
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+  overflow-x: auto; 
+}
+
+.stepper {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  min-width: 600px;
+  padding-bottom: 0.5rem;
+}
+
+/* Connecting Line */
+.stepper::before {
+  content: '';
+  position: absolute;
+  top: 14px; 
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--neutral-200);
+  z-index: 0;
+}
+
+.step {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: default;
+  text-align: center;
+  flex: 1;
+}
+
+.stepCircle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: var(--bg-surface);
+  border: 2px solid var(--neutral-300);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.stepCircle svg {
+    stroke: var(--text-secondary);
+}
+
+.stepLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  max-width: 100px;
+}
+
+/* Active/Completed States */
+.step.completed .stepCircle {
+  background-color: var(--success-500);
+  border-color: var(--success-500);
+  color: white;
+}
+.step.completed .stepCircle svg {
+    stroke: white; 
+}
+
+.step.completed .stepLabel {
+  color: var(--success-500);
+}
+
+.step.active .stepCircle {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  box-shadow: 0 0 0 4px var(--primary-50);
+}
+.step.active .stepCircle svg {
+    stroke: white; 
+}
+
+.step.active .stepLabel {
+  color: var(--primary);
+  font-weight: 700;
+}

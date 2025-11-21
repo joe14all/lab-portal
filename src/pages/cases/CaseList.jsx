@@ -1,35 +1,48 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLab, useCrm } from '../../contexts';
 import SearchBar from '../../components/common/SearchBar';
+import CaseListTable from '../../components/cases/CaseListTable'; 
+import CaseForm from '../../components/cases/CaseForm'; // NEW IMPORT for modal
 import { 
-  IconChevronRight, 
-  IconBox 
+  IconBox,
+  IconClose // NEW IMPORT
 } from '../../layouts/components/LabIcons';
 import styles from './CaseList.module.css';
+// Import modal styles from CaseDetail for consistency
+import detailStyles from '../cases/CaseDetail.module.css'; 
+
 
 const CaseList = () => {
   const navigate = useNavigate();
-  const { cases, stages, loading: labLoading } = useLab();
+  const { cases, stages, loading: labLoading, createCase } = useLab();
   const { doctors, clinics, loading: crmLoading } = useCrm();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [showCreateModal, setShowCreateModal] = useState(false); // USED NOW
 
   const isLoading = labLoading || crmLoading;
 
+  // --- Data Enrichment and Filtering ---
   const filteredCases = useMemo(() => {
     if (!cases) return [];
+    
     const enriched = cases.map(c => {
       const doc = doctors.find(d => d.id === c.doctorId);
       const clinic = clinics.find(cl => cl.id === c.clinicId);
       const stage = stages.find(s => s.id === c.status);
+
+      // Use 'units' as the source of truth if available, otherwise fallback to 'items'
+      const units = c.units || c.items || []; 
+      
       return {
         ...c,
         doctorName: doc ? `${doc.firstName} ${doc.lastName}` : 'Unknown Doctor',
         clinicName: clinic ? clinic.name : 'Unknown Clinic',
         stageLabel: stage ? stage.label : c.status,
-        stageColor: stage ? stage.color : 'gray'
+        stageColor: stage ? stage.color : 'gray',
+        units: units // Pass enriched units array to the table component
       };
     });
 
@@ -40,16 +53,46 @@ const CaseList = () => {
         item.patient.name.toLowerCase().includes(searchLower) ||
         item.doctorName.toLowerCase().includes(searchLower);
       const matchesStatus = statusFilter === 'All' || item.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      
+      // Filter out aggregate status (stage-production) unless specifically filtered for it
+      const matchesStageFilter = item.status !== 'stage-production' || statusFilter === 'stage-production' || statusFilter === 'All';
+
+      return matchesSearch && matchesStatus && matchesStageFilter;
     });
   }, [cases, doctors, clinics, stages, searchQuery, statusFilter]);
 
-  const handleRowClick = (caseId) => {
+  // --- Handlers ---
+  const handleRowClick = useCallback((caseId) => {
     navigate(`/cases/${caseId}`);
-  };
+  }, [navigate]);
+  
+  const handleCreateCase = useCallback(() => {
+    setShowCreateModal(true); // USE 1: Open Modal
+  }, []);
+  
+  const handleNewCaseSubmit = useCallback(async (newCaseData) => { // USE 2: Used as onSubmit handler
+    try {
+        const newCase = await createCase(newCaseData);
+        console.log("New Case Created:", newCase);
+        setShowCreateModal(false);
+        navigate(`/cases/${newCase.id}`); 
+    } catch (error) {
+        console.error("Failed to create new case:", error);
+    }
+  }, [createCase, navigate]);
 
+
+  // --- Render ---
   if (isLoading) {
-    return <div className={styles.pageContainer}><div className={styles.header}><h1>Loading...</h1></div></div>;
+    return (
+      <div className={styles.pageContainer}>
+        <div className={styles.header}>
+          <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            Loading case list...
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -62,14 +105,15 @@ const CaseList = () => {
           </p>
         </div>
         <div className={styles.headerActions}>
-          <button className="button primary">+ New Case</button>
+          <button className="button primary" onClick={handleCreateCase}>
+            + New Case
+          </button>
         </div>
       </header>
 
       {/* FILTER BAR */}
       <section className={styles.filterBar}>
         <div className={styles.searchWrapper}>
-          {/* Reusable Search Component */}
           <SearchBar 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -91,63 +135,44 @@ const CaseList = () => {
         </div>
       </section>
 
-      {/* TABLE */}
+      {/* TABLE/LIST */}
       <div className={styles.tableCard}>
-        <div className={styles.tableContainer}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Case ID</th>
-                <th>Patient</th>
-                <th>Doctor / Clinic</th>
-                <th>Received</th>
-                <th>Due Date</th>
-                <th>Stage</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCases.length > 0 ? (
-                filteredCases.map(c => (
-                  <tr key={c.id} className={styles.tableRow} onClick={() => handleRowClick(c.id)}>
-                    <td className={styles.caseId}>{c.caseNumber}</td>
-                    <td>
-                      <span className={styles.patientName}>{c.patient.name}</span>
-                      <span className={styles.patientMeta}>
-                        {c.items?.length || 0} Units • {c.items?.[0]?.type || 'Restoration'}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <strong>{c.doctorName}</strong>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{c.clinicName}</span>
-                      </div>
-                    </td>
-                    <td className={styles.dateText}>{new Date(c.dates.received).toLocaleDateString()}</td>
-                    <td className={styles.dateText}>{c.dates.due ? new Date(c.dates.due).toLocaleDateString() : '-'}</td>
-                    <td>
-                      <span className={`${styles.badge} ${styles[c.stageColor] || ''}`}>{c.stageLabel}</span>
-                    </td>
-                    <td style={{ textAlign: 'right', color: 'var(--text-secondary)' }}>
-                      <IconChevronRight width="18" />
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="7" className={styles.emptyState}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                      <IconBox width="48" height="48" style={{ opacity: 0.2 }} />
-                      <span>No cases match your filters.</span>
-                      <button className="button secondary" onClick={() => { setSearchQuery(''); setStatusFilter('All'); }}>Clear Filters</button>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        {filteredCases.length > 0 ? (
+          <CaseListTable 
+            cases={filteredCases} 
+            onRowClick={handleRowClick} 
+          />
+        ) : (
+          <div className={styles.emptyState}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+              <IconBox width="48" height="48" style={{ opacity: 0.2 }} />
+              <span>No cases match your filters.</span>
+              <button className="button secondary" onClick={() => { setSearchQuery(''); setStatusFilter('All'); }}>Clear Filters</button>
+            </div>
+          </div>
+        )}
       </div>
+      
+      {/* === NEW CASE MODAL === */}
+      {showCreateModal && (
+        <div className={detailStyles.modalBackdrop}>
+          <div className={detailStyles.modalContent}>
+            <div className={detailStyles.modalHeader}>
+                <h3>Create New Case</h3>
+                <button className="icon-button" onClick={() => setShowCreateModal(false)}>
+                    <IconClose width="24" height="24" />
+                </button>
+            </div>
+            {/* CaseForm handles the creation data input */}
+            <CaseForm
+              // In creation mode, initialData is null
+              initialData={null}
+              onSubmit={handleNewCaseSubmit}
+              onCancel={() => setShowCreateModal(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

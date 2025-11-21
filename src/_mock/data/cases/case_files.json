@@ -3,44 +3,69 @@
     "id": "file-101",
     "caseId": "case-5001",
     "uploaderId": "user-doc-01",
-    "category": "SCAN",
+    "category": "INPUT_SCAN",
+    "subCategory": "ARCH_UPPER",
     "fileType": "STL",
     "fileName": "smith_john_upper.stl",
     "size": "12MB",
     "url": "https://mock-s3.com/bucket/cases/5001/upper.stl",
-    "createdAt": "2025-11-19T09:05:00Z"
+    "createdAt": "2025-11-19T09:05:00Z",
+    "isImmutable": true,
+    "notes": "Original Pre-op scan"
   },
   {
     "id": "file-102",
     "caseId": "case-5001",
     "uploaderId": "user-doc-01",
-    "category": "SCAN",
+    "category": "INPUT_SCAN",
+    "subCategory": "ARCH_LOWER",
     "fileType": "STL",
     "fileName": "smith_john_lower.stl",
     "size": "10MB",
     "url": "https://mock-s3.com/bucket/cases/5001/lower.stl",
-    "createdAt": "2025-11-19T09:05:00Z"
+    "createdAt": "2025-11-19T09:05:00Z",
+    "isImmutable": true
   },
   {
     "id": "file-103",
     "caseId": "case-5001",
     "uploaderId": "user-doc-01",
-    "category": "RX_FORM",
+    "category": "REFERENCE",
+    "subCategory": "RX_FORM",
     "fileType": "PDF",
     "fileName": "prescription.pdf",
     "size": "250KB",
     "url": "https://mock-s3.com/bucket/cases/5001/rx.pdf",
-    "createdAt": "2025-11-19T09:00:00Z"
+    "createdAt": "2025-11-19T09:00:00Z",
+    "isImmutable": true
   },
   {
     "id": "file-201",
     "caseId": "case-5002",
     "uploaderId": "user-doc-01",
-    "category": "PHOTO",
+    "category": "INPUT_PHOTO",
+    "subCategory": "SHADE_MATCH",
     "fileType": "JPG",
     "fileName": "shade_match.jpg",
     "size": "4MB",
     "url": "https://mock-s3.com/bucket/cases/5002/shade.jpg",
-    "createdAt": "2025-11-18T14:05:00Z"
+    "createdAt": "2025-11-18T14:05:00Z",
+    "isImmutable": true
+  },
+  {
+    "id": "file-design-v2-5001",
+    "caseId": "case-5001",
+    "unitId": "unit-5001-14",
+    "uploaderId": "user-tech-01",
+    "category": "PRODUCTION_DESIGN",
+    "subCategory": "CAM_OUTPUT",
+    "fileType": "STL",
+    "fileName": "design_5001_14_v2.stl",
+    "size": "4.5MB",
+    "url": "https://mock-s3.com/bucket/cases/5001/design_v2.stl",
+    "createdAt": "2025-11-19T14:00:00Z",
+    "version": 2,
+    "isLatest": true,
+    "parentFileId": "file-101"
   }
 ]

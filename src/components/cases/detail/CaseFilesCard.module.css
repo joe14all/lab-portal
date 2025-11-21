@@ -1,0 +1,74 @@
+/* --- Shared Section Title Style --- */
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* --- FILE LIST & Digital Twin Styles --- */
+.fileList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.fileItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+  background-color: var(--bg-surface);
+  transition: background-color 0.2s;
+}
+.fileItem:hover {
+  background-color: var(--bg-surface-hover);
+}
+
+.fileInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.fileIcon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.fileName {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.fileMeta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.tag {
+    margin-left: 0.5rem;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.immutableTag {
+    color: var(--error-500);
+}
+.latestTag {
+    color: var(--success-500);
+}
+
+.emptyText {
+    font-size: 0.9rem; 
+    font-style: italic;
+    padding: 0 0 1rem 0;
+    color: var(--text-secondary);
+}

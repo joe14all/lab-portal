@@ -1,42 +1,103 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useLab, useAuth } from '../../contexts';
-
-// Mock Data Imports (Direct import for robust demo)
-import caseFilesData from '../../_mock/data/cases/case_files.json';
-import caseMessagesData from '../../_mock/data/cases/case_messages.json';
-import caseStagesData from '../../_mock/data/cases/case_stages.json';
-
-import { 
-  IconChevronRight, 
-  IconClock, 
-  IconUser, 
-  IconFile, 
-  IconAlert,
-  IconCheck,
-  IconMenu,
-  IconPrinter // Assuming this might exist, or we reuse another
-} from '../../layouts/components/LabIcons';
-
+// Import necessary contexts
+import { useLab, useAuth, useCrm } from '../../contexts'; 
+import CaseForm from '../../components/cases/CaseForm'; 
+import { IconClose } from '../../layouts/components/LabIcons';
 import styles from './CaseDetail.module.css';
+
+// --- New Sub-Component Imports ---
+import CaseDetailHeader from '../../components/cases/detail/CaseDetailHeader';
+import CaseDetailStepper from '../../components/cases/detail/CaseDetailStepper';
+import CaseContextCard from '../../components/cases/detail/CaseContextCard';
+import CaseUnitsList from '../../components/cases/detail/CaseUnitsList';
+import CaseFilesCard from '../../components/cases/detail/CaseFilesCard';
+import CaseCommunicationCard from '../../components/cases/detail/CaseCommunicationCard';
+// ----------------------------------
+
+// Map specific stages to their representative icons
+const getStageIcon = (stageId) => {
+  switch (stageId) {
+    case 'stage-milling':
+      return <IconDrill width="16" height="16" />;
+    case 'stage-finishing':
+    case 'stage-qc':
+      return <IconMicroscope width="16" height="16" />;
+    case 'stage-shipped':
+      return <IconCheck width="16" height="16" />;
+    case 'stage-hold':
+      return <IconAlert width="16" height="16" />;
+    case 'stage-design':
+    case 'stage-received':
+    default:
+      return null;
+  }
+};
 
 const CaseDetail = () => {
   const { caseId } = useParams();
   const navigate = useNavigate();
-  const { cases, updateCaseStatus } = useLab();
-  const { user } = useAuth();
   
-  // --- 1. Resolve Data ---
+  // *** CONTEXT DEPENDENCIES ***
+  const { 
+    cases, stages, updateCaseStatus, updateCase, 
+    getCaseFiles, getCaseMessages, loading: labLoading 
+  } = useLab();
+
+  const { clinics, doctors, loading: crmLoading } = useCrm(); 
+  const { user } = useAuth(); // RE-INTRODUCED USER HERE
+  
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  // --- HOOKS (MUST BE UNCONDITIONAL) ---
+  const handleCaseEditSubmit = useCallback(async (updates) => {
+    try {
+      const result = await updateCase(caseId, updates);
+      console.log('Case updated successfully:', result);
+      setShowEditModal(false);
+    } catch (error) {
+      console.error('Failed to save case updates:', error);
+    }
+  }, [caseId, updateCase]);
+
+  // --- 1. Resolve Data & Enrich Case (Memoized Data Layer) ---
   const activeCase = useMemo(() => {
-    return cases.find(c => c.id === caseId);
-  }, [cases, caseId]);
+    if (labLoading || crmLoading) return null;
 
-  // Filter related data
-  const files = useMemo(() => caseFilesData.filter(f => f.caseId === caseId), [caseId]);
-  const messages = useMemo(() => caseMessagesData.filter(m => m.caseId === caseId), [caseId]);
+    const foundCase = cases.find(c => c.id === caseId);
+    if (!foundCase) return null;
 
-  // --- 2. Loading/Error States ---
-  if (!activeCase) {
+    const clinic = clinics.find(cl => cl.id === foundCase.clinicId);
+    const doctor = doctors.find(doc => doc.id === foundCase.doctorId);
+    
+    return {
+      ...foundCase,
+      clinicName: clinic ? clinic.name : 'Unknown Clinic',
+      doctorName: doctor ? `Dr. ${doctor.lastName}` : (foundCase.doctorId || 'Unknown Doctor'),
+      units: foundCase.units || foundCase.items || [] 
+    };
+  }, [cases, caseId, clinics, doctors, labLoading, crmLoading]);
+
+  // --- 2. Related Data Getters ---
+  const allFiles = getCaseFiles(caseId);
+  const messages = getCaseMessages(caseId);
+
+  const files = useMemo(() => {
+    return {
+      inputs: allFiles.filter(f => f.category?.includes('INPUT') || f.category?.includes('REFERENCE')),
+      designs: allFiles.filter(f => f.category?.includes('PRODUCTION_DESIGN'))
+    };
+  }, [allFiles]);
+
+  // --- 3. Loading/Error States ---
+  if (labLoading || crmLoading || !activeCase) {
+    if (labLoading || crmLoading) {
+      return (
+        <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+          Loading case data...
+        </div>
+      );
+    }
     return (
       <div className="card">
         <div style={{ padding: '2rem', textAlign: 'center' }}>
@@ -50,219 +111,95 @@ const CaseDetail = () => {
     );
   }
 
-  // --- 3. Helpers ---
-  const currentStageIndex = caseStagesData.findIndex(s => s.id === activeCase.status);
+  // --- 4. Render Helpers ---
+  const handleEditClick = () => setShowEditModal(true);
+
+  // --- Stage Helpers (Kept here for simplicity, logic is in components) ---
+  const currentStageId = activeCase.status; 
+  const currentStageIndex = stages.findIndex(s => s.id === currentStageId);
   
   const getStageClass = (stageId, index) => {
-    if (activeCase.status === stageId) return `${styles.step} ${styles.active}`;
+    if (currentStageId === stageId) return `${styles.step} ${styles.active}`;
     if (index < currentStageIndex) return `${styles.step} ${styles.completed}`;
     return styles.step;
   };
 
-  const handleStatusChange = (newStatus) => {
-    updateCaseStatus(caseId, newStatus);
+  const updateUnitStatus = (unitId, newStatus) => {
+    updateCaseStatus(activeCase.id, newStatus, unitId);
   };
+  // ----------------------------------------------------------------------
+
 
   return (
     <div className={styles.container}>
       
       {/* === HEADER === */}
-      <header className={styles.header}>
-        <div className={styles.titleGroup}>
-          <h1>
-            <span className={styles.patientName}>{activeCase.patient.name}</span>
-            <span className={styles.caseNumber}>#{activeCase.caseNumber}</span>
-          </h1>
-          <div className={styles.metaRow}>
-            <span className={styles.metaItem}>
-              <IconUser width="16" height="16" /> Dr. {activeCase.doctorId}
-            </span>
-            <span className={styles.metaItem}>
-              <IconClock width="16" height="16" /> Due: {new Date(activeCase.dates.due).toLocaleDateString()}
-            </span>
-          </div>
-        </div>
-
-        <div className={styles.actions}>
-          <button className="button secondary">Print Ticket</button>
-          <button className="button primary" onClick={() => console.log("Open Actions")}>
-            Actions <IconChevronRight width="16" height="16" />
-          </button>
-        </div>
-      </header>
+      <CaseDetailHeader 
+        activeCase={activeCase} 
+        onEditClick={handleEditClick} 
+      />
 
       {/* === WORKFLOW STEPPER === */}
-      <section className={styles.stepperCard}>
-        <div className={styles.stepper}>
-          {caseStagesData.map((stage, index) => {
-            // Don't show "Exception" stages like Hold/Cancelled in linear flow unless active
-            if (stage.category === 'EXCEPTION' && activeCase.status !== stage.id) return null;
-            
-            return (
-              <div key={stage.id} className={getStageClass(stage.id, index)}>
-                <div className={styles.stepCircle}>
-                  {index < currentStageIndex ? <IconCheck width="16" height="16" /> : index + 1}
-                </div>
-                <span className={styles.stepLabel}>{stage.label}</span>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
+      <CaseDetailStepper 
+        caseStatus={activeCase.status} 
+        stages={stages}
+      />
+      
       {/* === MAIN GRID === */}
       <div className={styles.grid}>
         
-        {/* --- COL 1: CONTEXT (Patient/Clinic) --- */}
+        {/* --- COL 1: CONTEXT --- */}
         <div className={styles.leftCol}>
-          <div className="card">
-            <h3 className={styles.sectionTitle}>Clinic & Patient</h3>
-            <div className={styles.detailList}>
-              <div className={styles.detailItem}>
-                <span className={styles.label}>Patient</span>
-                <span className={styles.value}>{activeCase.patient.name} ({activeCase.patient.age} / {activeCase.patient.gender})</span>
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.label}>Chart #</span>
-                <span className={styles.value}>{activeCase.patient.chartNumber || 'N/A'}</span>
-              </div>
-              <hr style={{ borderColor: 'var(--border-color)', margin: '0.5rem 0' }} />
-              <div className={styles.detailItem}>
-                <span className={styles.label}>Clinic</span>
-                <span className={styles.value}>{activeCase.clinicId}</span>
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.label}>Doctor</span>
-                <span className={styles.value}>{activeCase.doctorId}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <h3 className={styles.sectionTitle}>Dates</h3>
-            <div className={styles.detailList}>
-              <div className={styles.detailItem}>
-                <span className={styles.label}>Received</span>
-                <span className={styles.value}>{new Date(activeCase.dates.received).toLocaleDateString()}</span>
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.label}>Due Date</span>
-                <span className={styles.value} style={{ color: 'var(--primary)' }}>
-                  {new Date(activeCase.dates.due).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-          </div>
+          <CaseContextCard 
+            activeCase={activeCase} 
+          />
         </div>
 
-        {/* --- COL 2: THE WORK (RX, Items, Files) --- */}
+        {/* --- COL 2: THE WORK --- */}
         <div className={styles.centerCol}>
-          
-          {/* Prescription / Items */}
-          <div className="card">
-            <h3 className={styles.sectionTitle}>Prescription Details</h3>
-            {activeCase.items.map((item, idx) => (
-              <div key={idx} className={styles.rxItem}>
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <span className={styles.toothBadge}>#{item.tooth}</span>
-                  <strong>{item.type}</strong>
-                </div>
-                <div className={styles.detailList}>
-                  <div className={styles.detailItem}>
-                    <span className={styles.label}>Material</span>
-                    <span className={styles.value}>{item.material}</span>
-                  </div>
-                  <div style={{ display: 'flex', gap: '2rem' }}>
-                    <div className={styles.detailItem}>
-                      <span className={styles.label}>Shade</span>
-                      <span className={styles.value}>{item.shade}</span>
-                    </div>
-                    <div className={styles.detailItem}>
-                      <span className={styles.label}>Stump</span>
-                      <span className={styles.value}>{item.stumpShade || 'N/A'}</span>
-                    </div>
-                  </div>
-                  {item.instructions && (
-                    <div className={styles.detailItem}>
-                      <span className={styles.label}>Instructions</span>
-                      <p style={{ fontSize: '0.9rem', margin: 0 }}>{item.instructions}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Files */}
-          <div className="card">
-            <h3 className={styles.sectionTitle}>
-              Files & Scans
-              <button className="icon-button" title="Upload File">+</button>
-            </h3>
-            <ul className={styles.fileList}>
-              {files.length > 0 ? files.map(file => (
-                <li key={file.id} className={styles.fileItem}>
-                  <div className={styles.fileInfo}>
-                    <IconFile className={styles.fileIcon} />
-                    <div>
-                      <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{file.fileName}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        {file.category} • {file.size}
-                      </div>
-                    </div>
-                  </div>
-                  <button className="button secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>
-                    View
-                  </button>
-                </li>
-              )) : (
-                <p style={{ fontSize: '0.9rem', fontStyle: 'italic' }}>No files attached.</p>
-              )}
-            </ul>
-          </div>
-
+          <CaseUnitsList 
+            units={activeCase.units} 
+            stages={stages}
+            caseId={activeCase.id}
+            updateUnitStatus={updateUnitStatus}
+          />
         </div>
 
-        {/* --- COL 3: COMMUNICATION --- */}
+        {/* --- COL 3: DIGITAL ASSETS & COMMUNICATION --- */}
         <div className={styles.rightCol}>
-          <div className="card" style={{ height: '100%' }}>
-            <h3 className={styles.sectionTitle}>Communication</h3>
-            
-            <div className={styles.messageList}>
-              {messages.length > 0 ? messages.map(msg => (
-                <div 
-                  key={msg.id} 
-                  className={`${styles.messageBubble} ${msg.isInternal ? styles.internalNote : ''}`}
-                >
-                  <div className={styles.msgHeader}>
-                    <span className={styles.msgAuthor}>
-                      {msg.isInternal && <IconAlert width="12" height="12" style={{marginRight:4}} />}
-                      {msg.senderName}
-                    </span>
-                    <span>{new Date(msg.createdAt).toLocaleDateString()}</span>
-                  </div>
-                  <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
-                </div>
-              )) : (
-                <p style={{ textAlign: 'center', padding: '2rem 0' }}>No messages yet.</p>
-              )}
-            </div>
+          
+          <CaseFilesCard 
+            files={files} 
+            caseId={activeCase.id}
+          />
 
-            {/* Reply Box Stub */}
-            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-              <textarea 
-                placeholder="Type a message or internal note..." 
-                style={{ width: '100%', marginBottom: '0.5rem', fontSize: '0.9rem' }}
-                rows="3"
-              />
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <button className="button primary" style={{ padding: '0.4rem 1rem', fontSize: '0.9rem' }}>Send</button>
-              </div>
-            </div>
-          </div>
+          <CaseCommunicationCard 
+            messages={messages} 
+            caseId={activeCase.id}
+            currentUserId={user?.id} // USER IS NOW DEFINED
+          />
         </div>
 
       </div>
+
+      {/* === EDIT CASE MODAL === */}
+      {showEditModal && (
+        <div className={styles.modalBackdrop}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+                <h3>Editing Case #{activeCase.caseNumber}</h3>
+                <button className="icon-button" onClick={() => setShowEditModal(false)}>
+                    <IconClose width="24" height="24" />
+                </button>
+            </div>
+            <CaseForm
+              initialData={activeCase}
+              onSubmit={handleCaseEditSubmit}
+              onCancel={() => setShowEditModal(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

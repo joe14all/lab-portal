@@ -5,3 +5,4 @@ export { useTheme } from './ThemeContext';
 export { useCrm } from './CrmContext';
 export { useLab } from './LabContext';
 export { useFinance } from './FinanceContext';
+export { useLogistics } from './LogisticsContext';

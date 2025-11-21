@@ -4,6 +4,7 @@ import { ThemeProvider } from './ThemeContext';
 import { CrmProvider } from './CrmContext';
 import { LabProvider } from './LabContext';
 import { FinanceProvider } from './FinanceContext';
+import { LogisticsProvider } from './LogisticsContext'; // NEW IMPORT
 
 export const AppProvider = ({ children }) => {
   return (
@@ -12,7 +13,9 @@ export const AppProvider = ({ children }) => {
         <CrmProvider>
           <LabProvider>
             <FinanceProvider>
-              {children}
+              <LogisticsProvider> {/* NEW PROVIDER */}
+                {children}
+              </LogisticsProvider>
             </FinanceProvider>
           </LabProvider>
         </CrmProvider>

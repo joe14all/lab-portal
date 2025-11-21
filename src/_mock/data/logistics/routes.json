@@ -14,19 +14,37 @@
         "sequence": 1,
         "clinicId": "clinic-001",
         "type": "Delivery",
-        "caseIds": ["case-5003"], 
+        "deliveryManifest": [
+          {
+            "caseId": "case-5003",
+            "unitIds": ["unit-5003-30"],
+            "packageId": "pkg-ups-889900",
+            "description": "Implant Crown Box",
+            "requiresSignature": true
+          }
+        ],
         "status": "Completed",
         "completedAt": "2025-11-20T08:45:00Z",
-        "signatureUrl": "/assets/signatures/sig-001.png"
+        "signatureUrl": "/assets/signatures/sig-001.png",
+        "signedBy": "Front Desk - Mary"
       },
       {
         "id": "stop-002",
         "sequence": 2,
         "clinicId": "clinic-001",
         "type": "Pickup",
-        "pickupId": "pickup-901",
+        "pickupTasks": [
+          {
+            "requestId": "pickup-901",
+            "itemType": "Physical Impression",
+            "notes": "PVS Impression for new Crown case",
+            "packageCount": 1,
+            "validatedReady": true
+          }
+        ],
         "status": "Pending",
-        "estimatedArrival": "2025-11-20T13:30:00Z"
+        "estimatedArrival": "2025-11-20T13:30:00Z",
+        "driverInstructions": "Park in rear loading zone B."
       }
     ]
   }

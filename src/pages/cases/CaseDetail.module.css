@@ -1,4 +1,4 @@
-/* --- LAYOUT --- */
+/* --- 1. BASE LAYOUT --- */
 .container {
   max-width: 1400px;
   margin: 0 auto;
@@ -13,275 +13,86 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* --- HEADER SECTION --- */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  background-color: var(--bg-surface);
-  padding: 1.5rem;
-  border-radius: 0.75rem;
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
-}
+/* --- 2. MAIN GRID STRUCTURE --- */
 
-.titleGroup h1 {
-  font-size: 1.5rem;
-  margin: 0 0 0.25rem 0;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.patientName {
-  color: var(--text-primary);
-}
-
-.caseNumber {
-  color: var(--text-secondary);
-  font-weight: 400;
-  font-size: 1.25rem;
-}
-
-.metaRow {
-  display: flex;
-  gap: 1.5rem;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-}
-
-.metaItem {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-/* Action Buttons */
-.actions {
-  display: flex;
-  gap: 0.75rem;
-}
-
-/* --- STEPPER / PROGRESS --- */
-.stepperCard {
-  background-color: var(--bg-surface);
-  padding: 1.5rem 2rem; /* More padding for the timeline */
-  border-radius: 0.75rem;
-  border: 1px solid var(--border-color);
-  overflow-x: auto; /* Allow scroll on small screens */
-}
-
-.stepper {
-  display: flex;
-  justify-content: space-between;
-  position: relative;
-  min-width: 600px;
-}
-
-/* Connecting Line */
-.stepper::before {
-  content: '';
-  position: absolute;
-  top: 14px; /* Align with circle center */
-  left: 0;
-  right: 0;
-  height: 2px;
-  background-color: var(--neutral-200);
-  z-index: 0;
-}
-
-.step {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: default;
-  text-align: center;
-  flex: 1;
-}
-
-.stepCircle {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background-color: var(--bg-surface);
-  border: 2px solid var(--neutral-300);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
-}
-
-.stepLabel {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  max-width: 100px;
-}
-
-/* Active/Completed States */
-.step.completed .stepCircle {
-  background-color: var(--success-500);
-  border-color: var(--success-500);
-  color: white;
-}
-
-.step.completed .stepLabel {
-  color: var(--success-500);
-}
-
-.step.active .stepCircle {
-  background-color: var(--primary);
-  border-color: var(--primary);
-  color: white;
-  box-shadow: 0 0 0 4px var(--primary-50);
-}
-
-.step.active .stepLabel {
-  color: var(--primary);
-  font-weight: 700;
-}
-
-/* --- MAIN GRID --- */
 .grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem;
 }
 
-/* Desktop: 3 Columns (Left: 25%, Center: 45%, Right: 30%) */
+/* Desktop: 3 Columns Layout */
+/* Left: Context (280px), Center: Work/Units (1fr), Right: Assets/Comms (320px) */
 @media (min-width: 1280px) {
   .grid {
-    grid-template-columns: 300px 1fr 380px;
+    grid-template-columns: 280px 1fr 320px; 
   }
 }
 
-/* --- CARD STYLES --- */
-.sectionTitle {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* --- 3. GENERIC MODAL STYLES (Used by both CaseList and CaseDetail) --- */
+
+.modalBackdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    padding: 20px;
 }
 
-/* Details List (Key-Value) */
-.detailList {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+.modalContent {
+    background-color: var(--bg-body);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 900px; /* Wider modal for the complex CaseForm */
+    max-height: 95vh;
+    overflow-y: auto;
+    animation: zoomIn 0.3s ease-out;
 }
 
-.detailItem {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+@keyframes zoomIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
 }
 
-.label {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-surface);
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-.value {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--text-primary);
+.modalHeader h3 {
+    margin: 0;
+    font-size: 1.25rem;
 }
 
-/* RX Items Table (Simplified) */
-.rxItem {
-  background-color: var(--neutral-50);
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 0.75rem;
-  border: 1px solid var(--neutral-200);
+/* Styles to ensure the CaseForm inside the modal looks correct */
+.modalContent > form {
+    padding: 1.5rem;
+    gap: 1rem;
+    padding-bottom: 0; 
+}
+.modalContent .actions {
+    padding: 1.5rem;
+    padding-top: 0.75rem; 
+    border-top: 1px solid var(--border-color);
 }
 
-.toothBadge {
-  background-color: var(--neutral-800);
-  color: white;
-  padding: 0.15rem 0.4rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  margin-right: 0.5rem;
-}
-
-/* File List */
-.fileList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.fileItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  margin-bottom: 0.5rem;
-  background-color: var(--bg-surface);
-  transition: background-color 0.2s;
-}
-.fileItem:hover {
-  background-color: var(--bg-surface-hover);
-}
-
-.fileInfo {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.fileIcon {
-  color: var(--primary);
-}
-
-/* Messages / Timeline */
-.messageList {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  max-height: 400px;
-  overflow-y: auto;
-  padding-right: 0.5rem;
-}
-
-.messageBubble {
-  background-color: var(--neutral-50);
-  padding: 1rem;
-  border-radius: 0.75rem;
-  font-size: 0.9rem;
-  border: 1px solid var(--neutral-200);
-}
-
-.internalNote {
-  background-color: #fff7ed; /* Light orange/yellow */
-  border-color: #fed7aa;
-}
-
-.msgHeader {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-.msgAuthor {
-  font-weight: 600;
-  color: var(--text-primary);
-}
+/* --- DEPRECATED/MOVED STYLES REMOVED --- 
+All specific component styles (header, stepper, unit, file, message, detailList) 
+have been moved to the detail/ sub-component CSS files. 
+*/

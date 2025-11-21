@@ -1,0 +1,47 @@
+/* --- Shared Section Title Style --- */
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Details List (Key-Value) */
+.detailList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.value {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.primary {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.divider {
+  border-color: var(--border-color);
+  margin: 0.5rem 0;
+}

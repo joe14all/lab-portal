@@ -1,11 +1,15 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
-import { useAuth } from './AuthContext'; // We might need user ID for audit trails
+import { useAuth } from './AuthContext';
 
 // --- Mock Data Imports ---
 import activeCasesData from '../_mock/data/cases/active_cases.json';
 import caseStagesData from '../_mock/data/cases/case_stages.json';
+// NEW IMPORTS: Case Files and Messages
+import caseFilesData from '../_mock/data/cases/case_files.json'; 
+import caseMessagesData from '../_mock/data/cases/case_messages.json'; 
+
 import materialsData from '../_mock/data/production/materials.json';
 import batchesData from '../_mock/data/production/batches.json';
 import equipmentData from '../_mock/data/production/equipment.json';
@@ -13,11 +17,15 @@ import equipmentData from '../_mock/data/production/equipment.json';
 const LabContext = createContext(null);
 
 export const LabProvider = ({ children }) => {
-  const { user } = useAuth();
+  const { user, hasRole, hasPermission } = useAuth();
 
   // --- State ---
   const [cases, setCases] = useState([]);
   const [stages, setStages] = useState([]);
+  // NEW STATES: Files and Messages
+  const [caseFiles, setCaseFiles] = useState([]);
+  const [caseMessages, setCaseMessages] = useState([]);
+  
   const [materials, setMaterials] = useState([]);
   const [batches, setBatches] = useState([]);
   const [equipment, setEquipment] = useState([]);
@@ -35,6 +43,10 @@ export const LabProvider = ({ children }) => {
         
         setCases(activeCasesData);
         setStages(caseStagesData);
+        // Load NEW data
+        setCaseFiles(caseFilesData); 
+        setCaseMessages(caseMessagesData);
+
         setMaterials(materialsData);
         setBatches(batchesData);
         setEquipment(equipmentData);
@@ -48,7 +60,7 @@ export const LabProvider = ({ children }) => {
     initData();
   }, []);
 
-  // --- Helper for simulated API calls ---
+  // --- Helper for simulated API calls (Unchanged) ---
   const simulateApi = (callback, delay = 500) => {
     return new Promise((resolve, reject) => {
       setLoading(true);
@@ -69,26 +81,60 @@ export const LabProvider = ({ children }) => {
   };
 
   // ============================================================
+  // 0. UTILITY HELPERS (Unchanged)
+  // ============================================================
+
+  const deriveCaseStatus = useCallback((units = []) => {
+    if (!units || units.length === 0) return 'stage-new';
+    
+    const statusMap = units.map(u => u.status);
+    
+    if (statusMap.includes('stage-hold')) return 'stage-hold';
+    if (statusMap.some(s => ['stage-design', 'stage-milling', 'stage-finishing'].includes(s))) {
+      return 'stage-production'; // Aggregate status
+    }
+    if (statusMap.every(s => s === 'stage-shipped')) return 'stage-shipped';
+    
+    return 'stage-production';
+  }, []);
+
+  const validateTransition = useCallback((currentStage, nextStage) => {
+    if (hasRole('role-driver') && nextStage !== 'stage-shipped' && nextStage !== 'stage-delivered') {
+       throw new Error("Drivers can only update Shipping/Delivery status.");
+    }
+    return true;
+  }, [hasRole]);
+
+  // ============================================================
   // 1. CASE MANAGEMENT HANDLERS
   // ============================================================
 
-  /**
-   * (READ) Get a single case by ID
-   */
   const getCaseById = useCallback((caseId) => {
     return cases.find(c => c.id === caseId);
   }, [cases]);
+  
+  // NEW READ ACTIONS
+  const getCaseFiles = useCallback((caseId) => {
+    return caseFiles.filter(f => f.caseId === caseId);
+  }, [caseFiles]);
 
-  /**
-   * (CREATE) Create a new case (Order Entry)
-   */
+  const getCaseMessages = useCallback((caseId) => {
+    return caseMessages.filter(m => m.caseId === caseId);
+  }, [caseMessages]);
+
+
   const createCase = useCallback(async (newCaseData) => {
     return await simulateApi(() => {
       const newCase = {
         ...newCaseData,
         id: `case-${Date.now()}`,
-        caseNumber: `2025-${Math.floor(Math.random() * 10000)}`, // Auto-generate ID
-        status: 'stage-new', // Default start stage
+        caseNumber: `2025-${Math.floor(Math.random() * 10000)}`,
+        status: 'stage-new',
+        units: newCaseData.items?.map((item, idx) => ({
+           id: `unit-${Date.now()}-${idx}`,
+           ...item,
+           status: 'stage-new'
+        })) || [],
         dates: {
           created: new Date().toISOString(),
           received: new Date().toISOString(),
@@ -102,9 +148,6 @@ export const LabProvider = ({ children }) => {
     });
   }, [user]);
 
-  /**
-   * (UPDATE) Update case details (non-status changes)
-   */
   const updateCase = useCallback(async (caseId, updates) => {
     return await simulateApi(() => {
       let updatedCase = null;
@@ -120,25 +163,33 @@ export const LabProvider = ({ children }) => {
     });
   }, []);
 
-  /**
-   * (UPDATE) Move case to next stage (Workflow Transition)
-   */
-  const updateCaseStatus = useCallback(async (caseId, newStageId) => {
+  const updateCaseStatus = useCallback(async (caseId, newStageId, unitId = null) => {
     return await simulateApi(() => {
-      // In a real app, validate transition logic here (e.g. can't skip QC)
-      setCases(prev => prev.map(c => 
-        c.id === caseId ? { ...c, status: newStageId } : c
-      ));
+      setCases(prev => prev.map(c => {
+        if (c.id !== caseId) return c;
+
+        validateTransition(c.status, newStageId);
+
+        let updatedUnits = c.units || [];
+        if (unitId) {
+          updatedUnits = updatedUnits.map(u => 
+            u.id === unitId ? { ...u, status: newStageId } : u
+          );
+        } else {
+          updatedUnits = updatedUnits.map(u => ({ ...u, status: newStageId }));
+        }
+
+        const derivedStatus = deriveCaseStatus(updatedUnits);
+
+        return { ...c, units: updatedUnits, status: derivedStatus };
+      }));
     });
-  }, []);
+  }, [validateTransition, deriveCaseStatus]);
 
   // ============================================================
-  // 2. PRODUCTION HANDLERS
+  // 2. PRODUCTION HANDLERS (Unchanged)
   // ============================================================
 
-  /**
-   * (UPDATE) Deduct material stock (Inventory Management)
-   */
   const consumeMaterial = useCallback(async (materialId, quantity) => {
     return await simulateApi(() => {
       let success = false;
@@ -152,14 +203,10 @@ export const LabProvider = ({ children }) => {
         }
         return mat;
       }));
-      
       if (!success) throw new Error("Material not found");
     });
   }, []);
 
-  /**
-   * (CREATE) Create a production batch (e.g. nesting a mill run)
-   */
   const createBatch = useCallback(async (batchData) => {
     return await simulateApi(() => {
       const newBatch = {
@@ -171,20 +218,31 @@ export const LabProvider = ({ children }) => {
       };
       setBatches(prev => [...prev, newBatch]);
       
-      // Optional: Automatically update status of all cases in this batch to 'In Production'
-      if (batchData.caseIds && batchData.caseIds.length > 0) {
-         setCases(prev => prev.map(c => 
-            batchData.caseIds.includes(c.id) ? { ...c, status: 'stage-milling' } : c
-         ));
+      if (batchData.productionJobs && batchData.productionJobs.length > 0) {
+         setCases(prevCases => prevCases.map(c => {
+            const caseJobs = batchData.productionJobs.filter(job => job.caseId === c.id);
+            
+            if (caseJobs.length === 0) return c;
+
+            const targetStatus = batchData.type === 'Milling' ? 'stage-milling' 
+                               : batchData.type === 'Printing' ? 'stage-printing' 
+                               : 'stage-production';
+
+            const updatedUnits = (c.units || []).map(unit => {
+                const isIncluded = caseJobs.some(job => job.unitId === unit.id);
+                return isIncluded ? { ...unit, status: targetStatus } : unit;
+            });
+
+            const newStatus = deriveCaseStatus(updatedUnits);
+
+            return { ...c, units: updatedUnits, status: newStatus };
+         }));
       }
       
       return newBatch;
     });
-  }, [user]);
+  }, [user, deriveCaseStatus]);
 
-  /**
-   * (UPDATE) Update equipment status (e.g. Machine Maintenance)
-   */
   const updateEquipmentStatus = useCallback(async (equipmentId, status, notes) => {
     return await simulateApi(() => {
       setEquipment(prev => prev.map(eq => 
@@ -218,6 +276,8 @@ export const LabProvider = ({ children }) => {
 
     // Case Actions
     getCaseById,
+    getCaseFiles,     // NEW EXPORT
+    getCaseMessages,  // NEW EXPORT
     createCase,
     updateCase,
     updateCaseStatus,
@@ -226,10 +286,14 @@ export const LabProvider = ({ children }) => {
     consumeMaterial,
     createBatch,
     updateEquipmentStatus,
+    
+    // Helpers
+    deriveCaseStatus, 
   }), [
     cases, stages, materials, batches, equipment, loading, error,
-    getCaseById, createCase, updateCase, updateCaseStatus,
-    consumeMaterial, createBatch, updateEquipmentStatus
+    getCaseById, getCaseFiles, getCaseMessages, createCase, updateCase, updateCaseStatus,
+    consumeMaterial, createBatch, updateEquipmentStatus,
+    deriveCaseStatus
   ]);
 
   return (
@@ -239,7 +303,6 @@ export const LabProvider = ({ children }) => {
   );
 };
 
-// Hook
 export const useLab = () => {
   const context = useContext(LabContext);
   if (!context) {

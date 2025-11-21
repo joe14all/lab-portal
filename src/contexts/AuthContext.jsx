@@ -1,10 +1,12 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 // In a real app, we would use a service adapter. 
 // For now, we import the JSON mock data directly to simulate the DB.
 import usersData from '../_mock/data/auth/users.json';
 import rolesData from '../_mock/data/auth/roles.json';
+// NEW IMPORT: Audit Logs
+import auditLogsData from '../_mock/data/auth/audit_logs.json'; 
 
 const AuthContext = createContext(null);
 
@@ -13,6 +15,8 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // NEW STATE: Audit Logs
+  const [auditLogs, setAuditLogs] = useState([]); 
 
   // --- 1. HELPER: Hydrate User with Role Permissions ---
   const hydrateUser = useCallback((rawUser) => {
@@ -35,9 +39,10 @@ export const AuthProvider = ({ children }) => {
     setError(null);
   }, []);
 
-  // --- 2. INITIALIZE: Check for existing session ---
+  // --- 2. INITIALIZE: Check for existing session & Load Audit Logs ---
   useEffect(() => {
     const initAuth = async () => {
+      setLoading(true);
       // Simulate network latency for a "token validation" check
       await new Promise(resolve => setTimeout(resolve, 500));
       
@@ -52,6 +57,10 @@ export const AuthProvider = ({ children }) => {
             localStorage.removeItem('lab_user_id');
           }
         }
+        
+        // LOAD STATIC AUDIT LOGS
+        setAuditLogs(auditLogsData);
+
       } catch (err) {
         console.error("Auth initialization failed", err);
         setError("Failed to restore session");
@@ -63,7 +72,7 @@ export const AuthProvider = ({ children }) => {
   }, [hydrateUser]);
 
   // --- 3. ACTION: Login ---
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => { // WRAPPED IN useCallback
     setLoading(true);
     setError(null);
     
@@ -71,17 +80,12 @@ export const AuthProvider = ({ children }) => {
     await new Promise(resolve => setTimeout(resolve, 800)); 
 
     try {
-      // Find user (Simulate backend query)
-      // In a real app, the backend would verify the hash.
       const foundUser = usersData.find(u => u.email.toLowerCase() === email.toLowerCase());
       
       if (!foundUser) {
          throw new Error("Invalid email or password");
       }
       
-      // Note: In this mock, we accept any password if the email exists. 
-      // In production, verify `password` against `foundUser.passwordHash`.
-
       // Simulate Audit Log creation (Backend would do this)
       console.log(`[Audit] Login Success: User ${foundUser.id} at ${new Date().toISOString()}`);
 
@@ -98,10 +102,10 @@ export const AuthProvider = ({ children }) => {
       setError(err.message);
       return { success: false, message: err.message };
     }
-  };
+  }, [hydrateUser]); // Dependency on hydrateUser
 
   // --- 4. ACTION: Logout ---
-  const logout = async () => {
+  const logout = useCallback(async () => { // WRAPPED IN useCallback
     // Simulate API call to invalidate token
     await new Promise(resolve => setTimeout(resolve, 300));
     
@@ -112,50 +116,33 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('lab_user_id');
     setUser(null);
     setIsAuthenticated(false);
-  };
+  }, [user]); // Dependency on user
 
   // --- 5. ACTION: Update Profile/Preferences ---
-  // Allows changing theme, notifications, etc. without re-login
-  const updateUser = async (updates) => {
+  const updateUser = useCallback(async (updates) => { // WRAPPED IN useCallback
     // Simulate API Update
     await new Promise(resolve => setTimeout(resolve, 500));
 
     setUser(prev => {
       if (!prev) return null;
-      // Deep merge logic would go here for real apps.
-      // For now, we perform a shallow merge.
       return { ...prev, ...updates };
     });
-    
-    // Note: In a real app, you might need to update the local storage or 
-    // re-fetch the user to ensure sync with the server.
-  };
+  }, []); // No external dependencies
 
-  // --- 6. HELPER: Permission Checks ---
+  // --- 6. HELPER: Permission Checks (Unchanged) ---
   
-  /**
-   * Checks if the current user has a specific permission.
-   * Automatically returns true if user has 'ALL_ACCESS'.
-   */
   const hasPermission = useCallback((permissionStr) => {
     if (!user) return false;
     if (user.permissions.includes('ALL_ACCESS')) return true;
     return user.permissions.includes(permissionStr);
   }, [user]);
 
-  /**
-   * Checks if the user has ANY of the provided permissions.
-   * Useful for components accessible by multiple roles (e.g. "Managers OR Admins")
-   */
   const hasAnyPermission = useCallback((permissionsArray) => {
     if (!user) return false;
     if (user.permissions.includes('ALL_ACCESS')) return true;
     return permissionsArray.some(p => user.permissions.includes(p));
   }, [user]);
 
-  /**
-   * Check if user belongs to a specific role (by ID)
-   */
   const hasRole = useCallback((roleId) => {
     if (!user) return false;
     return user.roleId === roleId;
@@ -163,14 +150,15 @@ export const AuthProvider = ({ children }) => {
 
 
   // --- Expose Value ---
-  const value = {
+  const value = useMemo(() => ({
     // State
     user,
     isAuthenticated,
     loading,
     error,
+    auditLogs, 
     
-    // Actions
+    // Actions (Stable Function References)
     login,
     logout,
     updateUser,
@@ -179,7 +167,11 @@ export const AuthProvider = ({ children }) => {
     hasPermission,
     hasAnyPermission,
     hasRole
-  };
+  }), [
+    user, isAuthenticated, loading, error, auditLogs,
+    login, logout, updateUser, // Now stable references
+    hasPermission, hasAnyPermission, hasRole
+  ]);
 
   return (
     <AuthContext.Provider value={value}>

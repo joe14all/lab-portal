@@ -22,7 +22,12 @@
         "city": "Metropolis",
         "state": "NY",
         "zip": "10012",
-        "country": "US"
+        "country": "US",
+        "geoCoordinates": {
+          "lat": 40.7128,
+          "lng": -74.0060,
+          "radiusMeters": 50
+        }
       },
       "billing": {
         "line1": "PO Box 445",
@@ -32,10 +37,30 @@
         "country": "US"
       }
     },
+    "operatingHours": {
+      "timezone": "America/New_York",
+      "schedule": {
+        "Mon": ["08:00-12:00", "13:00-17:00"],
+        "Tue": ["08:00-12:00", "13:00-17:00"],
+        "Wed": ["08:00-12:00", "13:00-17:00"],
+        "Thu": ["08:00-12:00", "13:00-17:00"],
+        "Fri": ["08:00-13:00"]
+      }
+    },
     "preferences": {
       "shippingProvider": "UPS",
       "invoiceDelivery": "Email",
-      "autoPay": true
+      "autoPay": true,
+      "productionDefaults": {
+        "modelWork": "Digital Only",
+        "alloyType": "Semi-Precious"
+      }
+    },
+    "integration": {
+      "ehrSystem": "DentrixAscend_V2",
+      "tenantId": "tenant-ddc-001",
+      "syncEnabled": true,
+      "webhookUrl": "https://api.downtowndental.com/webhooks/lab-updates"
     },
     "systemInfo": {
       "createdAt": "2020-01-15T09:00:00Z",
@@ -63,12 +88,29 @@
         "city": "Smallville",
         "state": "KS",
         "zip": "66002",
-        "country": "US"
+        "country": "US",
+        "geoCoordinates": {
+          "lat": 38.9717,
+          "lng": -95.2353,
+          "radiusMeters": 100
+        }
+      }
+    },
+    "operatingHours": {
+      "timezone": "America/Chicago",
+      "schedule": {
+        "Mon": ["09:00-17:00"],
+        "Wed": ["09:00-17:00"],
+        "Fri": ["09:00-17:00"]
       }
     },
     "preferences": {
       "shippingProvider": "FedEx",
       "invoiceDelivery": "Mail"
+    },
+    "integration": {
+      "ehrSystem": "None",
+      "syncEnabled": false
     }
   }
 ]

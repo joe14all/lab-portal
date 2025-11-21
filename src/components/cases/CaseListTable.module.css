@@ -1,0 +1,95 @@
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  background-color: var(--bg-surface);
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.table th {
+  text-align: left;
+  padding: 1rem 1.5rem;
+  background-color: var(--bg-surface-hover);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.row {
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+}
+
+.row:last-child td {
+  border-bottom: none;
+}
+
+.row:hover {
+  background-color: var(--bg-surface-hover);
+}
+
+/* Typography Helpers */
+.caseId {
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.primaryText {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.subText {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.date {
+  font-variant-numeric: tabular-nums;
+}
+
+.dueDate {
+  font-weight: 500;
+}
+
+.unitCount {
+  background-color: var(--neutral-100);
+  color: var(--neutral-700);
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.actionCell {
+  text-align: right;
+  color: var(--text-secondary);
+}
+
+.emptyState {
+  padding: 3rem;
+  text-align: center;
+  color: var(--text-secondary);
+  background-color: var(--bg-surface);
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+}
