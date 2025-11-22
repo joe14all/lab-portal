@@ -113,37 +113,58 @@ export const LabProvider = ({ children }) => {
   }, [caseFiles]);
 
   const getCaseMessages = useCallback((caseId) => {
-    // Sort by Date ASC (oldest top) for chat flow
     return caseMessages
       .filter(m => m.caseId === caseId)
       .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
   }, [caseMessages]);
 
-  // --- NEW: Add Message Function ---
   const addCaseMessage = useCallback(async (caseId, { content, isInternal }) => {
     return await simulateApi(() => {
       const senderName = user?.profile 
         ? `${user.profile.firstName} ${user.profile.lastName}`.trim() 
         : user?.email || 'Unknown';
 
-      // Create the new message object
       const newMessage = {
         id: `msg-${Date.now()}`,
         caseId,
         senderId: user?.id || 'system',
         senderName: senderName,
-        senderRole: hasRole('role-client') ? 'Client' : 'Lab', // Simple role logic
+        senderRole: hasRole('role-client') ? 'Client' : 'Lab',
         content,
         isInternal: !!isInternal,
         createdAt: new Date().toISOString(),
         readAt: null
       };
 
-      // Update the state so the UI reflects the new message immediately
       setCaseMessages(prev => [...prev, newMessage]);
       return newMessage;
     });
   }, [user, hasRole]);
+
+  // --- NEW: File Upload Simulation ---
+  const addCaseFile = useCallback(async (caseId, fileObj, category) => {
+    return await simulateApi(() => {
+      const newFile = {
+        id: `file-new-${Date.now()}`,
+        caseId,
+        uploaderId: user?.id || 'system',
+        category: category, // 'INPUT_SCAN', 'REFERENCE', 'PRODUCTION_DESIGN'
+        subCategory: category === 'PRODUCTION_DESIGN' ? 'CAM_OUTPUT' : 'User Upload',
+        fileType: fileObj.name.split('.').pop().toUpperCase(),
+        fileName: fileObj.name,
+        // Convert bytes to MB
+        size: `${(fileObj.size / (1024 * 1024)).toFixed(2)} MB`,
+        // Create a temporary local URL for preview
+        url: URL.createObjectURL(fileObj),
+        createdAt: new Date().toISOString(),
+        isLatest: true, 
+        version: 1
+      };
+
+      setCaseFiles(prev => [...prev, newFile]);
+      return newFile;
+    });
+  }, [user]);
 
   const createCase = useCallback(async (newCaseData) => {
     return await simulateApi(() => {
@@ -152,11 +173,11 @@ export const LabProvider = ({ children }) => {
         id: `case-${Date.now()}`,
         caseNumber: `2025-${Math.floor(Math.random() * 10000)}`,
         status: 'stage-new',
-        units: newCaseData.items?.map((item, idx) => ({
+        units: (newCaseData.units || []).map((unit, idx) => ({
            id: `unit-${Date.now()}-${idx}`,
-           ...item,
+           ...unit,
            status: 'stage-new'
-        })) || [],
+        })),
         dates: {
           created: new Date().toISOString(),
           received: new Date().toISOString(),
@@ -165,6 +186,7 @@ export const LabProvider = ({ children }) => {
         },
         systemInfo: { createdBy: user?.id || 'system' }
       };
+      if (newCase.items) delete newCase.items;
       setCases(prev => [...prev, newCase]);
       return newCase;
     });
@@ -211,7 +233,7 @@ export const LabProvider = ({ children }) => {
   // ============================================================
   // 2. PRODUCTION HANDLERS
   // ============================================================
-  // ... (Existing production handlers remain unchanged)
+  
   const consumeMaterial = useCallback(async (materialId, quantity) => {
     return await simulateApi(() => {
       let success = false;
@@ -237,7 +259,6 @@ export const LabProvider = ({ children }) => {
         operatorId: user?.id || 'system'
       };
       setBatches(prev => [...prev, newBatch]);
-      // Basic Logic to update case status if batch created (omitted for brevity)
       return newBatch;
     });
   }, [user]);
@@ -269,6 +290,7 @@ export const LabProvider = ({ children }) => {
     getCaseFiles,
     getCaseMessages,
     addCaseMessage,
+    addCaseFile, // NEW
     createCase,
     updateCase,
     updateCaseStatus,
@@ -279,7 +301,7 @@ export const LabProvider = ({ children }) => {
     deriveCaseStatus, 
   }), [
     cases, stages, materials, batches, equipment, loading, error,
-    getCaseById, getCaseFiles, getCaseMessages, addCaseMessage, createCase, updateCase, updateCaseStatus,
+    getCaseById, getCaseFiles, getCaseMessages, addCaseMessage, addCaseFile, createCase, updateCase, updateCaseStatus,
     consumeMaterial, createBatch, updateEquipmentStatus, deriveCaseStatus
   ]);
 

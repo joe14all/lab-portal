@@ -4,15 +4,24 @@
   padding: 2rem; 
   border-radius: 0.75rem;
   border: 1px solid var(--border-color);
-  overflow-x: auto; /* Horizontal scroll on small screens */
+  overflow-x: auto; 
   box-shadow: var(--shadow-sm);
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.containerHold {
+  border-color: var(--error-500);
+  background-color: #fff5f5; 
+}
+:global(body.dark) .containerHold {
+  background-color: rgba(239, 68, 68, 0.05);
 }
 
 .stepper {
   display: flex;
   justify-content: space-between;
   position: relative;
-  min-width: 700px; /* Increased min-width to accommodate more steps */
+  min-width: 700px; 
   padding-bottom: 0.5rem;
 }
 
@@ -20,14 +29,13 @@
 .stepper::before {
   content: '';
   position: absolute;
-  top: 15px; /* Vertically center with circle (32px height / 2) */
+  top: 15px; 
   left: 0;
   right: 0;
   height: 2px;
   background-color: var(--neutral-200);
   z-index: 0;
 }
-
 :global(body.dark) .stepper::before {
   background-color: var(--neutral-700);
 }
@@ -42,8 +50,18 @@
   cursor: default;
   text-align: center;
   flex: 1;
+  transition: transform 0.2s ease;
 }
 
+.step.interactive {
+  cursor: pointer;
+}
+.step.interactive:hover .stepCircle {
+  background-color: var(--bg-surface-hover);
+  border-color: var(--primary-300);
+}
+
+/* --- STANDARD CIRCLE --- */
 .stepCircle {
   width: 32px;
   height: 32px;
@@ -57,23 +75,51 @@
   transition: all 0.3s ease;
   font-weight: 600;
 }
-
 :global(body.dark) .stepCircle {
   border-color: var(--neutral-600);
   background-color: var(--neutral-800);
+}
+
+/* --- HOLD BADGE --- */
+.holdBadge {
+  width: 36px; 
+  height: 36px;
+  margin-top: -2px; 
+  border-radius: 8px; 
+  background-color: var(--error-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 0 0 4px var(--error-100);
+  animation: pulseBadge 2s infinite;
+  z-index: 2;
+  transition: transform 0.2s ease;
+}
+
+/* Hover effect for the Badge */
+.step.interactive:hover .holdBadge {
+  transform: scale(1.1);
+  cursor: pointer;
 }
 
 .stepLabel {
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-secondary);
-  max-width: 120px; /* Increased to fit "Acrylic Processing" */
+  max-width: 120px; 
   line-height: 1.2;
+  transition: color 0.2s;
+}
+
+.labelHold {
+  color: var(--error-500);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /* --- STATES --- */
-
-/* Completed */
 .step.completed .stepCircle {
   background-color: var(--success-500);
   border-color: var(--success-500);
@@ -83,12 +129,11 @@
   color: var(--success-500);
 }
 
-/* Active */
 .step.active .stepCircle {
   background-color: var(--primary);
   border-color: var(--primary);
   color: white;
-  box-shadow: 0 0 0 4px var(--primary-50); /* Halo effect */
+  box-shadow: 0 0 0 4px var(--primary-50); 
 }
 .step.active .stepLabel {
   color: var(--primary);
@@ -97,4 +142,10 @@
 
 :global(body.dark) .step.active .stepCircle {
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+}
+
+@keyframes pulseBadge {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }

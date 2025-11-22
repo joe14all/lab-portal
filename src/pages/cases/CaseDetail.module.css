@@ -6,7 +6,7 @@
   flex-direction: column;
   gap: 1.5rem;
   animation: fadeIn 0.3s ease-out;
-  width: 100%; /* Ensure full width */
+  width: 100%;
 }
 
 @keyframes fadeIn {
@@ -17,22 +17,18 @@
 /* --- 2. MAIN GRID STRUCTURE --- */
 .grid {
   display: grid;
-  grid-template-columns: 1fr; /* Mobile default */
+  grid-template-columns: 1fr;
   gap: 1.5rem;
   width: 100%;
 }
 
-/* Desktop: 3 Columns Layout */
-/* Left: Context (280px), Center: Work/Units (1fr), Right: Assets/Comms (350px) */
 @media (min-width: 1280px) {
   .grid {
-    /* Fixed Left, Fluid Center, Fixed Right */
     grid-template-columns: 300px 1fr 380px; 
-    align-items: start; /* Prevents stretching height */
+    align-items: start;
   }
 }
 
-/* Flex containers for columns to stack cards vertically */
 .leftCol, .centerCol, .rightCol {
   display: flex;
   flex-direction: column;
@@ -91,18 +87,47 @@
     font-size: 1.25rem;
 }
 
-/* PRINT OVERRIDE */
+/* --- 4. PRINT CONFIGURATION --- */
+
+/* Hide print area on screen */
+.printArea {
+  display: none;
+}
+
 @media print {
+  /* HIDE EVERYTHING ELSE */
+  :global(body) * {
+    visibility: hidden;
+  }
+  
+  /* Hide the main container and modal specifically */
   .container,
   .modalBackdrop {
     display: none !important;
   }
   
+  /* RESET BODY */
   :global(body), :global(#root) {
     margin: 0;
     padding: 0;
     background: white;
     height: auto;
     overflow: visible;
+  }
+
+  /* SHOW PRINT AREA */
+  .printArea {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 9999;
+  }
+
+  /* FORCE VISIBILITY FOR CHILDREN */
+  .printArea,
+  .printArea * {
+    visibility: visible !important;
   }
 }

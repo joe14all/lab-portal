@@ -1,15 +1,27 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../contexts';
 import { 
   IconClock, 
   IconUser, 
   IconChevronRight,
-  IconPrinter 
+  IconPrinter
 } from '../../../layouts/components/LabIcons';
 import styles from './CaseDetailHeader.module.css';
 
 const CaseDetailHeader = ({ activeCase, onEditClick }) => {
   const navigate = useNavigate();
+  const { hasAnyPermission } = useAuth();
+
+  // Permission Gate: Only allow editing for roles involved in management or production.
+  // Drivers/Shipping (LOGISTICS_VIEW) should not see this button.
+  const canEdit = hasAnyPermission([
+    'ALL_ACCESS',
+    'CASE_MANAGE', 
+    'CASE_EDIT_DESIGN', 
+    'CASE_EDIT_PRODUCTION',
+    'ORDER_CREATE' // Allow clients to edit their own orders if workflow permits
+  ]);
 
   const handlePrint = () => {
     window.print();
@@ -64,9 +76,12 @@ const CaseDetailHeader = ({ activeCase, onEditClick }) => {
             <IconPrinter width="16" height="16" style={{ marginRight: '0.5rem' }} />
             Print Ticket
           </button>
-          <button className="button primary" onClick={onEditClick}>
-            Edit Case
-          </button>
+          
+          {canEdit && (
+            <button className="button primary" onClick={onEditClick}>
+              Edit Case
+            </button>
+          )}
         </div>
 
       </div>

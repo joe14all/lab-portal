@@ -55,6 +55,37 @@
   color: var(--neutral-400);
 }
 
+/* --- HOLD ALERT VARIANT --- */
+.cardHold {
+  border-color: var(--error-500);
+}
+
+.headerHold {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--error-100);
+  background-color: var(--error-bg);
+  display: flex;
+  align-items: center;
+}
+
+.titleHold {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--error-500);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.holdText {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+  font-weight: 500;
+  margin: 0;
+}
+
 /* --- CONTENT --- */
 .content {
   padding: 1.25rem;

@@ -12,7 +12,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* --- HEADER --- */
+/* --- HEADER & FILTERS (Standard Screen Styles) --- */
 .header {
   display: flex;
   flex-direction: column;
@@ -43,7 +43,6 @@
   }
 }
 
-/* --- FILTERS BAR --- */
 .filterBar {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
@@ -53,15 +52,52 @@
   flex-direction: column;
   gap: 1rem;
   box-shadow: var(--shadow-sm);
+  transition: background-color 0.2s ease;
+}
+
+/* Batch Mode Variant */
+.batchBar {
+  background-color: var(--primary-50);
+  border-color: var(--primary-300);
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+:global(body.dark) .batchBar {
+  background-color: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.batchInfo {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.batchCount {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--primary-700);
+}
+:global(body.dark) .batchCount {
+  color: var(--primary-300);
+}
+
+.batchHint {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.batchActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .searchWrapper {
   position: relative;
   flex: 1;
 }
-
-/* The Search Icon and Input styles are now handled by SearchBar.module.css, 
-   but we keep the layout elements here */
 
 .filterGroup {
   display: flex;
@@ -96,25 +132,59 @@
   }
 }
 
-/* --- TABLE CARD CONTAINER --- */
-/* This is just the wrapper for the table component */
 .tableCard {
-  /* Using standard card styles directly */
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: 0.75rem;
-  /* Importantly: Do NOT apply overflow hidden here, 
-     let the inner table component manage its own scroll/borders */
   overflow: visible; 
   box-shadow: var(--shadow-sm);
-  padding: 0; /* Remove default card padding since table component adds its own structure */
+  padding: 0; 
 }
 
-
-/* --- EMPTY STATE (Kept here as it's part of the main page rendering) --- */
 .emptyState {
   padding: 4rem 2rem;
   text-align: center;
   color: var(--text-secondary);
 }
 
+/* ==========================================
+   PRINT OVERRIDE
+   ========================================== */
+@media print {
+  /* 1. Hide EVERYTHING by default */
+  :global(body) * {
+    visibility: hidden;
+  }
+
+  /* 2. Reset Page Margins to allow full bleed */
+  :global(body) {
+    margin: 0;
+    padding: 0;
+    background-color: white;
+  }
+
+  /* 3. Show ONLY the Batch Wrapper and its children */
+  .printBatchWrapper, 
+  .printBatchWrapper * {
+    visibility: visible;
+  }
+
+  /* 4. Position the wrapper at the absolute top-left */
+  .printBatchWrapper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    /* Ensure it sits on top of any other residue */
+    z-index: 9999; 
+  }
+
+  /* Hide the normal page container layout to prevent gaps */
+  .pageContainer {
+    display: block;
+    margin: 0;
+    padding: 0;
+  }
+}

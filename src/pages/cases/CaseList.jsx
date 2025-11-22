@@ -3,15 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useLab, useCrm } from '../../contexts';
 import SearchBar from '../../components/common/SearchBar';
 import CaseListTable from '../../components/cases/CaseListTable'; 
-import CaseForm from '../../components/cases/CaseForm'; // NEW IMPORT for modal
+import CaseForm from '../../components/cases/CaseForm'; 
+import CasePrintTicket from '../../components/cases/detail/CasePrintTicket'; 
 import { 
   IconBox,
-  IconClose // NEW IMPORT
+  IconClose,
+  IconPrinter 
 } from '../../layouts/components/LabIcons';
 import styles from './CaseList.module.css';
-// Import modal styles from CaseDetail for consistency
 import detailStyles from '../cases/CaseDetail.module.css'; 
-
 
 const CaseList = () => {
   const navigate = useNavigate();
@@ -20,20 +20,19 @@ const CaseList = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [showCreateModal, setShowCreateModal] = useState(false); // USED NOW
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const isLoading = labLoading || crmLoading;
 
-  // --- Data Enrichment and Filtering ---
   const filteredCases = useMemo(() => {
     if (!cases) return [];
     
+    // 1. Enrich Data
     const enriched = cases.map(c => {
       const doc = doctors.find(d => d.id === c.doctorId);
       const clinic = clinics.find(cl => cl.id === c.clinicId);
       const stage = stages.find(s => s.id === c.status);
-
-      // Use 'units' as the source of truth if available, otherwise fallback to 'items'
       const units = c.units || c.items || []; 
       
       return {
@@ -42,10 +41,11 @@ const CaseList = () => {
         clinicName: clinic ? clinic.name : 'Unknown Clinic',
         stageLabel: stage ? stage.label : c.status,
         stageColor: stage ? stage.color : 'gray',
-        units: units // Pass enriched units array to the table component
+        units: units 
       };
     });
 
+    // 2. Filter
     return enriched.filter(item => {
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = 
@@ -53,13 +53,15 @@ const CaseList = () => {
         item.patient.name.toLowerCase().includes(searchLower) ||
         item.doctorName.toLowerCase().includes(searchLower);
       const matchesStatus = statusFilter === 'All' || item.status === statusFilter;
-      
-      // Filter out aggregate status (stage-production) unless specifically filtered for it
       const matchesStageFilter = item.status !== 'stage-production' || statusFilter === 'stage-production' || statusFilter === 'All';
 
       return matchesSearch && matchesStatus && matchesStageFilter;
     });
   }, [cases, doctors, clinics, stages, searchQuery, statusFilter]);
+
+  const selectedCases = useMemo(() => {
+    return filteredCases.filter(c => selectedIds.includes(c.id));
+  }, [filteredCases, selectedIds]);
 
   // --- Handlers ---
   const handleRowClick = useCallback((caseId) => {
@@ -67,13 +69,12 @@ const CaseList = () => {
   }, [navigate]);
   
   const handleCreateCase = useCallback(() => {
-    setShowCreateModal(true); // USE 1: Open Modal
+    setShowCreateModal(true);
   }, []);
   
-  const handleNewCaseSubmit = useCallback(async (newCaseData) => { // USE 2: Used as onSubmit handler
+  const handleNewCaseSubmit = useCallback(async (newCaseData) => {
     try {
         const newCase = await createCase(newCaseData);
-        console.log("New Case Created:", newCase);
         setShowCreateModal(false);
         navigate(`/cases/${newCase.id}`); 
     } catch (error) {
@@ -81,22 +82,36 @@ const CaseList = () => {
     }
   }, [createCase, navigate]);
 
+  const handleBatchPrint = () => {
+    window.print();
+  };
 
-  // --- Render ---
+  const handleClearSelection = () => {
+    setSelectedIds([]);
+  };
+
   if (isLoading) {
     return (
       <div className={styles.pageContainer}>
-        <div className={styles.header}>
-          <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-            Loading case list...
-          </div>
-        </div>
+        <div className={styles.header}>Loading case list...</div>
       </div>
     );
   }
 
   return (
     <div className={styles.pageContainer}>
+      
+      {/* --- BATCH PRINT RENDERER --- */}
+      {/* Always rendered when selection exists, but hidden via CSS until print */}
+      {selectedCases.length > 0 && (
+        <div className={styles.printBatchWrapper}>
+          {selectedCases.map(c => (
+            <CasePrintTicket key={c.id} activeCase={c} />
+          ))}
+        </div>
+      )}
+
+      {/* --- HEADER --- */}
       <header className={styles.header}>
         <div className={styles.titleGroup}>
           <h1>Case Management</h1>
@@ -111,36 +126,57 @@ const CaseList = () => {
         </div>
       </header>
 
-      {/* FILTER BAR */}
-      <section className={styles.filterBar}>
-        <div className={styles.searchWrapper}>
-          <SearchBar 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by case #, patient, or doctor..."
-          />
-        </div>
+      {/* --- FILTER / BATCH BAR --- */}
+      {selectedIds.length > 0 ? (
+        <section className={`${styles.filterBar} ${styles.batchBar}`}>
+          <div className={styles.batchInfo}>
+            <span className={styles.batchCount}>{selectedIds.length} Selected</span>
+            <span className={styles.batchHint}>Select actions to apply to all</span>
+          </div>
+          
+          <div className={styles.batchActions}>
+            <button className="button secondary" onClick={handleBatchPrint}>
+              <IconPrinter width="16" height="16" style={{marginRight: '0.5rem'}}/> 
+              Print Tickets
+            </button>
+            <button className="button text" onClick={handleClearSelection}>
+              Cancel
+            </button>
+          </div>
+        </section>
+      ) : (
+        <section className={styles.filterBar}>
+          <div className={styles.searchWrapper}>
+            <SearchBar 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by case #, patient, or doctor..."
+            />
+          </div>
 
-        <div className={styles.filterGroup}>
-          <select 
-            value={statusFilter} 
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className={styles.selectInput}
-          >
-            <option value="All">All Statuses</option>
-            {stages.map(stage => (
-              <option key={stage.id} value={stage.id}>{stage.label}</option>
-            ))}
-          </select>
-        </div>
-      </section>
+          <div className={styles.filterGroup}>
+            <select 
+              value={statusFilter} 
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className={styles.selectInput}
+            >
+              <option value="All">All Statuses</option>
+              {stages.map(stage => (
+                <option key={stage.id} value={stage.id}>{stage.label}</option>
+              ))}
+            </select>
+          </div>
+        </section>
+      )}
 
-      {/* TABLE/LIST */}
+      {/* --- TABLE --- */}
       <div className={styles.tableCard}>
         {filteredCases.length > 0 ? (
           <CaseListTable 
             cases={filteredCases} 
             onRowClick={handleRowClick} 
+            selectedIds={selectedIds}
+            onSelectionChange={setSelectedIds}
           />
         ) : (
           <div className={styles.emptyState}>
@@ -153,7 +189,7 @@ const CaseList = () => {
         )}
       </div>
       
-      {/* === NEW CASE MODAL === */}
+      {/* --- MODAL --- */}
       {showCreateModal && (
         <div className={detailStyles.modalBackdrop}>
           <div className={detailStyles.modalContent}>
@@ -163,9 +199,7 @@ const CaseList = () => {
                     <IconClose width="24" height="24" />
                 </button>
             </div>
-            {/* CaseForm handles the creation data input */}
             <CaseForm
-              // In creation mode, initialData is null
               initialData={null}
               onSubmit={handleNewCaseSubmit}
               onCancel={() => setShowCreateModal(false)}

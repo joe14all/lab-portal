@@ -44,16 +44,53 @@ const getCaseTypeConfig = (c) => {
   };
 };
 
-const CaseListTable = ({ cases, onRowClick }) => {
+const CaseListTable = ({ 
+  cases, 
+  onRowClick, 
+  selectedIds = [], 
+  onSelectionChange = () => {} 
+}) => {
   if (!cases || cases.length === 0) {
     return <div className={styles.emptyState}>No cases found.</div>;
   }
+
+  // --- Selection Logic ---
+  const allSelected = cases.length > 0 && selectedIds.length === cases.length;
+  const isIndeterminate = selectedIds.length > 0 && selectedIds.length < cases.length;
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      onSelectionChange(cases.map(c => c.id));
+    } else {
+      onSelectionChange([]);
+    }
+  };
+
+  const handleSelectRow = (e, id) => {
+    e.stopPropagation(); // Prevent row navigation when selecting
+    if (e.target.checked) {
+      onSelectionChange([...selectedIds, id]);
+    } else {
+      onSelectionChange(selectedIds.filter(sid => sid !== id));
+    }
+  };
 
   return (
     <div className={styles.tableWrapper}>
       <table className={styles.table}>
         <thead>
           <tr>
+            {/* CHECKBOX COLUMN */}
+            <th className={styles.checkboxCell}>
+              <input 
+                type="checkbox"
+                className={styles.checkbox}
+                checked={allSelected}
+                ref={el => el && (el.indeterminate = isIndeterminate)}
+                onChange={handleSelectAll}
+                aria-label="Select all cases"
+              />
+            </th>
             <th style={{ width: '120px' }}>Case ID</th>
             <th style={{ width: '180px' }}>Type</th>
             <th>Patient</th>
@@ -69,9 +106,25 @@ const CaseListTable = ({ cases, onRowClick }) => {
           {cases.map((c) => {
             const typeConfig = getCaseTypeConfig(c);
             const isRush = (c.tags || []).includes('Rush');
+            const isSelected = selectedIds.includes(c.id);
 
             return (
-              <tr key={c.id} className={styles.row} onClick={() => onRowClick(c.id)}>
+              <tr 
+                key={c.id} 
+                className={`${styles.row} ${isSelected ? styles.selected : ''}`} 
+                onClick={() => onRowClick(c.id)}
+              >
+                {/* CHECKBOX CELL */}
+                <td className={styles.checkboxCell}>
+                  <input 
+                    type="checkbox"
+                    className={styles.checkbox}
+                    checked={isSelected}
+                    onChange={(e) => handleSelectRow(e, c.id)}
+                    onClick={(e) => e.stopPropagation()} // Extra safety
+                    aria-label={`Select case ${c.caseNumber}`}
+                  />
+                </td>
                 <td className={styles.caseId}>
                   #{c.caseNumber.split('-')[1] || c.caseNumber}
                 </td>
@@ -93,7 +146,7 @@ const CaseListTable = ({ cases, onRowClick }) => {
                 </td>
                 <td style={{ textAlign: 'center' }}>
                   <span className={styles.unitCount}>
-                    {c.units?.length || c.items?.length || 0}
+                    {c.units?.length || 0}
                   </span>
                 </td>
                 <td className={styles.date}>

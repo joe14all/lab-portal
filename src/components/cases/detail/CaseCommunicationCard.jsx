@@ -1,14 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useLab } from '../../../contexts';
+import { useLab, useAuth } from '../../../contexts';
 import { IconAlert } from '../../../layouts/components/LabIcons';
 import styles from './CaseCommunicationCard.module.css';
 
-const CaseCommunicationCard = ({ messages, caseId, currentUserId }) => {
+const CaseCommunicationCard = ({ messages, caseId }) => {
+  const { user } = useAuth();
   const { addCaseMessage } = useLab();
+  
   const [inputValue, setInputValue] = useState('');
   const [isInternal, setIsInternal] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef(null);
+
+  // --- Permissions ---
+  // Clients cannot send internal notes.
+  const isClient = user?.roleId === 'role-client';
+  const canSendInternal = !isClient;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -18,9 +25,11 @@ const CaseCommunicationCard = ({ messages, caseId, currentUserId }) => {
     if (!inputValue.trim()) return;
     setIsSending(true);
     try {
-      await addCaseMessage(caseId, { content: inputValue, isInternal });
+      // Ensure clients can't force internal flag
+      const messageType = canSendInternal ? isInternal : false;
+      await addCaseMessage(caseId, { content: inputValue, isInternal: messageType });
       setInputValue('');
-      setIsInternal(false);
+      // We keep the 'isInternal' toggle state as is for workflow continuity for admins
     } catch (error) {
       console.error("Failed to send:", error);
     } finally {
@@ -50,24 +59,26 @@ const CaseCommunicationCard = ({ messages, caseId, currentUserId }) => {
       {/* STREAM */}
       <div className={styles.stream}>
         {messages.length > 0 ? messages.map(msg => {
-          const isMe = msg.senderId === currentUserId;
+          const isMe = msg.senderId === user?.id;
           
           return (
             <div 
               key={msg.id} 
               className={`${styles.messageGroup} ${isMe ? styles.groupMine : ''}`}
             >
-              {/* META DATA (Outside Bubble) */}
+              {/* META DATA */}
               <div className={styles.meta}>
                 <span className={styles.author}>
-                  {msg.senderName}
+                  {isMe ? 'You' : msg.senderName}
                 </span>
-                <span className={styles.role}>{msg.senderRole}</span>
+                {!isMe && <span className={styles.role}>{msg.senderRole}</span>}
+                
                 {msg.isInternal && (
                   <span className={styles.internalBadge}>
                     <IconAlert width="10" height="10" /> Internal
                   </span>
                 )}
+                
                 <span className={styles.time}>
                   {new Date(msg.createdAt).toLocaleString([], { 
                     month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
@@ -75,7 +86,7 @@ const CaseCommunicationCard = ({ messages, caseId, currentUserId }) => {
                 </span>
               </div>
 
-              {/* BUBBLE (Content Only) */}
+              {/* BUBBLE */}
               <div className={`
                 ${styles.bubble} 
                 ${msg.isInternal ? styles.bubbleInternal : ''}
@@ -94,19 +105,28 @@ const CaseCommunicationCard = ({ messages, caseId, currentUserId }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* COMPOSER (Inside Card) */}
+      {/* COMPOSER */}
       <div className={`${styles.composer} ${isInternal ? styles.composerInternal : ''}`}>
         <div className={styles.toolbar}>
-          <label className={`${styles.toggle} ${isInternal ? styles.toggleActive : ''}`}>
-            <input 
-              type="checkbox" 
-              checked={isInternal}
-              onChange={(e) => setIsInternal(e.target.checked)}
-            />
-            <span className={styles.toggleLabel}>
-              {isInternal ? 'Internal Note' : 'Public Message'}
+          
+          {/* PERMISSION GATE: Toggle only for Lab Staff */}
+          {canSendInternal ? (
+            <label className={`${styles.toggle} ${isInternal ? styles.toggleActive : ''}`}>
+              <input 
+                type="checkbox" 
+                checked={isInternal}
+                onChange={(e) => setIsInternal(e.target.checked)}
+              />
+              <span className={styles.toggleLabel}>
+                {isInternal ? 'Internal Note' : 'Public Message'}
+              </span>
+            </label>
+          ) : (
+            <span className={styles.hint} style={{ fontWeight: 500 }}>
+              Public Message
             </span>
-          </label>
+          )}
+
           <span className={styles.hint}>{shortcutHint}</span>
         </div>
 

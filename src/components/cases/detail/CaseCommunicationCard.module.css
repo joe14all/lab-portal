@@ -9,7 +9,14 @@
   border: 1px solid var(--border-color);
   border-radius: 0.75rem;
   box-shadow: var(--shadow-sm);
-  overflow: hidden; /* Contains the inner scroll */
+  overflow: hidden;
+}
+
+/* Responsive height for smaller screens */
+@media (max-width: 1024px) {
+  .card {
+    height: 500px;
+  }
 }
 
 /* ==========================================
@@ -52,7 +59,7 @@
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem; /* More space between groups */
+  gap: 1.25rem;
   background-color: var(--bg-body);
 }
 

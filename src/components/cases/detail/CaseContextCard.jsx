@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { IconUser, IconInvoice, IconCheck } from '../../../layouts/components/LabIcons';
 import styles from './CaseContextCard.module.css';
 
-// Helper Component for individual rows
 const DetailItem = ({ label, value, isPrimary = false, isCopyable = false }) => {
   const [copied, setCopied] = useState(false);
 

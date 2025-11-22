@@ -47,6 +47,27 @@
   background-color: var(--bg-surface-hover);
 }
 
+/* --- SELECTION STATE --- */
+.selected {
+  background-color: var(--primary-50) !important;
+}
+:global(body.dark) .selected {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+
+.checkboxCell {
+  width: 48px;
+  text-align: center;
+  padding: 0 0.5rem;
+}
+
+.checkbox {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+}
+
 /* --- TYPOGRAPHY & BADGES --- */
 
 .caseId {

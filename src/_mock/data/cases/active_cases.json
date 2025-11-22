@@ -17,8 +17,9 @@
       "due": "2025-11-26T17:00:00Z",
       "shipped": null
     },
-    "items": [
+    "units": [
       {
+        "id": "unit-5001-14",
         "tooth": 14,
         "type": "Crown",
         "material": "Zirconia Full Contour",
@@ -52,8 +53,9 @@
       "received": "2025-11-18T14:30:00Z",
       "due": "2025-11-25T17:00:00Z"
     },
-    "items": [
+    "units": [
       {
+        "id": "unit-5002-08",
         "tooth": 8,
         "type": "Veneer",
         "material": "E.max",
@@ -88,8 +90,13 @@
       "carrier": "UPS",
       "trackingNumber": "1Z999AA10123456784"
     },
-    "items": [
-      { "tooth": 30, "type": "Implant Crown", "material": "Zirconia w/ TiBase" }
+    "units": [
+      { 
+        "id": "unit-5003-30",
+        "tooth": 30, 
+        "type": "Implant Crown", 
+        "material": "Zirconia w/ TiBase" 
+      }
     ],
     "financial": {
       "invoiceId": "inv-2025-005",
@@ -115,8 +122,9 @@
       "due": "2025-12-04T17:00:00Z",
       "shipped": null
     },
-    "items": [
+    "units": [
       {
+        "id": "unit-5004-upper",
         "tooth": null,
         "type": "Complete Denture",
         "material": "High Impact Acrylic",
@@ -149,8 +157,9 @@
       "due": "2025-11-29T17:00:00Z",
       "shipped": null
     },
-    "items": [
+    "units": [
       {
+        "id": "unit-5005-19",
         "tooth": 19,
         "type": "Implant Crown",
         "material": "Zirconia Screw-Retained",
@@ -183,8 +192,9 @@
       "due": "2025-11-22T17:00:00Z",
       "shipped": null
     },
-    "items": [
+    "units": [
       {
+        "id": "unit-5006-upper",
         "tooth": null,
         "type": "Nightguard",
         "material": "Hard/Soft Thermal",
@@ -217,8 +227,9 @@
       "due": "2025-12-02T17:00:00Z",
       "shipped": null
     },
-    "items": [
+    "units": [
       {
+        "id": "unit-5007-03",
         "tooth": 3,
         "type": "Bridge Unit (Retainer)",
         "material": "PFM (High Noble)",
@@ -226,6 +237,7 @@
         "instructions": "Metal island on occlusal."
       },
       {
+        "id": "unit-5007-04",
         "tooth": 4,
         "type": "Bridge Unit (Pontic)",
         "material": "PFM (High Noble)",
@@ -233,6 +245,7 @@
         "instructions": "Modified ridge lap."
       },
       {
+        "id": "unit-5007-05",
         "tooth": 5,
         "type": "Bridge Unit (Retainer)",
         "material": "PFM (High Noble)",
@@ -264,8 +277,9 @@
       "due": "2025-11-21T17:00:00Z",
       "shipped": null
     },
-    "items": [
+    "units": [
       {
+        "id": "unit-5008-lower",
         "tooth": null,
         "type": "Cast Partial Frame",
         "material": "Chrome Cobalt",

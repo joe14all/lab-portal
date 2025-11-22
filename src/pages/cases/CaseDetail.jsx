@@ -1,12 +1,10 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-// Import necessary contexts
 import { useLab, useAuth, useCrm } from '../../contexts'; 
 import CaseForm from '../../components/cases/CaseForm'; 
 import { IconClose } from '../../layouts/components/LabIcons';
 import styles from './CaseDetail.module.css';
 
-// --- New Sub-Component Imports ---
 import CaseDetailHeader from '../../components/cases/detail/CaseDetailHeader';
 import CaseDetailStepper from '../../components/cases/detail/CaseDetailStepper';
 import CaseContextCard from '../../components/cases/detail/CaseContextCard';
@@ -19,7 +17,6 @@ const CaseDetail = () => {
   const { caseId } = useParams();
   const navigate = useNavigate();
   
-  // *** CONTEXT DEPENDENCIES ***
   const { 
     cases, stages, updateCaseStatus, updateCase, 
     getCaseFiles, getCaseMessages, loading: labLoading 
@@ -30,18 +27,17 @@ const CaseDetail = () => {
   
   const [showEditModal, setShowEditModal] = useState(false);
 
-  // --- HOOKS ---
   const handleCaseEditSubmit = useCallback(async (updates) => {
     try {
-      const result = await updateCase(caseId, updates);
-      console.log('Case updated successfully:', result);
+      // FIX: Removed unused 'result' variable assignment
+      await updateCase(caseId, updates);
       setShowEditModal(false);
     } catch (error) {
       console.error('Failed to save case updates:', error);
     }
   }, [caseId, updateCase]);
 
-  // --- 1. Resolve Data & Enrich Case ---
+  // --- 1. Resolve Data ---
   const activeCase = useMemo(() => {
     if (labLoading || crmLoading) return null;
 
@@ -59,7 +55,6 @@ const CaseDetail = () => {
     };
   }, [cases, caseId, clinics, doctors, labLoading, crmLoading]);
 
-  // --- 2. Related Data ---
   const allFiles = getCaseFiles(caseId);
   const messages = getCaseMessages(caseId);
 
@@ -70,20 +65,15 @@ const CaseDetail = () => {
     };
   }, [allFiles]);
 
-  // --- 3. Loading/Error States ---
   if (labLoading || crmLoading || !activeCase) {
     if (labLoading || crmLoading) {
-      return (
-        <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-          Loading case data...
-        </div>
-      );
+      return <div style={{ padding: '4rem', textAlign: 'center' }}>Loading...</div>;
     }
     return (
       <div className="card">
-        <div style={{ padding: '2rem', textAlign: 'center' }}>
-          <h2>Case Not Found</h2>
-          <p>The requested case ID <strong>{caseId}</strong> does not exist or you do not have permission to view it.</p>
+        <div style={{ padding: '2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <h3>Case Not Found</h3>
+          {/* FIX: Used 'navigate' to provide a way back */}
           <button className="button secondary" onClick={() => navigate('/cases')}>
             Back to Case List
           </button>
@@ -92,42 +82,35 @@ const CaseDetail = () => {
     );
   }
 
-  // --- 4. Helpers ---
   const handleEditClick = () => setShowEditModal(true);
-
   const updateUnitStatus = (unitId, newStatus) => {
     updateCaseStatus(activeCase.id, newStatus, unitId);
   };
 
   return (
     <>
-      {/* --- PRINT COMPONENT (Hidden on Screen) --- */}
-      <CasePrintTicket activeCase={activeCase} />
+      {/* --- PRINT AREA --- */}
+      <div className={styles.printArea}>
+        <CasePrintTicket activeCase={activeCase} />
+      </div>
 
-      {/* --- WEB UI (Hidden on Print) --- */}
+      {/* --- SCREEN AREA --- */}
       <div className={styles.container}>
-        
-        {/* HEADER */}
         <CaseDetailHeader 
           activeCase={activeCase} 
           onEditClick={handleEditClick} 
         />
 
-        {/* STEPPER */}
-       <CaseDetailStepper 
+        <CaseDetailStepper 
           activeCase={activeCase} 
           stages={stages}
         />
         
-        {/* MAIN GRID */}
         <div className={styles.grid}>
-          
-          {/* COL 1: CONTEXT */}
           <div className={styles.leftCol}>
             <CaseContextCard activeCase={activeCase} />
           </div>
 
-          {/* COL 2: WORK */}
           <div className={styles.centerCol}>
             <CaseUnitsList 
               units={activeCase.units} 
@@ -137,7 +120,6 @@ const CaseDetail = () => {
             />
           </div>
 
-          {/* COL 3: ASSETS & COMMS */}
           <div className={styles.rightCol}>
             <CaseFilesCard files={files} caseId={activeCase.id} />
             <CaseCommunicationCard 
@@ -146,10 +128,8 @@ const CaseDetail = () => {
               currentUserId={user?.id}
             />
           </div>
-
         </div>
 
-        {/* MODAL */}
         {showEditModal && (
           <div className={styles.modalBackdrop}>
             <div className={styles.modalContent}>
