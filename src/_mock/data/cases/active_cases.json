@@ -96,5 +96,189 @@
       "finalTotal": 250.00,
       "currency": "USD"
     }
+  },
+  {
+    "id": "case-5004",
+    "caseNumber": "2025-1004",
+    "clinicId": "clinic-001",
+    "doctorId": "doc-002",
+    "patient": {
+      "name": "Mary Williams",
+      "age": 72,
+      "gender": "Female",
+      "chartNumber": "P-4421"
+    },
+    "status": "stage-received",
+    "dates": {
+      "created": "2025-11-20T09:00:00Z",
+      "received": "2025-11-20T09:30:00Z",
+      "due": "2025-12-04T17:00:00Z",
+      "shipped": null
+    },
+    "items": [
+      {
+        "tooth": null,
+        "type": "Complete Denture",
+        "material": "High Impact Acrylic",
+        "shade": "A3",
+        "instructions": "Upper Arch. Please use premium teeth (Phonares). Round teeth arrangement."
+      }
+    ],
+    "financial": {
+      "priceListId": "pl-standard-2025",
+      "estimatedTotal": 239.00,
+      "currency": "USD",
+      "invoiceId": null
+    },
+    "tags": ["Removable", "Premium Teeth"]
+  },
+  {
+    "id": "case-5005",
+    "caseNumber": "2025-1005",
+    "clinicId": "clinic-005",
+    "doctorId": "doc-001",
+    "patient": {
+      "name": "James Miller",
+      "age": 55,
+      "gender": "Male"
+    },
+    "status": "stage-milling",
+    "dates": {
+      "created": "2025-11-15T14:00:00Z",
+      "received": "2025-11-15T15:00:00Z",
+      "due": "2025-11-29T17:00:00Z",
+      "shipped": null
+    },
+    "items": [
+      {
+        "tooth": 19,
+        "type": "Implant Crown",
+        "material": "Zirconia Screw-Retained",
+        "shade": "A3.5",
+        "instructions": "Screw access hole on occlusal. Straumann Bone Level RC."
+      }
+    ],
+    "financial": {
+      "priceListId": "pl-group-discount",
+      "estimatedTotal": 250.00,
+      "currency": "USD",
+      "invoiceId": null
+    },
+    "tags": ["Implant", "Digital Workflow"]
+  },
+  {
+    "id": "case-5006",
+    "caseNumber": "2025-1006",
+    "clinicId": "clinic-001",
+    "doctorId": "doc-002",
+    "patient": {
+      "name": "Sarah Connor",
+      "age": 28,
+      "gender": "Female"
+    },
+    "status": "stage-finishing",
+    "dates": {
+      "created": "2025-11-12T10:00:00Z",
+      "received": "2025-11-12T11:00:00Z",
+      "due": "2025-11-22T17:00:00Z",
+      "shipped": null
+    },
+    "items": [
+      {
+        "tooth": null,
+        "type": "Nightguard",
+        "material": "Hard/Soft Thermal",
+        "shade": "Clear",
+        "instructions": "Upper arch. Flat plane occlusion. Open bite 2mm."
+      }
+    ],
+    "financial": {
+      "priceListId": "pl-standard-2025",
+      "estimatedTotal": 89.00,
+      "currency": "USD",
+      "invoiceId": null
+    },
+    "tags": ["Ortho", "Splint"]
+  },
+  {
+    "id": "case-5007",
+    "caseNumber": "2025-1007",
+    "clinicId": "clinic-001",
+    "doctorId": "doc-001",
+    "patient": {
+      "name": "William Davis",
+      "age": 62,
+      "gender": "Male"
+    },
+    "status": "stage-design",
+    "dates": {
+      "created": "2025-11-18T08:30:00Z",
+      "received": "2025-11-18T09:00:00Z",
+      "due": "2025-12-02T17:00:00Z",
+      "shipped": null
+    },
+    "items": [
+      {
+        "tooth": 3,
+        "type": "Bridge Unit (Retainer)",
+        "material": "PFM (High Noble)",
+        "shade": "C2",
+        "instructions": "Metal island on occlusal."
+      },
+      {
+        "tooth": 4,
+        "type": "Bridge Unit (Pontic)",
+        "material": "PFM (High Noble)",
+        "shade": "C2",
+        "instructions": "Modified ridge lap."
+      },
+      {
+        "tooth": 5,
+        "type": "Bridge Unit (Retainer)",
+        "material": "PFM (High Noble)",
+        "shade": "C2"
+      }
+    ],
+    "financial": {
+      "priceListId": "pl-standard-2025",
+      "estimatedTotal": 387.00,
+      "currency": "USD",
+      "invoiceId": null
+    },
+    "tags": ["Fixed", "Complex"]
+  },
+  {
+    "id": "case-5008",
+    "caseNumber": "2025-1008",
+    "clinicId": "clinic-005",
+    "doctorId": "doc-001",
+    "patient": {
+      "name": "Emily Chen",
+      "age": 41,
+      "gender": "Female"
+    },
+    "status": "stage-qc",
+    "dates": {
+      "created": "2025-11-14T13:00:00Z",
+      "received": "2025-11-14T14:00:00Z",
+      "due": "2025-11-21T17:00:00Z",
+      "shipped": null
+    },
+    "items": [
+      {
+        "tooth": null,
+        "type": "Cast Partial Frame",
+        "material": "Chrome Cobalt",
+        "shade": "N/A",
+        "instructions": "Lower Arch. Kennedy Class I. RPI clasps on #21, #28."
+      }
+    ],
+    "financial": {
+      "priceListId": "pl-group-discount",
+      "estimatedTotal": 289.00,
+      "currency": "USD",
+      "invoiceId": null
+    },
+    "tags": ["Removable", "Metal"]
   }
 ]

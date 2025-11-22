@@ -8,18 +8,32 @@
     "materialId": "mat-zirc-disk",
     "isTaxable": true,
     "turnaroundDays": 5,
-    "requires": ["impression", "opposing", "bite", "shade"]
+    "requires": ["impression", "opposing", "bite", "shade"],
+    "workflowType": "Digital"
   },
   {
     "id": "prod-pfm",
     "sku": "PFM-STD",
     "name": "Porcelain Fused to Metal",
-    "description": "Classic PFM with standard alloy.",
+    "description": "Classic PFM with standard alloy. Requires opaque and layering.",
     "category": "Crown & Bridge",
     "materialId": "mat-alloy-base",
     "isTaxable": true,
     "turnaroundDays": 7,
-    "requires": ["impression", "opposing", "bite", "shade"]
+    "requires": ["impression", "opposing", "bite", "shade"],
+    "workflowType": "Hybrid"
+  },
+  {
+    "id": "prod-gold-full",
+    "sku": "CROWN-GOLD",
+    "name": "Full Cast Gold Crown",
+    "description": "Classic full contour gold (High Noble). Excellent biocompatibility.",
+    "category": "Crown & Bridge",
+    "materialId": "mat-gold-alloy",
+    "isTaxable": true,
+    "turnaroundDays": 8,
+    "requires": ["impression", "opposing", "bite"],
+    "workflowType": "Analog"
   },
   {
     "id": "prod-imp-screw",
@@ -30,7 +44,8 @@
     "materialId": "mat-zirc-disk",
     "isTaxable": true,
     "turnaroundDays": 10,
-    "requires": ["impression", "opposing", "bite", "shade", "implant_parts"]
+    "requires": ["impression", "opposing", "bite", "shade", "implant_parts"],
+    "workflowType": "Digital"
   },
   {
     "id": "prod-imp-custom",
@@ -41,18 +56,20 @@
     "materialId": "mat-ti-blank",
     "isTaxable": true,
     "turnaroundDays": 12,
-    "requires": ["impression", "opposing", "bite", "shade", "implant_parts"]
+    "requires": ["impression", "opposing", "bite", "shade", "implant_parts"],
+    "workflowType": "Hybrid"
   },
   {
     "id": "prod-denture-comp",
     "sku": "REM-DENT-COMP",
     "name": "Complete Denture (Upper/Lower)",
-    "description": "High impact acrylic with standard teeth.",
+    "description": "High impact acrylic with standard teeth. Includes setup and finish.",
     "category": "Removables",
     "materialId": "mat-acrylic-base",
     "isTaxable": false,
     "turnaroundDays": 10,
-    "requires": ["impression", "bite", "shade", "mold_selection"]
+    "requires": ["impression", "bite", "shade", "mold_selection"],
+    "workflowType": "Analog"
   },
   {
     "id": "prod-partial-cast",
@@ -63,7 +80,32 @@
     "materialId": "mat-chrome-cobalt",
     "isTaxable": false,
     "turnaroundDays": 12,
-    "requires": ["impression", "opposing", "bite", "shade", "design_drawing"]
+    "requires": ["impression", "opposing", "bite", "shade", "design_drawing"],
+    "workflowType": "Analog"
+  },
+  {
+    "id": "prod-wax-rim",
+    "sku": "REM-WAX-RIM",
+    "name": "Occlusion Wax Rim",
+    "description": "Bite block for establishing VDO/CR.",
+    "category": "Removables",
+    "materialId": "mat-wax-base",
+    "isTaxable": false,
+    "turnaroundDays": 3,
+    "requires": ["impression"],
+    "workflowType": "Analog"
+  },
+  {
+    "id": "prod-custom-tray",
+    "sku": "REM-TRAY",
+    "name": "Custom Impression Tray",
+    "description": "Light-cured resin tray for final impressions.",
+    "category": "Removables",
+    "materialId": "mat-resin-tray",
+    "isTaxable": false,
+    "turnaroundDays": 2,
+    "requires": ["model"],
+    "workflowType": "Analog"
   },
   {
     "id": "prod-nightguard",
@@ -74,7 +116,31 @@
     "materialId": "mat-thermo-disk",
     "isTaxable": false,
     "turnaroundDays": 5,
-    "requires": ["impression", "opposing"]
+    "requires": ["impression", "opposing"],
+    "workflowType": "Hybrid"
+  },
+  {
+    "id": "prod-essix",
+    "sku": "ORTHO-ESSIX",
+    "name": "Essix Retainer",
+    "description": "Clear vacuum formed retainer.",
+    "category": "Orthodontics",
+    "materialId": "mat-clear-sheet",
+    "isTaxable": false,
+    "turnaroundDays": 3,
+    "requires": ["model"],
+    "workflowType": "Analog"
+  },
+  {
+    "id": "srv-model-stone",
+    "sku": "SRV-MODEL-STONE",
+    "name": "Pour Stone Model",
+    "description": "Physical model from PVS/Alginate impression.",
+    "category": "Services",
+    "materialId": "mat-stone-type4",
+    "isTaxable": false,
+    "turnaroundDays": 1,
+    "workflowType": "Analog"
   },
   {
     "id": "srv-custom-shade",
@@ -84,7 +150,8 @@
     "category": "Services",
     "materialId": null,
     "isTaxable": false,
-    "turnaroundDays": 0
+    "turnaroundDays": 0,
+    "workflowType": "Service"
   },
   {
     "id": "fee-rush",
@@ -94,6 +161,7 @@
     "category": "Fees",
     "materialId": null,
     "isTaxable": false,
-    "turnaroundDays": 0
+    "turnaroundDays": 0,
+    "workflowType": "Fee"
   }
 ]

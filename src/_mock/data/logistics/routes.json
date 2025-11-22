@@ -1,7 +1,7 @@
 [
   {
     "id": "route-morning-A",
-    "name": "Morning Route - Downtown",
+    "name": "Morning Route - Downtown & Beverly",
     "driverId": "user-driver-01",
     "vehicleId": "van-01",
     "date": "2025-11-20",
@@ -31,20 +31,45 @@
       {
         "id": "stop-002",
         "sequence": 2,
+        "clinicId": "clinic-002",
+        "type": "Pickup",
+        "pickupTasks": [
+          {
+            "requestId": "pickup-903",
+            "itemType": "Physical Impression",
+            "notes": "3 Boxes - Fragile PVS. Handle with care.",
+            "packageCount": 3,
+            "validatedReady": true
+          }
+        ],
+        "status": "InProgress",
+        "estimatedArrival": "2025-11-20T10:30:00Z",
+        "driverInstructions": "Go to suite 500. Ask for Jessica."
+      },
+      {
+        "id": "stop-003",
+        "sequence": 3,
         "clinicId": "clinic-001",
         "type": "Pickup",
         "pickupTasks": [
           {
+            "requestId": "pickup-904",
+            "itemType": "Wet Alginate",
+            "notes": "RUSH - Immediate Denture Impression. Keep moist.",
+            "packageCount": 1,
+            "validatedReady": true
+          },
+          {
             "requestId": "pickup-901",
             "itemType": "Physical Impression",
-            "notes": "PVS Impression for new Crown case",
+            "notes": "Standard Crown Impression",
             "packageCount": 1,
             "validatedReady": true
           }
         ],
         "status": "Pending",
-        "estimatedArrival": "2025-11-20T13:30:00Z",
-        "driverInstructions": "Park in rear loading zone B."
+        "estimatedArrival": "2025-11-20T11:15:00Z",
+        "driverInstructions": "Park in rear loading zone B. Pick up both Rush and Standard cases."
       }
     ]
   }

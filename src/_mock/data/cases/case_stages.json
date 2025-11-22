@@ -8,45 +8,73 @@
   },
   {
     "id": "stage-received",
-    "label": "Received / Triaged",
+    "label": "Received / Triggered",
     "category": "PRE_PRODUCTION",
     "color": "indigo",
     "order": 2
+  },
+  {
+    "id": "stage-model",
+    "label": "Model Work",
+    "category": "PRE_PRODUCTION",
+    "color": "indigo",
+    "order": 3
   },
   {
     "id": "stage-design",
     "label": "CAD Design",
     "category": "PRODUCTION",
     "color": "purple",
-    "order": 3
+    "order": 4
+  },
+  {
+    "id": "stage-waxup",
+    "label": "Wax-up / Setup",
+    "category": "PRODUCTION",
+    "color": "purple",
+    "order": 5
   },
   {
     "id": "stage-milling",
     "label": "Milling / Printing",
     "category": "PRODUCTION",
     "color": "orange",
-    "order": 4
+    "order": 6
+  },
+  {
+    "id": "stage-casting",
+    "label": "Casting / Pressing",
+    "category": "PRODUCTION",
+    "color": "orange",
+    "order": 7
+  },
+  {
+    "id": "stage-processing",
+    "label": "Acrylic Processing",
+    "category": "PRODUCTION",
+    "color": "pink",
+    "order": 8
   },
   {
     "id": "stage-finishing",
     "label": "Ceramics / Finishing",
     "category": "PRODUCTION",
     "color": "pink",
-    "order": 5
+    "order": 9
   },
   {
     "id": "stage-qc",
     "label": "Quality Control",
     "category": "POST_PRODUCTION",
     "color": "teal",
-    "order": 6
+    "order": 10
   },
   {
     "id": "stage-shipped",
     "label": "Shipped",
     "category": "COMPLETED",
     "color": "green",
-    "order": 7
+    "order": 11
   },
   {
     "id": "stage-hold",

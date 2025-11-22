@@ -1,12 +1,29 @@
-/* cspell:ignore Onlay */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useCrm } from '../../contexts';
 import { TOOTH_NUMBERS, MATERIALS } from '../../constants/catalog';
-import { IconClose } from '../../layouts/components/LabIcons';
+import { 
+  IconClose, 
+  IconUser, 
+  IconCalendar, 
+  IconTooth,
+  IconDrill 
+} from '../../layouts/components/LabIcons';
 import styles from './CaseForm.module.css';
 
 const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
-  const { clinics, doctors } = useCrm();
+  // Access full catalog from CRM context
+  const { clinics, doctors, products } = useCrm();
+
+  // --- Helper: Group Products by Category ---
+  const productCategories = useMemo(() => {
+    if (!products) return {};
+    return products.reduce((acc, prod) => {
+      const cat = prod.category || 'Other';
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(prod);
+      return acc;
+    }, {});
+  }, [products]);
 
   // --- Helper: Map Data to Form Structure ---
   const mapToFormData = (data) => ({
@@ -17,16 +34,16 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
     doctorId: data?.doctorId || '',
     receivedDate: data?.dates?.received?.split('T')[0] || new Date().toISOString().split('T')[0],
     dueDate: data?.dates?.due?.split('T')[0] || '',
-    units: data?.items || data?.units || []
+    // Map units and ensure instructions field exists
+    units: (data?.items || data?.units || []).map(u => ({
+      ...u,
+      instructions: u.instructions || ''
+    }))
   });
 
-  // --- Local State (Lazy Initializer) ---
-  // Fixes "setState in effect" on mount by initializing correctly the first time
-  const [formData, setFormData] = useState(() => {
-    if (initialData) {
-      return mapToFormData(initialData);
-    }
-    return {
+  // --- Local State ---
+  const [formData, setFormData] = useState(() => 
+    initialData ? mapToFormData(initialData) : {
       patientName: '',
       patientAge: '',
       patientGender: 'Male',
@@ -35,25 +52,18 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
       receivedDate: new Date().toISOString().split('T')[0],
       dueDate: '',
       units: [] 
-    };
-  });
+    }
+  );
 
   // --- Sync with Prop Updates ---
-  // Only runs if initialData changes AFTER mount (e.g. opening a different case)
   useEffect(() => {
     if (initialData) {
-      // Defer the update to avoid calling setState synchronously within the effect
-      const timer = setTimeout(() => {
-        setFormData(mapToFormData(initialData));
-      }, 0);
+      const timer = setTimeout(() => setFormData(mapToFormData(initialData)), 0);
       return () => clearTimeout(timer);
     }
-    // no-op if there's no initialData
-    return undefined;
   }, [initialData]);
 
-  // --- Derived State (Fixes setState in Effect) ---
-  // Calculates available doctors on-the-fly during render
+  // --- Derived State ---
   const availableDoctors = useMemo(() => {
     if (formData.clinicId) {
       return doctors.filter(d => d.clinicId === formData.clinicId);
@@ -72,7 +82,13 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
       ...prev,
       units: [
         ...prev.units,
-        { tooth: 1, type: 'Crown', material: 'Zirconia Full Contour', shade: 'A2' }
+        { 
+          tooth: 1, 
+          type: 'Zirconia Crown (Full Contour)', // Default
+          material: 'Zirconia', 
+          shade: 'A2',
+          instructions: '' 
+        }
       ]
     }));
   };
@@ -113,13 +129,13 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
 
   return (
     <form onSubmit={handleSubmit} className={styles.formContainer}>
-      <div className={styles.formHeader}>
-        <h2>{initialData ? 'Edit Case' : 'New Case Entry'}</h2>
-      </div>
-
+      {/* Removed internal header since this is usually inside a Modal with its own header */}
+      
       {/* SECTION 1: PATIENT & CLINIC */}
       <div className="card">
-        <h3 className={styles.sectionTitle}>Patient & Clinic Information</h3>
+        <h3 className={styles.sectionTitle}>
+          <IconUser width="18" height="18" /> Patient & Clinic
+        </h3>
         <div className={styles.grid}>
           <div className="form-group">
             <label>Patient Name</label>
@@ -129,23 +145,23 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
               placeholder="Last, First"
             />
           </div>
-          <div className="form-group">
-            <label>Age</label>
-            <input 
-              type="number" name="patientAge" 
-              value={formData.patientAge} onChange={handleChange} 
-              placeholder="Age"
-            />
-          </div>
-          <div className="form-group">
-            <label>Gender</label>
-            <select name="patientGender" value={formData.patientGender} onChange={handleChange}>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
+          <div className={styles.halfGrid}>
+            <div className="form-group">
+              <label>Age</label>
+              <input 
+                type="number" name="patientAge" 
+                value={formData.patientAge} onChange={handleChange} 
+              />
+            </div>
+            <div className="form-group">
+              <label>Gender</label>
+              <select name="patientGender" value={formData.patientGender} onChange={handleChange}>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            </div>
           </div>
 
-          {/* Line Break */}
           <div className={styles.fullRow}></div>
 
           <div className="form-group">
@@ -175,7 +191,9 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
 
       {/* SECTION 2: DATES */}
       <div className="card">
-        <h3 className={styles.sectionTitle}>Timeline</h3>
+        <h3 className={styles.sectionTitle}>
+          <IconCalendar width="18" height="18" /> Timeline
+        </h3>
         <div className={styles.grid}>
           <div className="form-group">
             <label>Received Date</label>
@@ -194,81 +212,104 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
         </div>
       </div>
 
-      {/* SECTION 3: UNITS / PRESCRIPTION */}
+      {/* SECTION 3: UNITS */}
       <div className="card">
         <div className={styles.sectionHeader}>
-          <h3 className={styles.sectionTitle}>Prescription Units</h3>
+          <h3 className={styles.sectionTitle} style={{marginBottom:0, border:0}}>
+            <IconTooth width="18" height="18" /> Prescription Units
+          </h3>
           <button type="button" className="button secondary" onClick={handleAddUnit}>
             + Add Unit
           </button>
         </div>
 
-        {formData.units.length === 0 && (
-          <p className={styles.emptyText}>No units added. Click "+ Add Unit" to begin.</p>
+        {formData.units.length === 0 ? (
+          <div className={styles.emptyState}>
+            <p>No units added to this case.</p>
+            <button type="button" className="button text" onClick={handleAddUnit}>Add First Unit</button>
+          </div>
+        ) : (
+          <div className={styles.unitsList}>
+            {formData.units.map((unit, index) => (
+              <div key={index} className={styles.unitRow}>
+                {/* Row Header: Remove Button */}
+                <div className={styles.unitHeader}>
+                  <span className={styles.unitIndex}>#{index + 1}</span>
+                  <button 
+                    type="button" 
+                    className={styles.removeBtn}
+                    onClick={() => handleRemoveUnit(index)}
+                    title="Remove Unit"
+                  >
+                    <IconClose width="14" height="14" />
+                  </button>
+                </div>
+
+                {/* Main Inputs Grid */}
+                <div className={styles.unitMainGrid}>
+                  
+                  {/* Tooth Number */}
+                  <div className="form-group">
+                    <label>Tooth</label>
+                    <select 
+                      value={unit.tooth || ''} 
+                      onChange={(e) => handleUnitChange(index, 'tooth', e.target.value)}
+                    >
+                      <option value="">N/A</option>
+                      {TOOTH_NUMBERS.map(num => (
+                        <option key={num} value={num}>{num}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Product Type (Categorized) */}
+                  <div className="form-group" style={{ flex: 2 }}>
+                    <label>Product / Service</label>
+                    <select 
+                      value={unit.type} 
+                      onChange={(e) => handleUnitChange(index, 'type', e.target.value)}
+                    >
+                      {Object.entries(productCategories).map(([category, items]) => (
+                        <optgroup key={category} label={category}>
+                          {items.map(prod => (
+                            <option key={prod.id} value={prod.name}>{prod.name}</option>
+                          ))}
+                        </optgroup>
+                      ))}
+                      {/* Fallback/Legacy Options if catalog fails */}
+                      <optgroup label="Legacy">
+                        <option value="Crown">Standard Crown</option>
+                        <option value="Bridge">Bridge Unit</option>
+                      </optgroup>
+                    </select>
+                  </div>
+
+                  {/* Shade */}
+                  <div className="form-group">
+                    <label>Shade</label>
+                    <input 
+                      type="text" 
+                      value={unit.shade} 
+                      onChange={(e) => handleUnitChange(index, 'shade', e.target.value)}
+                      placeholder="A2, BL1..."
+                    />
+                  </div>
+                </div>
+
+                {/* Extended Inputs: Instructions */}
+                <div className={styles.unitExtras}>
+                  <input 
+                    type="text"
+                    className={styles.instructionInput}
+                    value={unit.instructions}
+                    onChange={(e) => handleUnitChange(index, 'instructions', e.target.value)}
+                    placeholder="Specific instructions for this unit (e.g., 'Light occlusion', 'Metal island')..."
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         )}
-
-        <div className={styles.unitsList}>
-          {formData.units.map((unit, index) => (
-            <div key={index} className={styles.unitRow}>
-              <div className={styles.unitFieldSmall}>
-                <label>Tooth #</label>
-                <select 
-                  value={unit.tooth} 
-                  onChange={(e) => handleUnitChange(index, 'tooth', e.target.value)}
-                >
-                  {TOOTH_NUMBERS.map(num => (
-                    <option key={num} value={num}>{num}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className={styles.unitField}>
-                <label>Product Type</label>
-                <select 
-                  value={unit.type} 
-                  onChange={(e) => handleUnitChange(index, 'type', e.target.value)}
-                >
-                  <option value="Crown">Crown</option>
-                  <option value="Bridge">Bridge Pontic</option>
-                  <option value="Veneer">Veneer</option>
-                  <option value="Inlay/Onlay">Inlay/Onlay</option>
-                  <option value="Implant Crown">Implant Crown</option>
-                </select>
-              </div>
-
-              <div className={styles.unitField}>
-                <label>Material</label>
-                <select 
-                  value={unit.material} 
-                  onChange={(e) => handleUnitChange(index, 'material', e.target.value)}
-                >
-                  {Object.values(MATERIALS).map(mat => (
-                    <option key={mat} value={mat}>{mat}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className={styles.unitFieldSmall}>
-                <label>Shade</label>
-                <input 
-                  type="text" 
-                  value={unit.shade} 
-                  onChange={(e) => handleUnitChange(index, 'shade', e.target.value)}
-                  placeholder="e.g. A2"
-                />
-              </div>
-
-              <button 
-                type="button" 
-                className={styles.removeBtn}
-                onClick={() => handleRemoveUnit(index)}
-                title="Remove Unit"
-              >
-                <IconClose width="16" height="16" />
-              </button>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* ACTIONS */}

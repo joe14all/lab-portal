@@ -1,4 +1,4 @@
-/* --- Shared Section Title Style --- */
+/* --- SHARED TITLE --- */
 .sectionTitle {
   font-size: 1rem;
   font-weight: 600;
@@ -10,11 +10,23 @@
   align-items: center;
 }
 
-/* --- FILE LIST & Digital Twin Styles --- */
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* --- LIST STYLES --- */
 .fileList {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .fileItem {
@@ -24,51 +36,118 @@
   padding: 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
-  margin-bottom: 0.5rem;
-  background-color: var(--bg-surface);
-  transition: background-color 0.2s;
-}
-.fileItem:hover {
-  background-color: var(--bg-surface-hover);
+  background-color: var(--bg-body);
+  transition: all 0.2s;
 }
 
+.fileItem:hover {
+  background-color: var(--bg-surface-hover);
+  border-color: var(--primary-300);
+}
+
+/* File Info Column */
 .fileInfo {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  overflow: hidden; /* Text truncation container */
 }
 
-.fileIcon {
-  color: var(--primary);
+.iconWrapper {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background-color: var(--neutral-100);
+}
+
+/* Icon Color Variants */
+.iconPdf { color: #ef4444; }     /* Red */
+.iconImg { color: #10b981; }     /* Green */
+.iconStl { color: #f59e0b; }     /* Orange */
+.iconGeneric { color: var(--text-secondary); }
+
+/* Text Data */
+.textGroup {
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* Enables text overflow ellipsis */
 }
 
 .fileName {
-    font-weight: 500;
-    font-size: 0.9rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.fileLink {
+  text-decoration: none;
+  color: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fileLink:hover {
+  color: var(--primary);
+  text-decoration: underline;
 }
 
 .fileMeta {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
 }
 
-.tag {
-    margin-left: 0.5rem;
-    font-weight: 600;
-    font-size: 0.75rem;
+.dot {
+  margin: 0 0.3rem;
+  opacity: 0.5;
 }
 
-.immutableTag {
-    color: var(--error-500);
-}
-.latestTag {
-    color: var(--success-500);
+/* Badges */
+.badgeLatest {
+  font-size: 0.65rem;
+  background-color: var(--success-100);
+  color: var(--success-500);
+  padding: 0 0.3rem;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
+/* Empty States */
 .emptyText {
-    font-size: 0.9rem; 
-    font-style: italic;
-    padding: 0 0 1rem 0;
-    color: var(--text-secondary);
+  font-size: 0.9rem; 
+  font-style: italic;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.emptyStateDesign {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 0;
+  border: 1px dashed var(--border-color);
+  border-radius: 0.5rem;
+  color: var(--text-secondary);
+}
+
+/* Upload Button Loader */
+.spinner {
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

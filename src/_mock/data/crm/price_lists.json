@@ -8,16 +8,25 @@
     "items": [
       { "productId": "prod-zirc-crn", "price": 99.00 },
       { "productId": "prod-pfm", "price": 129.00 },
+      { "productId": "prod-gold-full", "price": 189.00 },
       { "productId": "prod-imp-screw", "price": 299.00 },
       { "productId": "prod-imp-custom", "price": 349.00 },
       { "productId": "prod-denture-comp", "price": 199.00 },
       { "productId": "prod-partial-cast", "price": 289.00 },
+      { "productId": "prod-wax-rim", "price": 25.00 },
+      { "productId": "prod-custom-tray", "price": 30.00 },
       { "productId": "prod-nightguard", "price": 89.00 },
+      { "productId": "prod-essix", "price": 65.00 },
       { "productId": "srv-custom-shade", "price": 50.00 },
+      { "productId": "srv-model-stone", "price": 12.00 },
       { "productId": "fee-rush", "price": 25.00 },
       { "addonId": "addon-margin-porc", "price": 15.00 },
       { "addonId": "addon-anodize", "price": 25.00 },
-      { "addonId": "addon-premium-teeth", "price": 40.00 }
+      { "addonId": "addon-premium-teeth", "price": 40.00 },
+      { "addonId": "addon-soft-liner", "price": 45.00 },
+      { "addonId": "addon-alloy-high-noble", "price": 85.00 },
+      { "addonId": "addon-clear-palate", "price": 25.00 },
+      { "addonId": "addon-ortho-color", "price": 10.00 }
     ]
   },
   {
@@ -29,9 +38,12 @@
     "items": [
       { "productId": "prod-zirc-crn", "price": 79.00 }, 
       { "productId": "prod-pfm", "price": 99.00 },
+      { "productId": "prod-gold-full", "price": 169.00 },
       { "productId": "prod-imp-screw", "price": 250.00 },
       { "productId": "prod-denture-comp", "price": 175.00 },
       { "productId": "prod-nightguard", "price": 75.00 },
+      { "productId": "prod-essix", "price": 55.00 },
+      { "productId": "srv-model-stone", "price": 0.00 },
       { "productId": "fee-rush", "price": 0.00 }
     ]
   }

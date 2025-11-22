@@ -53,5 +53,81 @@
     "subtotal": 250.00,
     "totalAmount": 250.00,
     "balanceDue": 250.00
+  },
+  {
+    "id": "inv-2025-006",
+    "invoiceNumber": "INV-2025-1006",
+    "clinicId": "clinic-001",
+    "status": "Draft",
+    "issueDate": null,
+    "dueDate": null,
+    "currency": "USD",
+    "items": [
+      {
+        "caseId": "case-5004",
+        "patientName": "Mary Williams",
+        "description": "Complete Denture (Upper) - Premium Teeth",
+        "quantity": 1,
+        "unitPrice": 239.00,
+        "total": 239.00
+      },
+      {
+        "caseId": "case-5006",
+        "patientName": "Sarah Connor",
+        "description": "Nightguard (Hard/Soft) - Upper",
+        "quantity": 1,
+        "unitPrice": 89.00,
+        "total": 89.00
+      }
+    ],
+    "subtotal": 328.00,
+    "totalAmount": 328.00,
+    "balanceDue": 328.00,
+    "notes": "Draft - Pending final weight/alloy adjustments."
+  },
+  {
+    "id": "inv-2025-007",
+    "invoiceNumber": "INV-2025-1007",
+    "clinicId": "clinic-005",
+    "status": "Sent",
+    "issueDate": "2025-11-20",
+    "dueDate": "2025-12-20",
+    "currency": "USD",
+    "items": [
+      {
+        "caseId": "case-5008",
+        "patientName": "Emily Chen",
+        "description": "Cast Partial Frame (Lower) - Chrome Cobalt",
+        "quantity": 1,
+        "unitPrice": 289.00,
+        "total": 289.00
+      }
+    ],
+    "subtotal": 289.00,
+    "totalAmount": 289.00,
+    "balanceDue": 289.00
+  },
+  {
+    "id": "inv-2025-008",
+    "invoiceNumber": "INV-2025-1008",
+    "clinicId": "clinic-001",
+    "status": "PaidInFull",
+    "issueDate": "2025-11-15",
+    "dueDate": "2025-12-15",
+    "currency": "USD",
+    "items": [
+      {
+        "caseId": "case-5007",
+        "patientName": "William Davis",
+        "description": "PFM Bridge (High Noble) - 3 Units",
+        "quantity": 3,
+        "unitPrice": 129.00,
+        "total": 387.00
+      }
+    ],
+    "subtotal": 387.00,
+    "totalAmount": 387.00,
+    "balanceDue": 0.00,
+    "paymentDate": "2025-11-18"
   }
 ]

@@ -36,5 +36,54 @@
       "nextServiceDue": "2025-11-20",
       "notes": "Tank replacement needed."
     }
+  },
+  {
+    "id": "cast-induct-01",
+    "name": "Bego Nautilus CC",
+    "type": "Casting Machine",
+    "serialNumber": "BEGO-9900",
+    "status": "Idle",
+    "currentJobId": null,
+    "maintenance": {
+      "lastServiceDate": "2025-10-15",
+      "nextServiceDue": "2026-04-15",
+      "notes": "Crucible replaced recently."
+    }
+  },
+  {
+    "id": "furnace-press-01",
+    "name": "Ivoclar Programat EP",
+    "type": "Press Furnace",
+    "serialNumber": "IVO-P-3000",
+    "status": "Running",
+    "currentJobId": "batch-press-404",
+    "maintenance": {
+      "lastServiceDate": "2025-08-20",
+      "nextServiceDue": "2026-02-20"
+    }
+  },
+  {
+    "id": "inject-01",
+    "name": "Ivobase Injector",
+    "type": "Acrylic Processor",
+    "serialNumber": "IVO-B-101",
+    "status": "Idle",
+    "currentJobId": null,
+    "maintenance": {
+      "lastServiceDate": "2025-11-01",
+      "nextServiceDue": "2026-05-01"
+    }
+  },
+  {
+    "id": "scan-01",
+    "name": "3Shape E3",
+    "type": "Desktop Scanner",
+    "serialNumber": "3S-E3-7788",
+    "status": "Running",
+    "currentJobId": "scan-job-5008",
+    "maintenance": {
+      "lastServiceDate": "2025-09-10",
+      "nextServiceDue": "2026-09-10"
+    }
   }
 ]

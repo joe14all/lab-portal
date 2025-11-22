@@ -1,92 +1,170 @@
-/* --- Shared Section Title Style --- */
+/* Shared Title */
 .sectionTitle {
   font-size: 1rem;
   font-weight: 600;
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--border-color);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
-/* --- UNIT ITEM (The core production item) --- */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* --- UNIT CARD --- */
 .unitItem {
-  background-color: var(--bg-surface-hover);
-  padding: 1rem;
-  border-radius: 0.75rem;
-  margin-bottom: 1rem;
+  background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.unitItem:hover {
+  border-color: var(--primary-300);
   box-shadow: var(--shadow-sm);
 }
 
+/* Hold State Variant */
+.unitHold {
+  border-color: var(--error-500);
+  background-color: #fff5f5; /* Light red tint */
+}
+:global(body.dark) .unitHold {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+/* Header Row */
 .unitHeader {
   display: flex;
-  align-items: center;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.identity {
+  display: flex;
   gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  align-items: center;
 }
 
-.toothIcon {
+.typeIcon {
   color: var(--primary);
-  flex-shrink: 0;
+  background-color: var(--primary-50);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  display: flex;
+}
+:global(body.dark) .typeIcon {
+  background-color: rgba(59, 130, 246, 0.2);
 }
 
-.unitInfo {
-    flex: 1;
+.idText {
+  display: flex;
+  flex-direction: column;
 }
 
 .toothBadge {
-  background-color: var(--primary-100);
-  color: var(--primary-700);
-  padding: 0.15rem 0.4rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  margin-right: 0.5rem;
-  display: inline-block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 0.05em;
 }
 
-.unitHeader strong {
-  display: block;
+.idText strong {
   font-size: 0.95rem;
   color: var(--text-primary);
 }
 
+/* Details Grid */
 .unitDetails {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    margin-left: 2.75rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  padding: 0.75rem;
+  background-color: var(--bg-surface-hover);
+  border-radius: 0.5rem;
 }
 
-.unitMeta {
-    font-weight: 400;
+.detailCol {
+  display: flex;
+  flex-direction: column;
 }
 
-.unitAction {
-    margin-top: 1rem;
-    padding-top: 0.75rem;
-    border-top: 1px dashed var(--border-color);
-    display: flex;
-    justify-content: flex-end;
-}
-.unitAction button {
-    font-size: 0.85rem;
-    padding: 0.4rem 0.8rem;
+.label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 0.1rem;
 }
 
+/* Instructions */
 .instructions {
-    margin-top: 1rem;
-    background-color: var(--neutral-50);
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-    border: 1px solid var(--neutral-200);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  background-color: var(--warning-bg);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--warning-100);
+  line-height: 1.4;
 }
-.instructions p {
-    margin: 0;
-    font-size: 0.85rem;
-    color: var(--text-primary);
+:global(body.dark) .instructions {
+  border-color: #78350f;
+}
+
+/* Action Row & Progress */
+.actionRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.progressTrack {
+  flex: 1;
+  height: 6px;
+  background-color: var(--neutral-200);
+  border-radius: 3px;
+  overflow: hidden;
+}
+:global(body.dark) .progressTrack {
+  background-color: var(--neutral-700);
+}
+
+.progressBar {
+  height: 100%;
+  background-color: var(--primary);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.advanceBtn {
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.holdBtn {
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  width: 32px;
+  height: 32px;
+}
+.holdBtn:hover {
+  color: var(--error-500);
+  border-color: var(--error-500);
+  background-color: var(--error-bg);
 }

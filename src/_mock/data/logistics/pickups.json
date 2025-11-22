@@ -24,5 +24,31 @@
     "notes": "Rush case for patient Brown.",
     "packageCount": 1,
     "isRush": true
+  },
+  {
+    "id": "pickup-903",
+    "clinicId": "clinic-002",
+    "requestedBy": "doc-004",
+    "requestTime": "2025-11-20T10:15:00Z",
+    "windowStart": "2025-11-20T14:00:00Z",
+    "windowEnd": "2025-11-20T16:00:00Z",
+    "status": "Pending",
+    "driverId": null,
+    "notes": "Fragile PVS impressions for Gold Crowns. Please handle with care. Security Code: #9988.",
+    "packageCount": 3,
+    "isRush": false
+  },
+  {
+    "id": "pickup-904",
+    "clinicId": "clinic-001",
+    "requestedBy": "doc-002",
+    "requestTime": "2025-11-20T11:00:00Z",
+    "windowStart": "2025-11-20T12:00:00Z",
+    "windowEnd": "2025-11-20T14:00:00Z",
+    "status": "Assigned",
+    "driverId": "user-driver-01",
+    "notes": "Wet Alginate impressions for Immediate Denture case. Needs to be poured ASAP.",
+    "packageCount": 1,
+    "isRush": true
   }
 ]

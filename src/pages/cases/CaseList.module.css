@@ -118,6 +118,3 @@
   color: var(--text-secondary);
 }
 
-/* --- DEPRECATED/MOVED STYLES --- 
-   All table/badge/column specific styles (e.g., .table, .tableRow, .badge.blue, etc.) 
-   HAVE BEEN REMOVED from this module and MOVED to CaseListTable.module.css */

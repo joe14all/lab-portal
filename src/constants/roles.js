@@ -1,13 +1,39 @@
 export const LAB_ROLES = {
-  ADMIN: 'ADMIN',           // Full access
-  MANAGER: 'MANAGER',       // Can override prices, approve discounts
-  TECHNICIAN: 'TECHNICIAN', // Can only see/update specific production stages
-  SHIPPING: 'SHIPPING',     // Can only access Shipping/Receiving modules
-  CLIENT: 'CLIENT',         // (The Dentist) - View only / Order creation
+  ADMIN: "ADMIN", // Full system access
+  MANAGER: "MANAGER", // Operations, Financials, CRM
+  TECHNICIAN: "TECHNICIAN", // CAD, Ceramics, Model work
+  DRIVER: "DRIVER", // Logistics, Pickups, Deliveries
+  SHIPPING: "SHIPPING", // Shipping & Receiving (Internal)
+  CLIENT: "CLIENT", // Doctor / Clinic Staff
 };
 
 export const PERMISSIONS = {
+  // Administration
+  CAN_MANAGE_USERS: [LAB_ROLES.ADMIN],
+  CAN_EDIT_SETTINGS: [LAB_ROLES.ADMIN],
+
+  // Operations
   CAN_APPROVE_CASES: [LAB_ROLES.ADMIN, LAB_ROLES.MANAGER],
   CAN_EDIT_PRICING: [LAB_ROLES.ADMIN],
+
+  // Finance
   CAN_VIEW_FINANCIALS: [LAB_ROLES.ADMIN, LAB_ROLES.MANAGER],
+  CAN_PROCESS_PAYMENTS: [LAB_ROLES.ADMIN, LAB_ROLES.MANAGER],
+
+  // Logistics
+  CAN_VIEW_LOGISTICS: [
+    LAB_ROLES.ADMIN,
+    LAB_ROLES.MANAGER,
+    LAB_ROLES.DRIVER,
+    LAB_ROLES.SHIPPING,
+  ],
+  CAN_UPDATE_ROUTES: [LAB_ROLES.ADMIN, LAB_ROLES.MANAGER, LAB_ROLES.DRIVER],
+
+  // Production
+  CAN_UPDATE_PRODUCTION: [
+    LAB_ROLES.ADMIN,
+    LAB_ROLES.MANAGER,
+    LAB_ROLES.TECHNICIAN,
+  ],
+  CAN_QC_CASES: [LAB_ROLES.ADMIN, LAB_ROLES.MANAGER, LAB_ROLES.TECHNICIAN],
 };

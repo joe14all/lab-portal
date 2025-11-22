@@ -30,5 +30,48 @@
       "notes": "Prefers printed models for all cases."
     },
     "isActive": true
+  },
+  {
+    "id": "doc-003",
+    "clinicId": "clinic-005",
+    "firstName": "Robert",
+    "lastName": "Brown",
+    "title": "DDS, MS",
+    "specialty": "Orthodontist",
+    "preferences": {
+      "trimming": "Scalloped",
+      "retention": "Tight",
+      "notes": "Digital impressions only. Do not print models unless requested."
+    },
+    "isActive": true
+  },
+  {
+    "id": "doc-004",
+    "clinicId": "clinic-002",
+    "firstName": "Victor",
+    "lastName": "Von Doom",
+    "title": "DMD, PhD",
+    "specialty": "Prosthodontist",
+    "preferences": {
+      "contacts": "Broad",
+      "occlusion": "Shimstock Hold",
+      "alloyType": "High Noble (Gold)",
+      "notes": "Sends physical impressions. Requires metal try-in for all bridges."
+    },
+    "isActive": true
+  },
+  {
+    "id": "doc-005",
+    "clinicId": "clinic-003",
+    "firstName": "John",
+    "lastName": "Doe",
+    "title": "DDS",
+    "specialty": "General",
+    "preferences": {
+      "contacts": "Normal",
+      "occlusion": "Light",
+      "materialDefault": "Zirconia Full Contour"
+    },
+    "isActive": true
   }
 ]

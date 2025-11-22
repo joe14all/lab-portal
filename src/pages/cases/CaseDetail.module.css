@@ -6,6 +6,7 @@
   flex-direction: column;
   gap: 1.5rem;
   animation: fadeIn 0.3s ease-out;
+  width: 100%; /* Ensure full width */
 }
 
 @keyframes fadeIn {
@@ -14,23 +15,31 @@
 }
 
 /* --- 2. MAIN GRID STRUCTURE --- */
-
 .grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr; /* Mobile default */
   gap: 1.5rem;
+  width: 100%;
 }
 
 /* Desktop: 3 Columns Layout */
-/* Left: Context (280px), Center: Work/Units (1fr), Right: Assets/Comms (320px) */
+/* Left: Context (280px), Center: Work/Units (1fr), Right: Assets/Comms (350px) */
 @media (min-width: 1280px) {
   .grid {
-    grid-template-columns: 280px 1fr 320px; 
+    /* Fixed Left, Fluid Center, Fixed Right */
+    grid-template-columns: 300px 1fr 380px; 
+    align-items: start; /* Prevents stretching height */
   }
 }
 
-/* --- 3. GENERIC MODAL STYLES (Used by both CaseList and CaseDetail) --- */
+/* Flex containers for columns to stack cards vertically */
+.leftCol, .centerCol, .rightCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
 
+/* --- 3. GENERIC MODAL STYLES --- */
 .modalBackdrop {
     position: fixed;
     top: 0;
@@ -50,10 +59,12 @@
     border-radius: 1rem;
     box-shadow: var(--shadow-lg);
     width: 100%;
-    max-width: 900px; /* Wider modal for the complex CaseForm */
+    max-width: 900px;
     max-height: 95vh;
     overflow-y: auto;
     animation: zoomIn 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
 }
 
 @keyframes zoomIn {
@@ -80,19 +91,18 @@
     font-size: 1.25rem;
 }
 
-/* Styles to ensure the CaseForm inside the modal looks correct */
-.modalContent > form {
-    padding: 1.5rem;
-    gap: 1rem;
-    padding-bottom: 0; 
+/* PRINT OVERRIDE */
+@media print {
+  .container,
+  .modalBackdrop {
+    display: none !important;
+  }
+  
+  :global(body), :global(#root) {
+    margin: 0;
+    padding: 0;
+    background: white;
+    height: auto;
+    overflow: visible;
+  }
 }
-.modalContent .actions {
-    padding: 1.5rem;
-    padding-top: 0.75rem; 
-    border-top: 1px solid var(--border-color);
-}
-
-/* --- DEPRECATED/MOVED STYLES REMOVED --- 
-All specific component styles (header, stepper, unit, file, message, detailList) 
-have been moved to the detail/ sub-component CSS files. 
-*/

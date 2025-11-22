@@ -31,5 +31,49 @@
     "createdAt": "2025-11-19T11:00:00Z",
     "readAt": null,
     "isInternal": true
+  },
+  {
+    "id": "msg-4",
+    "caseId": "case-5004",
+    "senderId": "user-doc-02",
+    "senderName": "Dr. Kyle Reese",
+    "senderRole": "Client",
+    "content": "Please ensure the midline is exactly coincident with the labial frenum. Patient is very particular about aesthetics.",
+    "createdAt": "2025-11-20T09:15:00Z",
+    "readAt": null,
+    "isInternal": false
+  },
+  {
+    "id": "msg-5",
+    "caseId": "case-5005",
+    "senderId": "user-tech-01",
+    "senderName": "Sarah (CAD)",
+    "senderRole": "Lab",
+    "content": "Received the scan bodies. The path of insertion for the screw access channel on #19 looks good, slightly buccal but manageable.",
+    "createdAt": "2025-11-15T15:30:00Z",
+    "readAt": "2025-11-15T16:00:00Z",
+    "isInternal": false
+  },
+  {
+    "id": "msg-6",
+    "caseId": "case-5007",
+    "senderId": "user-manager-01",
+    "senderName": "Joseph Admin",
+    "senderRole": "Admin",
+    "content": "Internal: Check alloy inventory for High Noble before casting. We might be low.",
+    "createdAt": "2025-11-18T09:30:00Z",
+    "readAt": null,
+    "isInternal": true
+  },
+  {
+    "id": "msg-7",
+    "caseId": "case-5008",
+    "senderId": "user-tech-ceram",
+    "senderName": "Mike (Ceramics)",
+    "senderRole": "Lab",
+    "content": "Dr. Connor, for the RPI clasp on #21, the undercut is quite deep. Do you want me to block it out slightly more to ease insertion?",
+    "createdAt": "2025-11-14T16:00:00Z",
+    "readAt": null,
+    "isInternal": false
   }
 ]

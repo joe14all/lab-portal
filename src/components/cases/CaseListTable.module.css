@@ -10,12 +10,12 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 900px;
+  min-width: 1000px; /* Slightly wider to accommodate Type column */
 }
 
 .table th {
   text-align: left;
-  padding: 1rem 1.5rem;
+  padding: 1rem 1.25rem;
   background-color: var(--bg-surface-hover);
   color: var(--text-secondary);
   font-size: 0.75rem;
@@ -23,10 +23,11 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
 }
 
 .table td {
-  padding: 1rem 1.5rem;
+  padding: 0.875rem 1.25rem;
   border-bottom: 1px solid var(--border-color);
   vertical-align: middle;
   color: var(--text-primary);
@@ -46,11 +47,13 @@
   background-color: var(--bg-surface-hover);
 }
 
-/* Typography Helpers */
+/* --- TYPOGRAPHY & BADGES --- */
+
 .caseId {
-  font-family: monospace;
+  font-family: 'Monaco', 'Consolas', monospace;
   font-weight: 600;
-  color: var(--primary);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
 }
 
 .primaryText {
@@ -59,25 +62,99 @@
 }
 
 .subText {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
+  margin-top: 0.1rem;
 }
 
+/* --- NEW: TYPE BADGES --- */
+.typeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background-color: var(--neutral-100);
+  color: var(--neutral-700);
+  width: fit-content;
+}
+
+/* Color Variants for Case Types */
+.typeFixed {
+  background-color: var(--primary-50);
+  color: var(--primary-700);
+}
+:global(body.dark) .typeFixed {
+  background-color: rgba(37, 99, 235, 0.15);
+  color: var(--primary-300);
+}
+
+.typeImplant {
+  background-color: #f3e8ff; /* Purple-100 */
+  color: #7e22ce;           /* Purple-700 */
+}
+:global(body.dark) .typeImplant {
+  background-color: rgba(147, 51, 234, 0.15);
+  color: #d8b4fe;
+}
+
+.typeRemovable {
+  background-color: #ffedd5; /* Orange-100 */
+  color: #c2410c;           /* Orange-700 */
+}
+:global(body.dark) .typeRemovable {
+  background-color: rgba(234, 88, 12, 0.15);
+  color: #fdba74;
+}
+
+.typeOrtho {
+  background-color: #ccfbf1; /* Teal-100 */
+  color: #0f766e;           /* Teal-700 */
+}
+:global(body.dark) .typeOrtho {
+  background-color: rgba(20, 184, 166, 0.15);
+  color: #5eead4;
+}
+
+/* --- DATES & RUSH --- */
 .date {
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .dueDate {
-  font-weight: 500;
+  font-weight: 600;
+}
+
+.rushTag {
+  color: var(--error-500);
+  display: flex;
+  align-items: center;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
 }
 
 .unitCount {
   background-color: var(--neutral-100);
-  color: var(--neutral-700);
-  padding: 0.1rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
+  color: var(--neutral-600);
+  padding: 0.15rem 0.5rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
   font-weight: 600;
+  min-width: 24px;
+  display: inline-block;
+  text-align: center;
+}
+:global(body.dark) .unitCount {
+  background-color: var(--neutral-800);
+  color: var(--neutral-400);
 }
 
 .actionCell {
@@ -86,9 +163,10 @@
 }
 
 .emptyState {
-  padding: 3rem;
+  padding: 4rem;
   text-align: center;
   color: var(--text-secondary);
+  font-style: italic;
   background-color: var(--bg-surface);
   border-radius: 0.75rem;
   border: 1px solid var(--border-color);

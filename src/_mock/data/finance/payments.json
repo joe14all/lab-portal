@@ -24,5 +24,31 @@
     "referenceNumber": "CHK-9090",
     "status": "Pending_Clearance",
     "notes": "Lump sum account credit, not applied to invoice yet."
+  },
+  {
+    "id": "pay-8803",
+    "paymentNumber": "RCT-1003",
+    "clinicId": "clinic-001",
+    "invoiceIds": ["inv-2025-008"],
+    "amount": 387.00,
+    "currency": "USD",
+    "date": "2025-11-18T14:00:00Z",
+    "method": "BankTransfer",
+    "referenceNumber": "WIRE-223344",
+    "status": "Completed",
+    "notes": "Full payment for PFM Bridge case."
+  },
+  {
+    "id": "pay-8804",
+    "paymentNumber": "RCT-1004",
+    "clinicId": "clinic-005",
+    "invoiceIds": ["inv-2025-005"],
+    "amount": 100.00,
+    "currency": "USD",
+    "date": "2025-11-22T09:00:00Z",
+    "method": "CreditCard",
+    "referenceNumber": "ch_stripe_98765",
+    "status": "Completed",
+    "notes": "Partial payment towards overdue balance."
   }
 ]

@@ -13,26 +13,7 @@ import CaseContextCard from '../../components/cases/detail/CaseContextCard';
 import CaseUnitsList from '../../components/cases/detail/CaseUnitsList';
 import CaseFilesCard from '../../components/cases/detail/CaseFilesCard';
 import CaseCommunicationCard from '../../components/cases/detail/CaseCommunicationCard';
-// ----------------------------------
-
-// Map specific stages to their representative icons
-const getStageIcon = (stageId) => {
-  switch (stageId) {
-    case 'stage-milling':
-      return <IconDrill width="16" height="16" />;
-    case 'stage-finishing':
-    case 'stage-qc':
-      return <IconMicroscope width="16" height="16" />;
-    case 'stage-shipped':
-      return <IconCheck width="16" height="16" />;
-    case 'stage-hold':
-      return <IconAlert width="16" height="16" />;
-    case 'stage-design':
-    case 'stage-received':
-    default:
-      return null;
-  }
-};
+import CasePrintTicket from '../../components/cases/detail/CasePrintTicket';
 
 const CaseDetail = () => {
   const { caseId } = useParams();
@@ -45,11 +26,11 @@ const CaseDetail = () => {
   } = useLab();
 
   const { clinics, doctors, loading: crmLoading } = useCrm(); 
-  const { user } = useAuth(); // RE-INTRODUCED USER HERE
+  const { user } = useAuth();
   
   const [showEditModal, setShowEditModal] = useState(false);
 
-  // --- HOOKS (MUST BE UNCONDITIONAL) ---
+  // --- HOOKS ---
   const handleCaseEditSubmit = useCallback(async (updates) => {
     try {
       const result = await updateCase(caseId, updates);
@@ -60,7 +41,7 @@ const CaseDetail = () => {
     }
   }, [caseId, updateCase]);
 
-  // --- 1. Resolve Data & Enrich Case (Memoized Data Layer) ---
+  // --- 1. Resolve Data & Enrich Case ---
   const activeCase = useMemo(() => {
     if (labLoading || crmLoading) return null;
 
@@ -78,7 +59,7 @@ const CaseDetail = () => {
     };
   }, [cases, caseId, clinics, doctors, labLoading, crmLoading]);
 
-  // --- 2. Related Data Getters ---
+  // --- 2. Related Data ---
   const allFiles = getCaseFiles(caseId);
   const messages = getCaseMessages(caseId);
 
@@ -111,96 +92,83 @@ const CaseDetail = () => {
     );
   }
 
-  // --- 4. Render Helpers ---
+  // --- 4. Helpers ---
   const handleEditClick = () => setShowEditModal(true);
-
-  // --- Stage Helpers (Kept here for simplicity, logic is in components) ---
-  const currentStageId = activeCase.status; 
-  const currentStageIndex = stages.findIndex(s => s.id === currentStageId);
-  
-  const getStageClass = (stageId, index) => {
-    if (currentStageId === stageId) return `${styles.step} ${styles.active}`;
-    if (index < currentStageIndex) return `${styles.step} ${styles.completed}`;
-    return styles.step;
-  };
 
   const updateUnitStatus = (unitId, newStatus) => {
     updateCaseStatus(activeCase.id, newStatus, unitId);
   };
-  // ----------------------------------------------------------------------
-
 
   return (
-    <div className={styles.container}>
-      
-      {/* === HEADER === */}
-      <CaseDetailHeader 
-        activeCase={activeCase} 
-        onEditClick={handleEditClick} 
-      />
+    <>
+      {/* --- PRINT COMPONENT (Hidden on Screen) --- */}
+      <CasePrintTicket activeCase={activeCase} />
 
-      {/* === WORKFLOW STEPPER === */}
-      <CaseDetailStepper 
-        caseStatus={activeCase.status} 
-        stages={stages}
-      />
-      
-      {/* === MAIN GRID === */}
-      <div className={styles.grid}>
+      {/* --- WEB UI (Hidden on Print) --- */}
+      <div className={styles.container}>
         
-        {/* --- COL 1: CONTEXT --- */}
-        <div className={styles.leftCol}>
-          <CaseContextCard 
-            activeCase={activeCase} 
-          />
-        </div>
+        {/* HEADER */}
+        <CaseDetailHeader 
+          activeCase={activeCase} 
+          onEditClick={handleEditClick} 
+        />
 
-        {/* --- COL 2: THE WORK --- */}
-        <div className={styles.centerCol}>
-          <CaseUnitsList 
-            units={activeCase.units} 
-            stages={stages}
-            caseId={activeCase.id}
-            updateUnitStatus={updateUnitStatus}
-          />
-        </div>
-
-        {/* --- COL 3: DIGITAL ASSETS & COMMUNICATION --- */}
-        <div className={styles.rightCol}>
+        {/* STEPPER */}
+       <CaseDetailStepper 
+          activeCase={activeCase} 
+          stages={stages}
+        />
+        
+        {/* MAIN GRID */}
+        <div className={styles.grid}>
           
-          <CaseFilesCard 
-            files={files} 
-            caseId={activeCase.id}
-          />
+          {/* COL 1: CONTEXT */}
+          <div className={styles.leftCol}>
+            <CaseContextCard activeCase={activeCase} />
+          </div>
 
-          <CaseCommunicationCard 
-            messages={messages} 
-            caseId={activeCase.id}
-            currentUserId={user?.id} // USER IS NOW DEFINED
-          />
-        </div>
-
-      </div>
-
-      {/* === EDIT CASE MODAL === */}
-      {showEditModal && (
-        <div className={styles.modalBackdrop}>
-          <div className={styles.modalContent}>
-            <div className={styles.modalHeader}>
-                <h3>Editing Case #{activeCase.caseNumber}</h3>
-                <button className="icon-button" onClick={() => setShowEditModal(false)}>
-                    <IconClose width="24" height="24" />
-                </button>
-            </div>
-            <CaseForm
-              initialData={activeCase}
-              onSubmit={handleCaseEditSubmit}
-              onCancel={() => setShowEditModal(false)}
+          {/* COL 2: WORK */}
+          <div className={styles.centerCol}>
+            <CaseUnitsList 
+              units={activeCase.units} 
+              stages={stages}
+              caseId={activeCase.id}
+              updateUnitStatus={updateUnitStatus}
             />
           </div>
+
+          {/* COL 3: ASSETS & COMMS */}
+          <div className={styles.rightCol}>
+            <CaseFilesCard files={files} caseId={activeCase.id} />
+            <CaseCommunicationCard 
+              messages={messages} 
+              caseId={activeCase.id}
+              currentUserId={user?.id}
+            />
+          </div>
+
         </div>
-      )}
-    </div>
+
+        {/* MODAL */}
+        {showEditModal && (
+          <div className={styles.modalBackdrop}>
+            <div className={styles.modalContent}>
+              <div className={styles.modalHeader}>
+                  <h3>Editing Case #{activeCase.caseNumber}</h3>
+                  <button className="icon-button" onClick={() => setShowEditModal(false)}>
+                      <IconClose width="24" height="24" />
+                  </button>
+              </div>
+              <CaseForm
+                initialData={activeCase}
+                onSubmit={handleCaseEditSubmit}
+                onCancel={() => setShowEditModal(false)}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 

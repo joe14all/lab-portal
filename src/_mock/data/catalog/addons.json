@@ -26,5 +26,33 @@
     "applicableProducts": ["prod-denture-comp"],
     "defaultPrice": 35.00,
     "currency": "USD"
+  },
+  {
+    "id": "addon-soft-liner",
+    "name": "Soft Liner (Processed)",
+    "applicableProducts": ["prod-denture-comp", "prod-partial-cast"],
+    "defaultPrice": 45.00,
+    "currency": "USD"
+  },
+  {
+    "id": "addon-alloy-high-noble",
+    "name": "High Noble Alloy Upgrade",
+    "applicableProducts": ["prod-pfm", "prod-gold-full"],
+    "defaultPrice": 85.00,
+    "currency": "USD"
+  },
+  {
+    "id": "addon-clear-palate",
+    "name": "Clear Palate",
+    "applicableProducts": ["prod-denture-comp"],
+    "defaultPrice": 25.00,
+    "currency": "USD"
+  },
+  {
+    "id": "addon-ortho-color",
+    "name": "Custom Color / Glitter",
+    "applicableProducts": ["prod-nightguard", "prod-essix"],
+    "defaultPrice": 10.00,
+    "currency": "USD"
   }
 ]

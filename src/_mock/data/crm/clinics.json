@@ -68,6 +68,94 @@
     }
   },
   {
+    "id": "clinic-002",
+    "name": "Prestige Prosthodontics",
+    "accountNumber": "PP-9090",
+    "status": "Active",
+    "priceListId": "pl-standard-2025",
+    "contacts": {
+      "primary": {
+        "name": "Jessica Manager",
+        "phone": "+13105550199",
+        "email": "info@prestigepros.com"
+      }
+    },
+    "addresses": {
+      "shipping": {
+        "line1": "450 N Roxbury Dr",
+        "suite": "Ste 500",
+        "city": "Beverly Hills",
+        "state": "CA",
+        "zip": "90210",
+        "country": "US"
+      }
+    },
+    "operatingHours": {
+      "timezone": "America/Los_Angeles",
+      "schedule": {
+        "Mon": ["09:00-18:00"],
+        "Tue": ["09:00-18:00"],
+        "Wed": ["09:00-18:00"],
+        "Thu": ["09:00-18:00"]
+      }
+    },
+    "preferences": {
+      "shippingProvider": "FedEx",
+      "invoiceDelivery": "Email",
+      "autoPay": false,
+      "productionDefaults": {
+        "modelWork": "Physical Stone",
+        "alloyType": "High Noble"
+      }
+    },
+    "integration": {
+      "ehrSystem": "OpenDental",
+      "syncEnabled": false
+    }
+  },
+  {
+    "id": "clinic-003",
+    "name": "Valley Family Dental",
+    "accountNumber": "VFD-3322",
+    "status": "Active",
+    "priceListId": "pl-standard-2025",
+    "contacts": {
+      "primary": {
+        "name": "Dr. John Doe",
+        "phone": "+15125550100",
+        "email": "drdoe@valleyfamily.com"
+      }
+    },
+    "addresses": {
+      "shipping": {
+        "line1": "789 Congress Ave",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701",
+        "country": "US"
+      }
+    },
+    "operatingHours": {
+      "timezone": "America/Chicago",
+      "schedule": {
+        "Mon": ["08:00-17:00"],
+        "Wed": ["08:00-17:00"],
+        "Fri": ["08:00-13:00"]
+      }
+    },
+    "preferences": {
+      "shippingProvider": "UPS",
+      "invoiceDelivery": "Mail",
+      "productionDefaults": {
+        "modelWork": "Digital Only"
+      }
+    },
+    "integration": {
+      "ehrSystem": "Eaglesoft",
+      "syncEnabled": true
+    }
+  },
+  {
     "id": "clinic-005",
     "name": "Smile Bright Orthodontics",
     "accountNumber": "SBO-2020",

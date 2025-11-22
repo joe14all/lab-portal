@@ -24,9 +24,37 @@
     "status": "Completed",
     "startTime": "2025-11-19T14:00:00Z",
     "endTime": "2025-11-19T16:00:00Z",
-    "caseIds": ["case-5002", "case-5003"],
+    "caseIds": ["case-5002", "case-5003", "case-5006"],
     "materialConsumed": {
-      "volumeMl": 120
+      "volumeMl": 180
+    }
+  },
+  {
+    "id": "batch-cast-202",
+    "type": "Casting",
+    "machineId": "cast-induct-01",
+    "materialId": "mat-chrome-cobalt",
+    "operatorId": "user-tech-ceram",
+    "status": "Completed",
+    "startTime": "2025-11-18T08:00:00Z",
+    "endTime": "2025-11-18T10:30:00Z",
+    "caseIds": ["case-5008"],
+    "materialConsumed": {
+      "weightGrams": 45
+    }
+  },
+  {
+    "id": "batch-press-404",
+    "type": "Pressing",
+    "machineId": "furnace-press-01",
+    "materialId": "mat-emax-ingot-BL1",
+    "operatorId": "user-tech-ceram",
+    "status": "Scheduled",
+    "startTime": null,
+    "estimatedEndTime": null,
+    "caseIds": ["case-5002"],
+    "materialConsumed": {
+      "units": 1
     }
   }
 ]
