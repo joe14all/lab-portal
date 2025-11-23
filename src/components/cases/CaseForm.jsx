@@ -20,6 +20,7 @@ const DEFAULT_FORM_VALUES = {
 };
 
 // --- VALIDATION SCHEMA ---
+// FIX: Added .nullable() to optional fields to allow 'null' values from form logic
 const schema = z.object({
   patientName: z.string().min(1, "Patient name is required"),
   patientAge: z.any().optional(),
@@ -30,12 +31,14 @@ const schema = z.object({
   dueDate: z.string().refine(val => !isNaN(Date.parse(val)), "Invalid date"),
   units: z.array(z.object({
     type: z.string().min(1, "Product type is required"),
-    tooth: z.any().optional(),
-    arch: z.string().optional(),
-    material: z.string().optional(),
-    shade: z.string().optional(),
-    instructions: z.string().optional(),
-    workflowId: z.string().optional(),
+    tooth: z.any().optional().nullable(), // Allow null
+    arch: z.string().optional().nullable(), // Allow null
+    material: z.string().optional().nullable(),
+    shade: z.string().optional().nullable(),
+    instructions: z.string().optional().nullable(),
+    workflowId: z.string().optional().nullable(),
+    addonIds: z.array(z.string()).optional(),
+    priceOverride: z.any().optional()
   })).min(1, "At least one unit is required")
 }).refine((data) => {
   if (!data.dueDate || !data.receivedDate) return true;
@@ -46,12 +49,16 @@ const schema = z.object({
 });
 
 const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
-  const { clinics, doctors, products } = useCrm();
+  const { clinics, doctors, products, addons } = useCrm();
   const { getWorkflowsForCategory } = useLab();
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState(null);
 
   // --- Helpers ---
+  const getProductDetails = (productName) => {
+    return products?.find(p => p.name === productName);
+  };
+
   const productCategories = useMemo(() => {
     if (!products) return {};
     return products.reduce((acc, prod) => {
@@ -66,7 +73,7 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
     const product = products.find(p => p.name === productName);
     if (!product) return false;
     const cat = (product.category || '').toLowerCase();
-    return cat.includes('removable') || cat.includes('ortho');
+    return cat.includes('removable') || cat.includes('ortho') || cat.includes('implant');
   };
 
   const getProductCategory = (productName) => {
@@ -90,7 +97,9 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
       tooth: u.tooth || '',
       arch: u.arch || '',
       instructions: u.instructions || '',
-      workflowId: u.workflowId || ''
+      workflowId: u.workflowId || '',
+      addonIds: u.addonIds || [],
+      priceOverride: u.priceOverride || ''
     }))
   });
 
@@ -126,13 +135,13 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
       units: [
         ...prev.units,
         { 
-          tooth: 1, 
-          arch: 'Upper',
-          type: 'Zirconia Crown (Full Contour)', 
-          material: 'Zirconia', 
-          shade: 'A2',
-          instructions: '',
-          workflowId: ''
+          type: '', 
+          tooth: null, 
+          arch: null, 
+          shade: '', 
+          instructions: '', 
+          workflowId: '',
+          addonIds: []
         }
       ]
     }));
@@ -149,24 +158,44 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
   const handleUnitChange = (index, field, value) => {
     setFormData(prev => {
       const newUnits = [...prev.units];
-      let unit = { ...newUnits[index], [field]: value };
-      
+      let unit = { ...newUnits[index] };
+
       if (field === 'type') {
-        // Logic 1: Reset Position (Tooth vs Arch)
-        const isArch = requiresArch(value);
-        if (isArch) {
+        unit.type = value;
+        
+        // Get Product Metadata
+        const product = getProductDetails(value);
+        const category = product?.category || 'Other';
+
+        // RESET FIELDS BASED ON TYPE
+        // If it's a Fee/Service, clear tooth/arch/shade
+        if (category === 'Fees' || category === 'Services') {
+          unit.tooth = null;
+          unit.arch = null;
+          unit.shade = '';
+          unit.material = '';
+        } 
+        // If it's Ortho/Removable/Implant, default to Arch (mostly) or handle specifically
+        else if (category === 'Orthodontics' || category === 'Removables' || category === 'Implants') {
            unit.tooth = null;
            unit.arch = unit.arch || 'Upper';
-        } else {
+        } 
+        // If it's Crown/Bridge, default to Tooth
+        else {
            unit.arch = null;
            unit.tooth = unit.tooth || 1;
         }
 
-        // Logic 2: Auto-Select Workflow
-        const category = getProductCategory(value);
+        // Reset Add-ons when product changes
+        unit.addonIds = [];
+
+        // Auto-Select Workflow
         const validWorkflows = getWorkflowsForCategory(category);
         const defaultWf = validWorkflows.find(w => w.isDefault) || validWorkflows[0];
         unit.workflowId = defaultWf ? defaultWf.id : '';
+      } else {
+        // Standard field update
+        unit[field] = value;
       }
       
       newUnits[index] = unit;
@@ -186,10 +215,12 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
       });
       setErrors(fieldErrors);
       setFormError("Please correct the highlighted errors.");
+      // Smooth scroll to top
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
+    // Clean up data before submission
     const submission = {
       clinicId: formData.clinicId,
       doctorId: formData.doctorId,
@@ -204,7 +235,9 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
       },
       units: formData.units.map(u => ({
         ...u,
-        tooth: requiresArch(u.type) ? null : Number(u.tooth),
+        // Ensure clean data on submit based on type logic
+        // logic: if Arch is required, Tooth is null, and vice versa.
+        tooth: requiresArch(u.type) ? null : (u.type === 'Rush Fee' ? null : Number(u.tooth)),
         arch: requiresArch(u.type) ? u.arch : null
       }))
     };
@@ -235,6 +268,8 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
         onRemoveUnit={handleRemoveUnit}
         onUnitChange={handleUnitChange}
         productCategories={productCategories}
+        products={products}
+        addons={addons}
         getWorkflowsForCategory={getWorkflowsForCategory}
         helpers={helpers}
         error={errors.units}
