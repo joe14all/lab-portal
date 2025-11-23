@@ -26,7 +26,8 @@
         "material": "Zirconia Full Contour",
         "shade": "A2",
         "stumpShade": "ND1",
-        "instructions": "Light occlusion, broad contacts."
+        "instructions": "Light occlusion, broad contacts.",
+        "status": "stage-design" 
       }
     ],
     "panNumbers": ["A12", "B4"], 
@@ -62,7 +63,9 @@
         "type": "Veneer",
         "material": "E.max",
         "shade": "BL1",
-        "instructions": "Match texture of adjacent #9."
+        "instructions": "Match texture of adjacent #9.",
+        "status": "stage-hold",
+        "holdReason": "Margin unclear on scan"
       }
     ],
     "holdReason": "Margin unclear on scan. Waiting for new scan.",
@@ -98,7 +101,8 @@
         "id": "unit-5003-30",
         "tooth": 30, 
         "type": "Implant Crown", 
-        "material": "Zirconia w/ TiBase" 
+        "material": "Zirconia w/ TiBase",
+        "status": "stage-shipped"
       }
     ],
     "financial": {
@@ -133,7 +137,8 @@
         "type": "Complete Denture",
         "material": "High Impact Acrylic",
         "shade": "A3",
-        "instructions": "Upper Arch. Please use premium teeth (Phonares). Round teeth arrangement."
+        "instructions": "Upper Arch. Premium Teeth.",
+        "status": "stage-received"
       }
     ],
     "financial": {
@@ -169,7 +174,8 @@
         "type": "Implant Crown",
         "material": "Zirconia Screw-Retained",
         "shade": "A3.5",
-        "instructions": "Screw access hole on occlusal. Straumann Bone Level RC."
+        "instructions": "Screw access hole on occlusal.",
+        "status": "stage-milling"
       }
     ],
     "financial": {
@@ -205,7 +211,8 @@
         "type": "Nightguard",
         "material": "Hard/Soft Thermal",
         "shade": "Clear",
-        "instructions": "Upper arch. Flat plane occlusion. Open bite 2mm."
+        "instructions": "Upper arch.",
+        "status": "stage-finishing"
       }
     ],
     "financial": {
@@ -241,7 +248,7 @@
         "type": "Bridge Unit (Retainer)",
         "material": "PFM (High Noble)",
         "shade": "C2",
-        "instructions": "Metal island on occlusal."
+        "status": "stage-design"
       },
       {
         "id": "unit-5007-04",
@@ -249,14 +256,15 @@
         "type": "Bridge Unit (Pontic)",
         "material": "PFM (High Noble)",
         "shade": "C2",
-        "instructions": "Modified ridge lap."
+        "status": "stage-design"
       },
       {
         "id": "unit-5007-05",
         "tooth": 5,
         "type": "Bridge Unit (Retainer)",
         "material": "PFM (High Noble)",
-        "shade": "C2"
+        "shade": "C2",
+        "status": "stage-design"
       }
     ],
     "financial": {
@@ -292,7 +300,8 @@
         "type": "Cast Partial Frame",
         "material": "Chrome Cobalt",
         "shade": "N/A",
-        "instructions": "Lower Arch. Kennedy Class I. RPI clasps on #21, #28."
+        "instructions": "Lower Arch. Kennedy Class I.",
+        "status": "stage-qc"
       }
     ],
     "financial": {

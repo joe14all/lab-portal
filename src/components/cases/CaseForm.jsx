@@ -1,17 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { z } from 'zod';
-import { useCrm } from '../../contexts';
-import { TOOTH_NUMBERS } from '../../constants/catalog';
-import { 
-  IconClose, 
-  IconUser, 
-  IconCalendar, 
-  IconTooth 
-} from '../../layouts/components/LabIcons';
+import { useCrm, useLab } from '../../contexts';
 import styles from './CaseForm.module.css';
 
-// --- CONSTANTS ---
-const ARCH_OPTIONS = ["Upper", "Lower", "Both"];
+// Sub-components
+import PatientInfoSection from './detail/caseForm/PatientInfoSection';
+import TimelineSection from './detail/caseForm/TimelineSection';
+import UnitsSection from './detail/caseForm/UnitsSection';
 
 const DEFAULT_FORM_VALUES = {
   patientName: '',
@@ -39,7 +34,8 @@ const schema = z.object({
     arch: z.string().optional(),
     material: z.string().optional(),
     shade: z.string().optional(),
-    instructions: z.string().optional()
+    instructions: z.string().optional(),
+    workflowId: z.string().optional(),
   })).min(1, "At least one unit is required")
 }).refine((data) => {
   if (!data.dueDate || !data.receivedDate) return true;
@@ -51,9 +47,11 @@ const schema = z.object({
 
 const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
   const { clinics, doctors, products } = useCrm();
+  const { getWorkflowsForCategory } = useLab();
   const [errors, setErrors] = useState({});
+  const [formError, setFormError] = useState(null);
 
-  // --- Helper: Group Products ---
+  // --- Helpers ---
   const productCategories = useMemo(() => {
     if (!products) return {};
     return products.reduce((acc, prod) => {
@@ -64,7 +62,6 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
     }, {});
   }, [products]);
 
-  // --- Helper: Determine if unit needs Arch or Tooth ---
   const requiresArch = (productName) => {
     const product = products.find(p => p.name === productName);
     if (!product) return false;
@@ -72,7 +69,14 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
     return cat.includes('removable') || cat.includes('ortho');
   };
 
-  // --- Helper: Map Data to Form ---
+  const getProductCategory = (productName) => {
+    const p = products.find(prod => prod.name === productName);
+    return p ? p.category : 'Other';
+  };
+
+  const helpers = { requiresArch, getProductCategory };
+
+  // --- Form Initialization ---
   const mapToFormData = (data) => ({
     patientName: data?.patient?.name || '',
     patientAge: data?.patient?.age || '',
@@ -85,23 +89,22 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
       ...u,
       tooth: u.tooth || '',
       arch: u.arch || '',
-      instructions: u.instructions || ''
+      instructions: u.instructions || '',
+      workflowId: u.workflowId || ''
     }))
   });
 
-  // --- Local State (with Derived State Pattern) ---
   const [prevInitialData, setPrevInitialData] = useState(initialData);
   const [formData, setFormData] = useState(() => 
     initialData ? mapToFormData(initialData) : DEFAULT_FORM_VALUES
   );
 
-  // FIX: Update state during render if props change (avoids useEffect cascade)
   if (initialData !== prevInitialData) {
     setPrevInitialData(initialData);
     setFormData(initialData ? mapToFormData(initialData) : DEFAULT_FORM_VALUES);
   }
 
-  // --- Derived State for Dropdowns ---
+  // --- Derived State ---
   const availableDoctors = useMemo(() => {
     if (formData.clinicId) {
       return doctors.filter(d => d.clinicId === formData.clinicId);
@@ -114,6 +117,7 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
+    if (formError) setFormError(null);
   };
 
   const handleAddUnit = () => {
@@ -127,10 +131,12 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
           type: 'Zirconia Crown (Full Contour)', 
           material: 'Zirconia', 
           shade: 'A2',
-          instructions: '' 
+          instructions: '',
+          workflowId: ''
         }
       ]
     }));
+    if (errors.units) setErrors(prev => ({ ...prev, units: null }));
   };
 
   const handleRemoveUnit = (index) => {
@@ -143,10 +149,10 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
   const handleUnitChange = (index, field, value) => {
     setFormData(prev => {
       const newUnits = [...prev.units];
-      const unit = { ...newUnits[index], [field]: value };
+      let unit = { ...newUnits[index], [field]: value };
       
-      // Reset position logic when type changes
       if (field === 'type') {
+        // Logic 1: Reset Position (Tooth vs Arch)
         const isArch = requiresArch(value);
         if (isArch) {
            unit.tooth = null;
@@ -155,6 +161,12 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
            unit.arch = null;
            unit.tooth = unit.tooth || 1;
         }
+
+        // Logic 2: Auto-Select Workflow
+        const category = getProductCategory(value);
+        const validWorkflows = getWorkflowsForCategory(category);
+        const defaultWf = validWorkflows.find(w => w.isDefault) || validWorkflows[0];
+        unit.workflowId = defaultWf ? defaultWf.id : '';
       }
       
       newUnits[index] = unit;
@@ -164,8 +176,8 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setFormError(null);
     
-    // 1. Validate
     const result = schema.safeParse(formData);
     if (!result.success) {
       const fieldErrors = {};
@@ -173,10 +185,11 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
         fieldErrors[issue.path[0]] = issue.message;
       });
       setErrors(fieldErrors);
+      setFormError("Please correct the highlighted errors.");
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
-    // 2. Prepare Submission
     const submission = {
       clinicId: formData.clinicId,
       doctorId: formData.doctorId,
@@ -202,208 +215,39 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
   return (
     <form onSubmit={handleSubmit} className={styles.formContainer}>
       
-      {/* SECTION 1: PATIENT & CLINIC */}
-      <div className="card">
-        <h3 className={styles.sectionTitle}>
-          <IconUser width="18" height="18" /> Patient & Clinic
-        </h3>
-        <div className={styles.grid}>
-          <div className="form-group">
-            <label>Patient Name</label>
-            <input 
-              type="text" name="patientName" 
-              value={formData.patientName} onChange={handleChange} 
-              className={errors.patientName ? styles.inputError : ''}
-              placeholder="Last, First"
-            />
-            {errors.patientName && <span className="error-text">{errors.patientName}</span>}
-          </div>
-          <div className={styles.halfGrid}>
-            <div className="form-group">
-              <label>Age</label>
-              <input 
-                type="number" name="patientAge" 
-                value={formData.patientAge} onChange={handleChange} 
-              />
-            </div>
-            <div className="form-group">
-              <label>Gender</label>
-              <select name="patientGender" value={formData.patientGender} onChange={handleChange}>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-              </select>
-            </div>
-          </div>
+      <PatientInfoSection 
+        formData={formData} 
+        handleChange={handleChange} 
+        errors={errors}
+        clinics={clinics}
+        availableDoctors={availableDoctors}
+      />
 
-          <div className={styles.fullRow}></div>
+      <TimelineSection 
+        formData={formData} 
+        handleChange={handleChange} 
+        errors={errors} 
+      />
 
-          <div className="form-group">
-            <label>Clinic</label>
-            <select 
-              name="clinicId" 
-              value={formData.clinicId} 
-              onChange={handleChange} 
-              className={errors.clinicId ? styles.inputError : ''}
-            >
-              <option value="">Select Clinic...</option>
-              {clinics.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-            {errors.clinicId && <span className="error-text">{errors.clinicId}</span>}
-          </div>
-          <div className="form-group">
-            <label>Doctor</label>
-            <select 
-              name="doctorId" 
-              value={formData.doctorId} 
-              onChange={handleChange} 
-              disabled={!formData.clinicId}
-              className={errors.doctorId ? styles.inputError : ''}
-            >
-              <option value="">Select Doctor...</option>
-              {availableDoctors.map(d => (
-                <option key={d.id} value={d.id}>Dr. {d.lastName}</option>
-              ))}
-            </select>
-            {errors.doctorId && <span className="error-text">{errors.doctorId}</span>}
-          </div>
-        </div>
-      </div>
-
-      {/* SECTION 2: DATES */}
-      <div className="card">
-        <h3 className={styles.sectionTitle}>
-          <IconCalendar width="18" height="18" /> Timeline
-        </h3>
-        <div className={styles.grid}>
-          <div className="form-group">
-            <label>Received Date</label>
-            <input 
-              type="date" name="receivedDate" 
-              value={formData.receivedDate} onChange={handleChange} 
-            />
-          </div>
-          <div className="form-group">
-            <label>Due Date</label>
-            <input 
-              type="date" name="dueDate" 
-              value={formData.dueDate} onChange={handleChange}
-              className={errors.dueDate ? styles.inputError : ''}
-            />
-            {errors.dueDate && <span className="error-text">{errors.dueDate}</span>}
-          </div>
-        </div>
-      </div>
-
-      {/* SECTION 3: UNITS */}
-      <div className="card">
-        <div className={styles.sectionHeader}>
-          <h3 className={styles.sectionTitle} style={{marginBottom:0, border:0}}>
-            <IconTooth width="18" height="18" /> Prescription Units
-          </h3>
-          <button type="button" className="button secondary" onClick={handleAddUnit}>
-            + Add Unit
-          </button>
-        </div>
-
-        {formData.units.length === 0 ? (
-          <div className={styles.emptyState}>
-            <p>No units added to this case.</p>
-            <button type="button" className="button text" onClick={handleAddUnit}>Add First Unit</button>
-          </div>
-        ) : (
-          <div className={styles.unitsList}>
-            {formData.units.map((unit, index) => {
-              const showArch = requiresArch(unit.type);
-
-              return (
-                <div key={index} className={styles.unitRow}>
-                  <div className={styles.unitHeader}>
-                    <span className={styles.unitIndex}>#{index + 1}</span>
-                    <button 
-                      type="button" 
-                      className={styles.removeBtn}
-                      onClick={() => handleRemoveUnit(index)}
-                      title="Remove Unit"
-                    >
-                      <IconClose width="14" height="14" />
-                    </button>
-                  </div>
-
-                  <div className={styles.unitMainGrid}>
-                    
-                    {/* Position Selector */}
-                    <div className="form-group">
-                      <label>{showArch ? 'Arch' : 'Tooth'}</label>
-                      {showArch ? (
-                        <select
-                          value={unit.arch || ''}
-                          onChange={(e) => handleUnitChange(index, 'arch', e.target.value)}
-                        >
-                          {ARCH_OPTIONS.map(opt => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <select 
-                          value={unit.tooth || ''} 
-                          onChange={(e) => handleUnitChange(index, 'tooth', e.target.value)}
-                        >
-                          {TOOTH_NUMBERS.map(num => (
-                            <option key={num} value={num}>{num}</option>
-                          ))}
-                        </select>
-                      )}
-                    </div>
-
-                    {/* Product Type */}
-                    <div className="form-group" style={{ flex: 2 }}>
-                      <label>Product / Service</label>
-                      <select 
-                        value={unit.type} 
-                        onChange={(e) => handleUnitChange(index, 'type', e.target.value)}
-                      >
-                        {Object.entries(productCategories).map(([category, items]) => (
-                          <optgroup key={category} label={category}>
-                            {items.map(prod => (
-                              <option key={prod.id} value={prod.name}>{prod.name}</option>
-                            ))}
-                          </optgroup>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Shade */}
-                    <div className="form-group">
-                      <label>Shade</label>
-                      <input 
-                        type="text" 
-                        value={unit.shade} 
-                        onChange={(e) => handleUnitChange(index, 'shade', e.target.value)}
-                        placeholder="A2, BL1..."
-                      />
-                    </div>
-                  </div>
-
-                  <div className={styles.unitExtras}>
-                    <input 
-                      type="text"
-                      className={styles.instructionInput}
-                      value={unit.instructions}
-                      onChange={(e) => handleUnitChange(index, 'instructions', e.target.value)}
-                      placeholder="Specific instructions for this unit..."
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      <UnitsSection 
+        units={formData.units}
+        onAddUnit={handleAddUnit}
+        onRemoveUnit={handleRemoveUnit}
+        onUnitChange={handleUnitChange}
+        productCategories={productCategories}
+        getWorkflowsForCategory={getWorkflowsForCategory}
+        helpers={helpers}
+        error={errors.units}
+      />
 
       {/* ACTIONS */}
       <div className={styles.actions}>
+        {formError && (
+          <span className="error-text" style={{ marginRight: 'auto', alignSelf: 'center' }}>
+            {formError}
+          </span>
+        )}
+        
         <button type="button" className="button secondary" onClick={onCancel}>
           Cancel
         </button>

@@ -34,6 +34,8 @@ import payments from "./data/finance/payments.json";
 import routes from "./data/logistics/routes.json";
 import pickups from "./data/logistics/pickups.json";
 
+import workflows from "./data/settings/workflows.json"; // Import new file
+
 // Export named for specific imports: import { activeCases } from '../_mock';
 export {
   // Org
@@ -71,6 +73,9 @@ export {
   // Logistics
   routes,
   pickups,
+
+  // Settings
+  workflows,
 };
 
 // Default export object if needed
@@ -83,4 +88,5 @@ export default {
   production: { materials, batches, equipment },
   finance: { invoices, payments },
   logistics: { routes, pickups },
+  settings: { workflows },
 };

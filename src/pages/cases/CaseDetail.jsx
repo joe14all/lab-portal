@@ -83,8 +83,10 @@ const CaseDetail = () => {
   }
 
   const handleEditClick = () => setShowEditModal(true);
-  const updateUnitStatus = (unitId, newStatus) => {
-    updateCaseStatus(activeCase.id, newStatus, unitId);
+  const updateUnitStatus = (unitId, newStatus, holdReason = null) => {
+    // Pass 'holdReason' to context function. 
+    // We need to update the Context signature in the next step to handle this.
+    updateCaseStatus(activeCase.id, newStatus, unitId, holdReason);
   };
 
   return (
@@ -105,7 +107,6 @@ const CaseDetail = () => {
           activeCase={activeCase} 
           stages={stages}
         />
-        
         <div className={styles.grid}>
           <div className={styles.leftCol}>
             <CaseContextCard activeCase={activeCase} />
@@ -113,12 +114,12 @@ const CaseDetail = () => {
 
           <div className={styles.centerCol}>
             <CaseUnitsList 
-              units={activeCase.units} 
-              stages={stages}
-              caseId={activeCase.id}
-              updateUnitStatus={updateUnitStatus}
-            />
-          </div>
+                units={activeCase.units} 
+                stages={stages}
+                caseId={activeCase.id}
+                updateUnitStatus={updateUnitStatus}
+              />
+            </div>
 
           <div className={styles.rightCol}>
             <CaseFilesCard files={files} caseId={activeCase.id} />

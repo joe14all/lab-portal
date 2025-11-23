@@ -10,7 +10,8 @@ export const LabProvider = ({ children }) => {
 
   // --- State ---
   const [cases, setCases] = useState([]);
-  const [stages, setStages] = useState([]);
+  const [stages, setStages] = useState([]); // System Stages
+  const [workflows, setWorkflows] = useState([]); // Lab Workflows
   const [caseFiles, setCaseFiles] = useState([]);
   const [caseMessages, setCaseMessages] = useState([]);
   
@@ -21,17 +22,17 @@ export const LabProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // --- Initialize Data (Reactive to Lab Switch) ---
+  // --- Initialize Data ---
   useEffect(() => {
     const initData = async () => {
       if (!activeLab?.id) return;
 
       setLoading(true);
       try {
-        // Fetch all Lab resources in parallel
         const [
           fetchedCases, 
-          fetchedStages, 
+          fetchedStages,
+          fetchedWorkflows, 
           fetchedFiles, 
           fetchedMessages,
           fetchedMaterials, 
@@ -39,7 +40,8 @@ export const LabProvider = ({ children }) => {
           fetchedEquipment
         ] = await Promise.all([
           MockService.cases.cases.getAll({ labId: activeLab.id }),
-          MockService.cases.stages.getAll(), // System Global
+          MockService.cases.stages.getAll(), 
+          MockService.settings.workflows.getAll({ labId: activeLab.id }),
           MockService.cases.files.getAll({ labId: activeLab.id }),
           MockService.cases.messages.getAll({ labId: activeLab.id }),
           MockService.production.inventory.getAll({ labId: activeLab.id }),
@@ -49,6 +51,7 @@ export const LabProvider = ({ children }) => {
         
         setCases(fetchedCases);
         setStages(fetchedStages);
+        setWorkflows(fetchedWorkflows);
         setCaseFiles(fetchedFiles);
         setCaseMessages(fetchedMessages);
 
@@ -72,16 +75,29 @@ export const LabProvider = ({ children }) => {
 
   const deriveCaseStatus = useCallback((units = []) => {
     if (!units || units.length === 0) return 'stage-new';
-    const statusMap = units.map(u => u.status);
-    
-    if (statusMap.includes('stage-hold')) return 'stage-hold';
-    if (statusMap.some(s => ['stage-design', 'stage-milling', 'stage-finishing'].includes(s))) {
-      return 'stage-production';
-    }
-    if (statusMap.every(s => s === 'stage-shipped')) return 'stage-shipped';
-    
-    return 'stage-production';
-  }, []);
+
+    // 1. Priority: HOLD (Any unit on hold puts case on hold)
+    if (units.some(u => u.status === 'stage-hold')) return 'stage-hold';
+
+    // 2. Priority: SHIPPED (Only if ALL are shipped)
+    const allShipped = units.every(u => u.status === 'stage-shipped' || u.status === 'stage-delivered');
+    if (allShipped) return 'stage-shipped';
+
+    // 3. Priority: LOWEST ACTIVE STAGE
+    // Filter to find valid stage objects for current unit statuses
+    const activeUnitStages = units
+      .map(u => stages.find(s => s.id === u.status))
+      .filter(Boolean); // Remove undefined if stage not found
+
+    if (activeUnitStages.length === 0) return 'stage-new'; // Fallback
+
+    // Sort by Order ASC (Lowest first) - The case is only as far as its "slowest" unit
+    activeUnitStages.sort((a, b) => a.order - b.order);
+
+    // Return the ID of the earliest stage (e.g., 'stage-design')
+    return activeUnitStages[0].id;
+
+  }, [stages]); 
 
   const validateTransition = useCallback((currentStage, nextStage) => {
     if (hasRole('role-driver') && nextStage !== 'stage-shipped' && nextStage !== 'stage-delivered') {
@@ -89,6 +105,11 @@ export const LabProvider = ({ children }) => {
     }
     return true;
   }, [hasRole]);
+
+  const getWorkflowsForCategory = useCallback((category) => {
+    return workflows.filter(w => w.category === category);
+  }, [workflows]);
+
 
   // ============================================================
   // 1. CASE MANAGEMENT HANDLERS
@@ -146,7 +167,7 @@ export const LabProvider = ({ children }) => {
         fileType: fileObj.name.split('.').pop().toUpperCase(),
         fileName: fileObj.name,
         size: `${(fileObj.size / (1024 * 1024)).toFixed(2)} MB`,
-        url: URL.createObjectURL(fileObj), // Local preview URL
+        url: URL.createObjectURL(fileObj), 
         isLatest: true, 
         version: 1
       });
@@ -167,7 +188,6 @@ export const LabProvider = ({ children }) => {
         labId: activeLab.id,
         caseNumber: `2025-${Math.floor(Math.random() * 10000)}`,
         status: 'stage-new',
-        // Ensure units have status and ID
         units: (newCaseData.units || []).map((unit, idx) => ({
            id: `unit-${Date.now()}-${idx}`,
            ...unit,
@@ -201,7 +221,7 @@ export const LabProvider = ({ children }) => {
     }
   }, []);
 
-  const updateCaseStatus = useCallback(async (caseId, newStageId, unitId = null) => {
+  const updateCaseStatus = useCallback(async (caseId, newStageId, unitId = null, holdReason = null) => {
     try {
       const currentCase = cases.find(c => c.id === caseId);
       if (!currentCase) throw new Error("Case not found");
@@ -209,19 +229,35 @@ export const LabProvider = ({ children }) => {
       validateTransition(currentCase.status, newStageId);
 
       let updatedUnits = currentCase.units || [];
+      
       if (unitId) {
-        updatedUnits = updatedUnits.map(u => 
-          u.id === unitId ? { ...u, status: newStageId } : u
-        );
+        updatedUnits = updatedUnits.map(u => {
+          if (u.id === unitId) {
+            return { 
+              ...u, 
+              status: newStageId,
+              holdReason: newStageId === 'stage-hold' ? holdReason : null 
+            };
+          }
+          return u;
+        });
       } else {
-        updatedUnits = updatedUnits.map(u => ({ ...u, status: newStageId }));
+        // Bulk update
+        updatedUnits = updatedUnits.map(u => ({ 
+          ...u, 
+          status: newStageId,
+          holdReason: newStageId === 'stage-hold' ? holdReason : null
+        }));
       }
 
       const derivedStatus = deriveCaseStatus(updatedUnits);
+      const caseHoldReason = derivedStatus === 'stage-hold' ? holdReason : null;
 
       const updatedCase = await MockService.cases.cases.update(caseId, {
         units: updatedUnits,
-        status: derivedStatus
+        status: derivedStatus,
+        holdReason: caseHoldReason,
+        heldAtStageId: derivedStatus === 'stage-hold' ? currentCase.status : null
       });
 
       setCases(prev => prev.map(c => c.id === caseId ? updatedCase : c));
@@ -230,7 +266,7 @@ export const LabProvider = ({ children }) => {
       throw err;
     }
   }, [cases, validateTransition, deriveCaseStatus]);
-
+  
   // ============================================================
   // 2. PRODUCTION HANDLERS
   // ============================================================
@@ -295,6 +331,7 @@ export const LabProvider = ({ children }) => {
   const value = useMemo(() => ({
     cases,
     stages,
+    workflows, // New
     materials,
     batches,
     equipment,
@@ -304,6 +341,7 @@ export const LabProvider = ({ children }) => {
     getCaseById,
     getCaseFiles,
     getCaseMessages,
+    getWorkflowsForCategory, // New
     addCaseMessage,
     addCaseFile,
     createCase,
@@ -315,8 +353,8 @@ export const LabProvider = ({ children }) => {
     updateEquipmentStatus,
     deriveCaseStatus, 
   }), [
-    cases, stages, materials, batches, equipment, loading, error,
-    getCaseById, getCaseFiles, getCaseMessages, addCaseMessage, addCaseFile, createCase, updateCase, updateCaseStatus,
+    cases, stages, workflows, materials, batches, equipment, loading, error,
+    getCaseById, getCaseFiles, getCaseMessages, getWorkflowsForCategory, addCaseMessage, addCaseFile, createCase, updateCase, updateCaseStatus,
     consumeMaterial, createBatch, updateEquipmentStatus, deriveCaseStatus
   ]);
 

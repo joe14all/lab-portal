@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useLab } from '../../../contexts'; // Import useLab
 import StatusBadge from '../StatusBadge';
+import Modal from '../../common/Modal'; 
 import { 
   IconTooth, 
   IconChevronRight, 
   IconAlert,
   IconDrill,
   IconLayers,
-  IconCheck
+  IconCheck,
+  IconClose
 } from '../../../layouts/components/LabIcons';
 import styles from './CaseUnitsList.module.css';
 
@@ -17,136 +20,224 @@ const getUnitIcon = (type) => {
   return <IconTooth width="20" height="20" />;
 };
 
+// --- REMOVED HARDCODED WORKFLOWS ---
+// We now use the dynamic workflows from Context
+
 const CaseUnitsList = ({ units, stages, caseId, updateUnitStatus }) => {
-  
-  // Helper: Find next logical stage
-  const getNextStageForUnit = (currentUnitStatus) => {
-    const currentStage = stages.find(s => s.id === currentUnitStatus);
-    if (!currentStage) return null;
+  const { workflows } = useLab(); // Get Dynamic Workflows
+  const [holdModalOpen, setHoldModalOpen] = useState(false);
+  const [selectedUnitId, setSelectedUnitId] = useState(null);
+  const [holdReason, setHoldReason] = useState('');
+
+  // --- Logic Helpers ---
+
+  const getNextStageForUnit = (unit) => {
+    const currentStatus = unit.status || 'stage-new';
     
-    // Find next stage by order, excluding exceptions like 'Hold'
-    return stages
-      .filter(s => s.order > currentStage.order && s.category !== 'EXCEPTION')
-      .sort((a, b) => a.order - b.order)[0];
+    // 1. Find the specific workflow assigned to this unit
+    let activeWorkflow = workflows.find(w => w.id === unit.workflowId);
+    
+    // Fallback: If no workflow ID on unit, try to guess/find a default based on category
+    // (This handles legacy data or units created before workflow selection)
+    if (!activeWorkflow) {
+       // Simple fallback logic or default to first available
+       activeWorkflow = workflows[0]; 
+    }
+
+    if (!activeWorkflow) return null;
+
+    // 2. Get valid stage IDs for this workflow
+    const validStageIds = activeWorkflow.stages;
+
+    // 3. Map to full Stage Objects to ensure we have metadata (labels, etc.)
+    // Filter global stages to only those in this workflow
+    const workflowStages = stages.filter(s => validStageIds.includes(s.id));
+    
+    // 4. Sort them by the order defined in the WORKFLOW definition (Source of Truth)
+    workflowStages.sort((a, b) => {
+      return validStageIds.indexOf(a.id) - validStageIds.indexOf(b.id);
+    });
+
+    // 5. Find where we are now
+    const currentIndex = workflowStages.findIndex(s => s.id === currentStatus);
+    
+    // 6. Return next step if available
+    if (currentIndex !== -1 && currentIndex < workflowStages.length - 1) {
+      return workflowStages[currentIndex + 1];
+    }
+    
+    return null;
   };
 
-  // Helper: Calculate progress percentage for visual bar
   const getProgressPercent = (status) => {
     if (status === 'stage-shipped' || status === 'stage-delivered') return 100;
     const stage = stages.find(s => s.id === status);
     if (!stage) return 0;
-    // Rough estimate based on total standard stages (~11)
+    // Use standard order for rough estimate, or refine based on workflow position
     return Math.min(100, Math.max(5, (stage.order / 11) * 100));
   };
   
+  // --- Handlers ---
   const handleStatusUpdate = (unitId, newStatus) => {
-    updateUnitStatus(caseId, newStatus, unitId);
+    updateUnitStatus(unitId, newStatus);
   };
-  
-  return (
-    <div className="card">
-      <h3 className={styles.sectionTitle}>
-        Production Units ({units.length})
-      </h3>
-      
-      <div className={styles.list}>
-        {units.map((unit, idx) => {
-          const nextStage = getNextStageForUnit(unit.status);
-          const isHold = unit.status === 'stage-hold';
-          const progress = getProgressPercent(unit.status);
 
-          return (
-            <div key={unit.id || idx} className={`${styles.unitItem} ${isHold ? styles.unitHold : ''}`}>
-              
-              {/* ROW 1: Header & Status */}
-              <div className={styles.unitHeader}>
-                <div className={styles.identity}>
-                  <span className={styles.typeIcon}>{getUnitIcon(unit.type)}</span>
-                  <div className={styles.idText}>
-                    <span className={styles.toothBadge}>
-                      {unit.tooth ? `Tooth #${unit.tooth}` : 'Full Arch'}
-                    </span>
-                    <strong>{unit.type}</strong>
+  const initiateHold = (unitId) => {
+    setSelectedUnitId(unitId);
+    setHoldReason(''); 
+    setHoldModalOpen(true);
+  };
+
+  const confirmHold = () => {
+    if (!selectedUnitId) return;
+    updateUnitStatus(selectedUnitId, 'stage-hold', holdReason);
+    setHoldModalOpen(false);
+    setSelectedUnitId(null);
+  };
+
+  return (
+    <>
+      <div className="card">
+        <h3 className={styles.sectionTitle}>
+          Production Units ({units.length})
+        </h3>
+        
+        <div className={styles.list}>
+          {units.map((unit, idx) => {
+            const effectiveStatus = unit.status || 'stage-new';
+            
+            // Use the new dynamic workflow-aware helper
+            const nextStage = getNextStageForUnit(unit);
+            
+            const isHold = effectiveStatus === 'stage-hold';
+            const progress = getProgressPercent(effectiveStatus);
+
+            return (
+              <div key={unit.id || idx} className={`${styles.unitItem} ${isHold ? styles.unitHold : ''}`}>
+                
+                <div className={styles.unitHeader}>
+                  <div className={styles.identity}>
+                    <span className={styles.typeIcon}>{getUnitIcon(unit.type)}</span>
+                    <div className={styles.idText}>
+                      <span className={styles.toothBadge}>
+                        {unit.tooth ? `Tooth #${unit.tooth}` : 'Full Arch'}
+                      </span>
+                      <strong>{unit.type}</strong>
+                    </div>
+                  </div>
+                  <StatusBadge status={effectiveStatus} />
+                </div>
+
+                <div className={styles.unitDetails}>
+                  <div className={styles.detailCol}>
+                    <span className={styles.label}>Material</span>
+                    <span>{unit.material}</span>
+                  </div>
+                  <div className={styles.detailCol}>
+                    <span className={styles.label}>Shade</span>
+                    <span>{unit.shade || 'N/A'}</span>
+                  </div>
+                  <div className={styles.detailCol}>
+                    <span className={styles.label}>Stump</span>
+                    <span>{unit.stumpShade || 'N/A'}</span>
                   </div>
                 </div>
-                <StatusBadge status={unit.status} />
+
+                {unit.instructions && (
+                  <div className={styles.instructions}>
+                    <span className={styles.label}>Notes:</span> {unit.instructions}
+                  </div>
+                )}
+
+                {isHold && unit.holdReason && (
+                   <div className={styles.instructions} style={{ marginTop: '0.5rem', borderColor: 'var(--error-500)', color: 'var(--error-500)' }}>
+                     <strong>Hold Reason:</strong> {unit.holdReason}
+                   </div>
+                )}
+
+                <div className={styles.actionRow}>
+                  <div className={styles.progressTrack} title={`${progress}% Complete`}>
+                    <div 
+                      className={styles.progressBar} 
+                      style={{ width: `${progress}%`, backgroundColor: isHold ? 'var(--error-500)' : 'var(--primary)' }}
+                    />
+                  </div>
+
+                  <div className={styles.buttons}>
+                    {/* Action: Put on Hold */}
+                    {!isHold && effectiveStatus !== 'stage-shipped' && (
+                      <button 
+                        className={`icon-button ${styles.actionBtn} ${styles.holdBtn}`}
+                        onClick={() => initiateHold(unit.id)}
+                        title="Put on Hold"
+                      >
+                        <IconAlert width="16" height="16" />
+                      </button>
+                    )}
+
+                    {/* Action: Advance (Dynamic) */}
+                    {nextStage && !isHold && (
+                      <button 
+                        className={`button secondary ${styles.advanceBtn}`} 
+                        onClick={() => handleStatusUpdate(unit.id, nextStage.id)}
+                      >
+                        <span>Move to {nextStage.label}</span>
+                        <IconChevronRight width="14" height="14" />
+                      </button>
+                    )}
+
+                    {/* Action: Resume (From Hold) */}
+                    {isHold && (
+                      <button 
+                        className="button primary"
+                        // Resume: Ideally find the *previous* active stage from history
+                        // For MVP, we default to 'stage-design' or the first stage of the workflow
+                        onClick={() => handleStatusUpdate(unit.id, 'stage-design')} 
+                      >
+                        Resume Production
+                      </button>
+                    )}
+                  </div>
+                </div>
+
               </div>
-
-              {/* ROW 2: Details Grid */}
-              <div className={styles.unitDetails}>
-                <div className={styles.detailCol}>
-                  <span className={styles.label}>Material</span>
-                  <span>{unit.material}</span>
-                </div>
-                <div className={styles.detailCol}>
-                  <span className={styles.label}>Shade</span>
-                  <span>{unit.shade || 'N/A'}</span>
-                </div>
-                <div className={styles.detailCol}>
-                  <span className={styles.label}>Stump</span>
-                  <span>{unit.stumpShade || 'N/A'}</span>
-                </div>
-              </div>
-
-              {/* ROW 3: Instructions (Conditional) */}
-              {unit.instructions && (
-                <div className={styles.instructions}>
-                  <span className={styles.label}>Notes:</span> {unit.instructions}
-                </div>
-              )}
-
-              {/* ROW 4: Progress & Actions */}
-              <div className={styles.actionRow}>
-                
-                {/* Mini Progress Bar */}
-                <div className={styles.progressTrack} title={`${progress}% Complete`}>
-                  <div 
-                    className={styles.progressBar} 
-                    style={{ width: `${progress}%`, backgroundColor: isHold ? 'var(--error-500)' : 'var(--primary)' }}
-                  />
-                </div>
-
-                {/* Action Buttons */}
-                <div className={styles.buttons}>
-                  {/* Hold Button */}
-                  {!isHold && unit.status !== 'stage-shipped' && (
-                    <button 
-                      className={`icon-button ${styles.actionBtn} ${styles.holdBtn}`}
-                      onClick={() => handleStatusUpdate(unit.id, 'stage-hold')}
-                      title="Put on Hold"
-                    >
-                      <IconAlert width="16" height="16" />
-                    </button>
-                  )}
-
-                  {/* Advance Button */}
-                  {nextStage && !isHold && (
-                    <button 
-                      className={`button secondary ${styles.advanceBtn}`} 
-                      onClick={() => handleStatusUpdate(unit.id, nextStage.id)}
-                    >
-                      <span>Move to {nextStage.label}</span>
-                      <IconChevronRight width="14" height="14" />
-                    </button>
-                  )}
-
-                  {/* Resume Button (If Hold) */}
-                  {isHold && (
-                    <button 
-                      className="button primary"
-                      onClick={() => handleStatusUpdate(unit.id, 'stage-design')} // Reset to design or logic to find previous
-                    >
-                      Resume Production
-                    </button>
-                  )}
-                </div>
-              </div>
-
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-    </div>
+
+      {/* --- HOLD MODAL --- */}
+      <Modal
+        isOpen={holdModalOpen}
+        onClose={() => setHoldModalOpen(false)}
+        title="Put Unit On Hold"
+        icon={<IconAlert width="20" height="20" />}
+        width="400px"
+        variant="danger"
+        footer={
+          <>
+            <button className="button text" onClick={() => setHoldModalOpen(false)}>Cancel</button>
+            <button className="button primary danger" onClick={confirmHold} disabled={!holdReason.trim()}>
+              Confirm Hold
+            </button>
+          </>
+        }
+      >
+        <div style={{ padding: '1.5rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
+            Reason for Hold
+          </label>
+          <textarea
+            className="input"
+            style={{ width: '100%', minHeight: '100px', padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)' }}
+            placeholder="e.g., Unclear margin, Material shortage..."
+            value={holdReason}
+            onChange={(e) => setHoldReason(e.target.value)}
+            autoFocus
+          />
+        </div>
+      </Modal>
+    </>
   );
 };
 

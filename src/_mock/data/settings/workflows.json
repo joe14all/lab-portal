@@ -1,0 +1,237 @@
+[
+  {
+    "id": "wf-crown-digital-001",
+    "labId": "lab-001",
+    "name": "Zirconia Crown (Model-less)",
+    "category": "Crown & Bridge",
+    "isDefault": true,
+    "description": "Fast-track digital workflow. No physical model needed.",
+    "stages": [
+      "stage-new",
+      "stage-received",
+      "stage-design",
+      "stage-milling",
+      "stage-finishing",
+      "stage-qc",
+      "stage-shipped"
+    ]
+  },
+  {
+    "id": "wf-crown-model-001",
+    "labId": "lab-001",
+    "name": "Zirconia/E.max (With Model)",
+    "category": "Crown & Bridge",
+    "isDefault": false,
+    "description": "Digital design but printed model required for contact verification.",
+    "stages": [
+      "stage-new",
+      "stage-received",
+      "stage-model",
+      "stage-design",
+      "stage-milling",
+      "stage-finishing",
+      "stage-qc",
+      "stage-shipped"
+    ]
+  },
+  {
+    "id": "wf-crown-pfm-001",
+    "labId": "lab-001",
+    "name": "PFM Crown (Standard)",
+    "category": "Crown & Bridge",
+    "isDefault": false,
+    "description": "Traditional PFM workflow with metal casting and porcelain stacking.",
+    "stages": [
+      "stage-new",
+      "stage-received",
+      "stage-model",
+      "stage-waxup",
+      "stage-casting",
+      "stage-finishing",
+      "stage-qc",
+      "stage-shipped"
+    ]
+  },
+  {
+    "id": "wf-crown-pfm-tryin-001",
+    "labId": "lab-001",
+    "name": "PFM Crown (Metal Try-in)",
+    "category": "Crown & Bridge",
+    "isDefault": false,
+    "description": "Includes a metal framework try-in appointment before final ceramics.",
+    "stages": [
+      "stage-new",
+      "stage-received",
+      "stage-model",
+      "stage-waxup",
+      "stage-casting",
+      "stage-tryin",
+      "stage-finishing",
+      "stage-qc",
+      "stage-shipped"
+    ]
+  },
+  {
+    "id": "wf-denture-complete-001",
+    "labId": "lab-001",
+    "name": "Complete Denture (Standard)",
+    "category": "Removables",
+    "isDefault": true,
+    "description": "Full steps: Wax Rim -> Wax Try-in -> Finish.",
+    "stages": [
+      "stage-new",
+      "stage-received",
+      "stage-model",
+      "stage-waxup",
+      "stage-tryin",
+      "stage-processing",
+      "stage-finishing",
+      "stage-qc",
+      "stage-shipped"
+    ]
+  },
+  {
+    "id": "wf-denture-immediate-001",
+    "labId": "lab-001",
+    "name": "Immediate Denture",
+    "category": "Removables",
+    "isDefault": false,
+    "description": "Straight to finish. No try-in appointment possible.",
+    "stages": [
+      "stage-new",
+      "stage-received",
+      "stage-model",
+      "stage-processing",
+      "stage-finishing",
+      "stage-qc",
+      "stage-shipped"
+    ]
+  },
+  {
+    "id": "wf-partial-cast-002",
+    "labId": "lab-002",
+    "name": "Cast Partial (Metal Framework)",
+    "category": "Removables",
+    "isDefault": true,
+    "description": "Includes Framework Try-in and Wax Try-in.",
+    "stages": [
+      "stage-new",
+      "stage-received",
+      "stage-model",
+      "stage-design",
+      "stage-casting",
+      "stage-tryin",
+      "stage-waxup",
+      "stage-tryin",
+      "stage-processing",
+      "stage-finishing",
+      "stage-qc",
+      "stage-shipped"
+    ]
+  },
+  {
+    "id": "wf-partial-flex-002",
+    "labId": "lab-002",
+    "name": "Flexible Partial (Valplast)",
+    "category": "Removables",
+    "isDefault": false,
+    "description": "Injection molded flexible partial. Wax try-in optional.",
+    "stages": [
+      "stage-new",
+      "stage-received",
+      "stage-model",
+      "stage-waxup",
+      "stage-tryin",
+      "stage-processing",
+      "stage-finishing",
+      "stage-qc",
+      "stage-shipped"
+    ]
+  },
+  {
+    "id": "wf-implant-custom-002",
+    "labId": "lab-002",
+    "name": "Custom Abutment + Crown",
+    "category": "Implants",
+    "isDefault": true,
+    "description": "Titanium or Zirconia custom abutment with cemented crown.",
+    "stages": [
+      "stage-new",
+      "stage-received",
+      "stage-model",
+      "stage-design",
+      "stage-milling",
+      "stage-finishing",
+      "stage-qc",
+      "stage-shipped"
+    ]
+  },
+  {
+    "id": "wf-implant-screw-002",
+    "labId": "lab-002",
+    "name": "Screw-Retained Crown",
+    "category": "Implants",
+    "isDefault": false,
+    "description": "Direct to fixture. One piece or Ti-base.",
+    "stages": [
+      "stage-new",
+      "stage-received",
+      "stage-model",
+      "stage-design",
+      "stage-milling",
+      "stage-finishing",
+      "stage-qc",
+      "stage-shipped"
+    ]
+  },
+  {
+    "id": "wf-ortho-nightguard-002",
+    "labId": "lab-002",
+    "name": "Nightguard (Printed/Milled)",
+    "category": "Orthodontics",
+    "isDefault": true,
+    "description": "Digital design and direct manufacturing.",
+    "stages": [
+      "stage-new",
+      "stage-received",
+      "stage-design",
+      "stage-milling",
+      "stage-finishing",
+      "stage-qc",
+      "stage-shipped"
+    ]
+  },
+  {
+    "id": "wf-ortho-retainer-002",
+    "labId": "lab-002",
+    "name": "Essix Retainer",
+    "category": "Orthodontics",
+    "isDefault": false,
+    "description": "Thermoformed over printed model.",
+    "stages": [
+      "stage-new",
+      "stage-received",
+      "stage-model",
+      "stage-processing",
+      "stage-finishing",
+      "stage-qc",
+      "stage-shipped"
+    ]
+  },
+  {
+    "id": "wf-repair-001",
+    "labId": "lab-001",
+    "name": "Denture Repair / Reline",
+    "category": "Repairs",
+    "isDefault": true,
+    "description": "Standard repair workflow.",
+    "stages": [
+      "stage-new",
+      "stage-received",
+      "stage-processing",
+      "stage-finishing",
+      "stage-qc",
+      "stage-shipped"
+    ]
+  }
+]

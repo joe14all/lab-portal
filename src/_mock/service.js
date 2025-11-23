@@ -20,6 +20,7 @@ import {
   payments,
   routes,
   pickups,
+  workflows,
 } from "./index";
 
 // --- 1. HELPER: LATENCY SIMULATION ---
@@ -126,6 +127,9 @@ const StageEntity = new MockEntity(caseStages, "stage");
 const FileEntity = new MockEntity(caseFiles, "file");
 const MessageEntity = new MockEntity(caseMessages, "message");
 
+// Settings / Workflows (NEW)
+const WorkflowEntity = new MockEntity(workflows, "workflow");
+
 // Production
 const MaterialEntity = new MockEntity(materials, "material");
 const BatchEntity = new MockEntity(batches, "batch");
@@ -160,16 +164,13 @@ export const MockService = {
       );
       if (!user) throw new Error("Invalid credentials");
 
-      // Mock Password Check (In real app, use bcrypt)
-      // For now, we accept any password for the mock user
-
       // Update stats
       const now = new Date().toISOString();
       await UserEntity.update(user.id, { lastLogin: now });
 
       // Log the action
       await LogEntity.create({
-        labId: user.memberships?.[0]?.labId || "unknown", // Default to first membership
+        labId: user.memberships?.[0]?.labId || "unknown",
         actorId: user.id,
         action: "LOGIN_SUCCESS",
         resource: "AUTH",
@@ -201,12 +202,11 @@ export const MockService = {
     files: FileEntity,
     messages: MessageEntity,
 
-    // Helper: Get full case details (Optional aggregate)
+    // Helper: Get full case details
     getFullCase: async (caseId) => {
       const caseData = await CaseEntity.getById(caseId);
       if (!caseData) return null;
 
-      // Parallel fetch for sub-resources
       const [files, messages] = await Promise.all([
         FileEntity.getAll({ caseId }),
         MessageEntity.getAll({ caseId }),
@@ -214,6 +214,11 @@ export const MockService = {
 
       return { ...caseData, files, messages };
     },
+  },
+
+  // Settings
+  settings: {
+    workflows: WorkflowEntity,
   },
 
   // Production / Manufacturing

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useLab, useAuth } from '../../../contexts';
-import Modal from '../../common/Modal'; // Imported generic Modal
+import Modal from '../../common/Modal'; 
 import { 
   IconCheck, 
   IconDrill, 
@@ -11,7 +11,8 @@ import {
   IconTooth,
   IconTruck,
   IconFire, 
-  IconLayers
+  IconLayers,
+  IconClose
 } from '../../../layouts/components/LabIcons';
 import styles from './CaseDetailStepper.module.css';
 
@@ -27,10 +28,11 @@ const getStageIcon = (stageId) => {
   if (stageId.includes('finishing')) return <IconMicroscope width="16" height="16" />;
   if (stageId.includes('qc')) return <IconCheck width="16" height="16" />;
   if (stageId.includes('shipped')) return <IconTruck width="16" height="16" />;
+  if (stageId.includes('tryin')) return <IconTooth width="16" height="16" />; // Try-in Icon
   return null;
 };
 
-// --- WORKFLOW DEFINITIONS ---
+// --- FALLBACK WORKFLOW DEFINITIONS ---
 const WORKFLOWS = {
   REMOVABLE: ['stage-new', 'stage-received', 'stage-model', 'stage-waxup', 'stage-processing', 'stage-finishing', 'stage-qc', 'stage-shipped'],
   CASTING: ['stage-new', 'stage-received', 'stage-model', 'stage-waxup', 'stage-casting', 'stage-finishing', 'stage-qc', 'stage-shipped'],
@@ -52,24 +54,46 @@ const detectWorkflow = (activeCase) => {
 };
 
 const CaseDetailStepper = ({ activeCase, stages }) => {
-  const { updateCaseStatus } = useLab();
+  const { updateCaseStatus, workflows } = useLab(); 
   const { hasAnyPermission } = useAuth();
   const [showHoldModal, setShowHoldModal] = useState(false);
 
   const currentStatus = activeCase?.status;
   const isHold = currentStatus === 'stage-hold';
 
-  const workflowKey = useMemo(() => detectWorkflow(activeCase), [activeCase]);
-  const relevantStageIds = WORKFLOWS[workflowKey];
+  // 1. Determine Active Workflow (Dynamic or Fallback)
+  const activeWorkflow = useMemo(() => {
+    // Try to find workflow ID from the first unit
+    const wfId = activeCase.units?.[0]?.workflowId;
+    if (wfId && workflows) {
+      return workflows.find(w => w.id === wfId);
+    }
+    return null; 
+  }, [activeCase, workflows]);
 
+  // 2. Calculate Display Stages based on Workflow
   const displayStages = useMemo(() => {
-    const filtered = stages.filter(s => relevantStageIds.includes(s.id));
-    return filtered.sort((a, b) => {
-      return relevantStageIds.indexOf(a.id) - relevantStageIds.indexOf(b.id);
-    });
-  }, [stages, relevantStageIds]);
+    let stageIds = [];
 
-  // Logic to determine where the Hold Badge appears
+    if (activeWorkflow) {
+      // Use the dynamic workflow steps from settings
+      stageIds = activeWorkflow.stages;
+    } else {
+      // Fallback to legacy hardcoded logic
+      const workflowKey = detectWorkflow(activeCase);
+      stageIds = WORKFLOWS[workflowKey];
+    }
+
+    // Filter system stages to match the ID list
+    const filtered = stages.filter(s => stageIds.includes(s.id));
+    
+    // Sort by the order defined in the workflow list (Source of Truth)
+    return filtered.sort((a, b) => {
+      return stageIds.indexOf(a.id) - stageIds.indexOf(b.id);
+    });
+  }, [stages, activeWorkflow, activeCase]);
+
+  // 3. Determine Active Index / Hold Replacement Logic
   const holdTargetStageId = activeCase.heldAtStageId || 'stage-design'; 
   
   const activeIndex = isHold 
@@ -79,11 +103,14 @@ const CaseDetailStepper = ({ activeCase, stages }) => {
   const safeActiveIndex = activeIndex === -1 ? 1 : activeIndex;
   const canEditStatus = hasAnyPermission(['ALL_ACCESS', 'CASE_MANAGE', 'CASE_EDIT_PRODUCTION']);
 
+  // --- Handlers ---
   const handleStepClick = (stage, index) => {
+    // Hold Badge Interaction
     if (isHold && index === safeActiveIndex) {
       setShowHoldModal(true);
       return;
     }
+
     if (!canEditStatus) return;
     if (stage.id === currentStatus) return;
 
@@ -114,6 +141,8 @@ const CaseDetailStepper = ({ activeCase, stages }) => {
           {displayStages.map((stage, index) => {
             const stateClass = getStepStateClass(index);
             const isCompleted = stateClass.includes(styles.completed);
+            
+            // Logic: Show Hold Badge ONLY on the active step if case is held
             const showHoldBadge = isHold && index === safeActiveIndex;
 
             return (
@@ -137,14 +166,16 @@ const CaseDetailStepper = ({ activeCase, stages }) => {
                     )}
                   </div>
                 )}
-                <span className={styles.stepLabel}>{stage.label}</span>
+                <span className={`${styles.stepLabel} ${showHoldBadge ? styles.labelHold : ''}`}>
+                  {stage.label}
+                </span>
               </div>
             );
           })}
         </div>
       </section>
 
-      {/* --- REUSABLE MODAL --- */}
+      {/* --- HOLD REASON MODAL --- */}
       <Modal
         isOpen={showHoldModal}
         onClose={() => setShowHoldModal(false)}
