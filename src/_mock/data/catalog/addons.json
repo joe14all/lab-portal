@@ -1,6 +1,7 @@
 [
   {
     "id": "addon-margin-porc",
+    "labId": "lab-001",
     "name": "Porcelain Butt Margin",
     "applicableProducts": ["prod-pfm"],
     "defaultPrice": 15.00,
@@ -8,6 +9,7 @@
   },
   {
     "id": "addon-anodize",
+    "labId": "lab-002",
     "name": "Gold Hue Anodization",
     "applicableProducts": ["prod-imp-custom", "prod-imp-screw"],
     "defaultPrice": 25.00,
@@ -15,13 +17,23 @@
   },
   {
     "id": "addon-premium-teeth",
+    "labId": "lab-001",
     "name": "Premium Teeth Upgrade (Phonares)",
-    "applicableProducts": ["prod-denture-comp", "prod-partial-cast"],
+    "applicableProducts": ["prod-denture-comp"],
+    "defaultPrice": 40.00,
+    "currency": "USD"
+  },
+  {
+    "id": "addon-premium-teeth-002",
+    "labId": "lab-002",
+    "name": "Premium Teeth Upgrade (Phonares)",
+    "applicableProducts": ["prod-partial-cast"],
     "defaultPrice": 40.00,
     "currency": "USD"
   },
   {
     "id": "addon-mesh-reinforce",
+    "labId": "lab-001",
     "name": "Metal Mesh Reinforcement",
     "applicableProducts": ["prod-denture-comp"],
     "defaultPrice": 35.00,
@@ -29,13 +41,23 @@
   },
   {
     "id": "addon-soft-liner",
+    "labId": "lab-001",
     "name": "Soft Liner (Processed)",
-    "applicableProducts": ["prod-denture-comp", "prod-partial-cast"],
+    "applicableProducts": ["prod-denture-comp"],
+    "defaultPrice": 45.00,
+    "currency": "USD"
+  },
+  {
+    "id": "addon-soft-liner-002",
+    "labId": "lab-002",
+    "name": "Soft Liner (Processed)",
+    "applicableProducts": ["prod-partial-cast"],
     "defaultPrice": 45.00,
     "currency": "USD"
   },
   {
     "id": "addon-alloy-high-noble",
+    "labId": "lab-001",
     "name": "High Noble Alloy Upgrade",
     "applicableProducts": ["prod-pfm", "prod-gold-full"],
     "defaultPrice": 85.00,
@@ -43,6 +65,7 @@
   },
   {
     "id": "addon-clear-palate",
+    "labId": "lab-001",
     "name": "Clear Palate",
     "applicableProducts": ["prod-denture-comp"],
     "defaultPrice": 25.00,
@@ -50,6 +73,7 @@
   },
   {
     "id": "addon-ortho-color",
+    "labId": "lab-002",
     "name": "Custom Color / Glitter",
     "applicableProducts": ["prod-nightguard", "prod-essix"],
     "defaultPrice": 10.00,

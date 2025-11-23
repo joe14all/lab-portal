@@ -1,0 +1,44 @@
+[
+  {
+    "id": "lab-001",
+    "name": "JS Dental Laboratory",
+    "type": "Full Service",
+    "address": {
+      "line1": "123 Lab Street",
+      "city": "Tech City",
+      "state": "CA",
+      "zip": "90210"
+    },
+    "contact": {
+      "email": "support@jslab.com",
+      "phone": "+15551234567"
+    },
+    "settings": {
+      "currency": "USD",
+      "timezone": "America/Los_Angeles",
+      "features": ["CAD", "Milling", "Printing"]
+    },
+    "isActive": true
+  },
+  {
+    "id": "lab-002",
+    "name": "Elite Ortho Specialists",
+    "type": "Orthodontic",
+    "address": {
+      "line1": "88 Braces Blvd",
+      "city": "Smile Valley",
+      "state": "TX",
+      "zip": "75001"
+    },
+    "contact": {
+      "email": "info@eliteortho.com",
+      "phone": "+15559876543"
+    },
+    "settings": {
+      "currency": "USD",
+      "timezone": "America/Chicago",
+      "features": ["Thermoforming", "Printing"]
+    },
+    "isActive": true
+  }
+]

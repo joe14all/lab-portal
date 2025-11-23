@@ -3,17 +3,19 @@
     "id": "user-admin-01",
     "email": "admin@jslab.com",
     "passwordHash": "bcrypt_hash_placeholder",
-    "roleId": "role-admin",
+    "memberships": [
+      { "labId": "lab-001", "roleId": "role-admin", "isDefault": true }
+    ],
     "profile": {
       "firstName": "Joseph",
-      "lastName": "Admin",
+      "lastName": "Shenouda",
       "phone": "+15550001111",
       "avatarUrl": "/assets/avatars/admin.jpg",
       "jobTitle": "Owner"
     },
     "status": "Active",
     "preferences": {
-      "theme": "dark",
+      "theme": "light",
       "notifications": { "email": true, "sms": true }
     },
     "lastLogin": "2025-11-20T08:00:00Z"
@@ -21,12 +23,18 @@
   {
     "id": "user-tech-01",
     "email": "sarah.cad@jslab.com",
-    "roleId": "role-tech-cad",
+    "memberships": [
+      { 
+        "labId": "lab-001", 
+        "roleId": "role-lead-ceram-001", 
+        "isDefault": true 
+      }
+    ],
     "profile": {
       "firstName": "Sarah",
       "lastName": "Designs",
       "avatarUrl": null,
-      "jobTitle": "Senior CAD Tech"
+      "jobTitle": "Lead Ceramist"
     },
     "status": "Active",
     "preferences": { "theme": "light" },
@@ -35,7 +43,9 @@
   {
     "id": "user-driver-01",
     "email": "mike.wheels@jslab.com",
-    "roleId": "role-driver",
+    "memberships": [
+      { "labId": "lab-001", "roleId": "role-driver", "isDefault": true }
+    ],
     "profile": {
       "firstName": "Mike",
       "lastName": "Wheels",
@@ -45,10 +55,40 @@
     "lastLogin": "2025-11-20T07:30:00Z"
   },
   {
+    "id": "user-ortho-admin-02",
+    "email": "manager@eliteortho.com",
+    "memberships": [
+      { "labId": "lab-002", "roleId": "role-manager", "isDefault": true }
+    ],
+    "profile": {
+      "firstName": "Karen",
+      "lastName": "Ortho",
+      "jobTitle": "Lab Manager"
+    },
+    "status": "Active",
+    "lastLogin": "2025-11-21T09:00:00Z"
+  },
+  {
+    "id": "user-super-consultant",
+    "email": "consultant@dental.com",
+    "memberships": [
+      { "labId": "lab-001", "roleId": "role-manager", "isDefault": true },
+      { "labId": "lab-002", "roleId": "role-tech-cad", "isDefault": false }
+    ],
+    "profile": {
+      "firstName": "Alex",
+      "lastName": "Consultant",
+      "jobTitle": "Multi-Lab Specialist"
+    },
+    "status": "Active",
+    "lastLogin": "2025-11-21T10:00:00Z"
+  },
+  {
     "id": "user-doc-01",
     "email": "dr.connor@clinic001.com",
-    "roleId": "role-client",
-    "clinicId": "clinic-001", 
+    "memberships": [
+      { "labId": "lab-001", "roleId": "role-client", "clinicId": "clinic-001", "isDefault": true }
+    ],
     "profile": {
       "firstName": "Sarah",
       "lastName": "Connor",

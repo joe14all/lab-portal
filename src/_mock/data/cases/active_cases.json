@@ -1,6 +1,7 @@
 [
   {
     "id": "case-5001",
+    "labId": "lab-001",
     "caseNumber": "2025-1001",
     "clinicId": "clinic-001",
     "doctorId": "doc-001",
@@ -39,6 +40,7 @@
   },
   {
     "id": "case-5002",
+    "labId": "lab-001",
     "caseNumber": "2025-1002",
     "clinicId": "clinic-001",
     "doctorId": "doc-001",
@@ -72,6 +74,7 @@
   },
   {
     "id": "case-5003",
+    "labId": "lab-002",
     "caseNumber": "2025-0998",
     "clinicId": "clinic-005",
     "doctorId": "user-doc-01",
@@ -106,6 +109,7 @@
   },
   {
     "id": "case-5004",
+    "labId": "lab-001",
     "caseNumber": "2025-1004",
     "clinicId": "clinic-001",
     "doctorId": "doc-002",
@@ -142,6 +146,7 @@
   },
   {
     "id": "case-5005",
+    "labId": "lab-002",
     "caseNumber": "2025-1005",
     "clinicId": "clinic-005",
     "doctorId": "doc-001",
@@ -177,6 +182,7 @@
   },
   {
     "id": "case-5006",
+    "labId": "lab-001",
     "caseNumber": "2025-1006",
     "clinicId": "clinic-001",
     "doctorId": "doc-002",
@@ -212,6 +218,7 @@
   },
   {
     "id": "case-5007",
+    "labId": "lab-001",
     "caseNumber": "2025-1007",
     "clinicId": "clinic-001",
     "doctorId": "doc-001",
@@ -262,6 +269,7 @@
   },
   {
     "id": "case-5008",
+    "labId": "lab-002",
     "caseNumber": "2025-1008",
     "clinicId": "clinic-005",
     "doctorId": "doc-001",

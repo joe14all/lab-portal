@@ -1,6 +1,7 @@
 [
   {
     "id": "file-101",
+    "labId": "lab-001",
     "caseId": "case-5001",
     "uploaderId": "user-doc-01",
     "category": "INPUT_SCAN",
@@ -15,6 +16,7 @@
   },
   {
     "id": "file-102",
+    "labId": "lab-001",
     "caseId": "case-5001",
     "uploaderId": "user-doc-01",
     "category": "INPUT_SCAN",
@@ -28,6 +30,7 @@
   },
   {
     "id": "file-103",
+    "labId": "lab-001",
     "caseId": "case-5001",
     "uploaderId": "user-doc-01",
     "category": "REFERENCE",
@@ -41,6 +44,7 @@
   },
   {
     "id": "file-201",
+    "labId": "lab-001",
     "caseId": "case-5002",
     "uploaderId": "user-doc-01",
     "category": "INPUT_PHOTO",
@@ -54,6 +58,7 @@
   },
   {
     "id": "file-design-v2-5001",
+    "labId": "lab-001",
     "caseId": "case-5001",
     "unitId": "unit-5001-14",
     "uploaderId": "user-tech-01",
@@ -70,6 +75,7 @@
   },
   {
     "id": "file-401",
+    "labId": "lab-001",
     "caseId": "case-5004",
     "uploaderId": "user-doc-02",
     "category": "REFERENCE",
@@ -84,6 +90,7 @@
   },
   {
     "id": "file-501",
+    "labId": "lab-002",
     "caseId": "case-5005",
     "uploaderId": "user-doc-01",
     "category": "INPUT_SCAN",
@@ -98,6 +105,7 @@
   },
   {
     "id": "file-502",
+    "labId": "lab-002",
     "caseId": "case-5005",
     "uploaderId": "user-doc-01",
     "category": "INPUT_SCAN",
@@ -111,6 +119,7 @@
   },
   {
     "id": "file-601",
+    "labId": "lab-001",
     "caseId": "case-5006",
     "uploaderId": "user-doc-02",
     "category": "INPUT_SCAN",
@@ -124,6 +133,7 @@
   },
   {
     "id": "file-701",
+    "labId": "lab-001",
     "caseId": "case-5007",
     "uploaderId": "user-doc-01",
     "category": "INPUT_SCAN",
@@ -138,6 +148,7 @@
   },
   {
     "id": "file-801",
+    "labId": "lab-002",
     "caseId": "case-5008",
     "uploaderId": "user-doc-01",
     "category": "INPUT_SCAN",

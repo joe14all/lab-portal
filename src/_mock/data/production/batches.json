@@ -1,22 +1,41 @@
 [
   {
     "id": "batch-mill-900",
+    "labId": "lab-001",
     "type": "Milling",
     "machineId": "mill-01",
+    "materialId": "mat-zirc-A2",
+    "operatorId": "user-tech-01",
+    "status": "Scheduled",
+    "startTime": null,
+    "estimatedEndTime": null,
+    "nestingFileUrl": "/production/nc-files/900.nc",
+    "caseIds": ["case-5001"],
+    "materialConsumed": {
+      "units": 1,
+      "percentage": 5
+    }
+  },
+  {
+    "id": "batch-mill-905",
+    "labId": "lab-002",
+    "type": "Milling",
+    "machineId": "mill-02",
     "materialId": "mat-zirc-A2",
     "operatorId": "user-tech-01",
     "status": "InProgress",
     "startTime": "2025-11-20T09:00:00Z",
     "estimatedEndTime": "2025-11-20T11:30:00Z",
-    "nestingFileUrl": "/production/nc-files/900.nc",
-    "caseIds": ["case-5001", "case-5005", "case-5012"],
+    "nestingFileUrl": "/production/nc-files/905.nc",
+    "caseIds": ["case-5005"],
     "materialConsumed": {
-      "units": 3,
-      "percentage": 15
+      "units": 1,
+      "percentage": 8
     }
   },
   {
     "id": "batch-print-101",
+    "labId": "lab-001",
     "type": "Printing",
     "machineId": "printer-01",
     "materialId": "mat-resin-model",
@@ -24,13 +43,29 @@
     "status": "Completed",
     "startTime": "2025-11-19T14:00:00Z",
     "endTime": "2025-11-19T16:00:00Z",
-    "caseIds": ["case-5002", "case-5003", "case-5006"],
+    "caseIds": ["case-5002", "case-5006"],
     "materialConsumed": {
-      "volumeMl": 180
+      "volumeMl": 120
+    }
+  },
+  {
+    "id": "batch-print-102",
+    "labId": "lab-002",
+    "type": "Printing",
+    "machineId": "printer-02",
+    "materialId": "mat-resin-model",
+    "operatorId": "user-tech-01",
+    "status": "Completed",
+    "startTime": "2025-11-15T09:00:00Z",
+    "endTime": "2025-11-15T11:00:00Z",
+    "caseIds": ["case-5003"],
+    "materialConsumed": {
+      "volumeMl": 60
     }
   },
   {
     "id": "batch-cast-202",
+    "labId": "lab-002",
     "type": "Casting",
     "machineId": "cast-induct-01",
     "materialId": "mat-chrome-cobalt",
@@ -45,6 +80,7 @@
   },
   {
     "id": "batch-press-404",
+    "labId": "lab-001",
     "type": "Pressing",
     "machineId": "furnace-press-01",
     "materialId": "mat-emax-ingot-BL1",

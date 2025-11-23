@@ -1,6 +1,7 @@
 [
   {
     "id": "mat-zirc-A2",
+    "labId": "lab-001",
     "name": "Zirconia Disc - 98mm - Shade A2",
     "type": "Disc",
     "manufacturer": "Aidite",
@@ -14,7 +15,23 @@
     "status": "InStock"
   },
   {
+    "id": "mat-zirc-A2-002",
+    "labId": "lab-002",
+    "name": "Zirconia Disc - 98mm - Shade A2",
+    "type": "Disc",
+    "manufacturer": "Aidite",
+    "sku": "AID-Z-A2-98-14",
+    "lotNumber": "LOT-L2-77",
+    "expiryDate": "2026-08-10",
+    "stockLevel": 5,
+    "reorderThreshold": 3,
+    "unitCost": 45.00,
+    "currency": "USD",
+    "status": "InStock"
+  },
+  {
     "id": "mat-emax-ingot-BL1",
+    "labId": "lab-001",
     "name": "IPS e.max Press Ingot - BL1",
     "type": "Ingot",
     "manufacturer": "Ivoclar",
@@ -29,6 +46,7 @@
   },
   {
     "id": "mat-resin-model",
+    "labId": "lab-001",
     "name": "Model Resin - Grey",
     "type": "Liquid",
     "manufacturer": "Formlabs",
@@ -43,7 +61,24 @@
     "status": "ReorderNow"
   },
   {
+    "id": "mat-resin-model-002",
+    "labId": "lab-002",
+    "name": "Model Resin - Grey",
+    "type": "Liquid",
+    "manufacturer": "SprintRay",
+    "sku": "SR-MOD-GR",
+    "lotNumber": "LOT-SR-99",
+    "expiryDate": "2025-12-01",
+    "stockLevel": 4,
+    "unit": "Liters",
+    "reorderThreshold": 1,
+    "unitCost": 160.00,
+    "currency": "USD",
+    "status": "InStock"
+  },
+  {
     "id": "mat-acrylic-base",
+    "labId": "lab-001",
     "name": "High Impact Denture Acrylic - Pink",
     "type": "Powder/Liquid",
     "manufacturer": "Lucitone",
@@ -59,6 +94,7 @@
   },
   {
     "id": "mat-chrome-cobalt",
+    "labId": "lab-002",
     "name": "Chrome Cobalt Alloy",
     "type": "Ingot",
     "manufacturer": "Bego",
@@ -74,6 +110,7 @@
   },
   {
     "id": "mat-gold-alloy",
+    "labId": "lab-001",
     "name": "High Noble Gold Alloy (52%)",
     "type": "Ingot",
     "manufacturer": "Argen",
@@ -89,6 +126,7 @@
   },
   {
     "id": "mat-thermo-disk",
+    "labId": "lab-001",
     "name": "Hard/Soft Ortho Sheet 2mm",
     "type": "Sheet",
     "manufacturer": "Erkodent",
@@ -103,7 +141,24 @@
     "status": "InStock"
   },
   {
+    "id": "mat-thermo-disk-002",
+    "labId": "lab-002",
+    "name": "Hard/Soft Ortho Sheet 2mm",
+    "type": "Sheet",
+    "manufacturer": "Erkodent",
+    "sku": "ERK-HS-20",
+    "lotNumber": "LOT-L2-88",
+    "expiryDate": "2027-04-01",
+    "stockLevel": 100,
+    "unit": "Sheets",
+    "reorderThreshold": 30,
+    "unitCost": 4.50,
+    "currency": "USD",
+    "status": "InStock"
+  },
+  {
     "id": "mat-stone-type4",
+    "labId": "lab-001",
     "name": "Die Stone Type IV - Green",
     "type": "Powder",
     "manufacturer": "Whip Mix",
@@ -119,6 +174,7 @@
   },
   {
     "id": "mat-wax-base",
+    "labId": "lab-001",
     "name": "Baseplate Wax - Pink",
     "type": "Sheet",
     "manufacturer": "Keystone",

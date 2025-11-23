@@ -1,16 +1,12 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
-// import { useAuth } from './AuthContext'; // Needed for Audit logging (future)
-
-// --- Mock Data Imports (Updated Structure) ---
-import routesData from '../_mock/data/logistics/routes.json'; 
-import pickupsData from '../_mock/data/logistics/pickups.json'; 
+import { MockService } from '../_mock/service';
+import { useAuth } from './AuthContext';
 
 const LogisticsContext = createContext(null);
 
 export const LogisticsProvider = ({ children }) => {
-  // const { user } = useAuth(); 
+  const { activeLab } = useAuth();
 
   // --- State ---
   const [routes, setRoutes] = useState([]);
@@ -22,11 +18,18 @@ export const LogisticsProvider = ({ children }) => {
   // --- Initialize Data ---
   useEffect(() => {
     const initData = async () => {
+      if (!activeLab?.id) return;
+
       setLoading(true);
       try {
-        await new Promise(resolve => setTimeout(resolve, 600)); // Simulate latency
-        setRoutes(routesData);
-        setPickups(pickupsData);
+        const [fetchedRoutes, fetchedPickups] = await Promise.all([
+          MockService.logistics.routes.getAll({ labId: activeLab.id }),
+          MockService.logistics.pickups.getAll({ labId: activeLab.id })
+        ]);
+        
+        setRoutes(fetchedRoutes);
+        setPickups(fetchedPickups);
+        setError(null);
       } catch (err) {
         console.error("Failed to load Logistics data", err);
         setError("Failed to load Logistics data");
@@ -35,74 +38,71 @@ export const LogisticsProvider = ({ children }) => {
       }
     };
     initData();
-  }, []);
-
-  // --- Helper for simulated API calls ---
-  const simulateApi = (callback, delay = 500) => {
-    return new Promise((resolve, reject) => {
-      setLoading(true);
-      setError(null);
-      setTimeout(() => {
-        try {
-          const result = callback();
-          resolve(result);
-        } catch (err) {
-          console.error("Mock API Error:", err.message);
-          setError(err.message);
-          reject(err);
-        } finally {
-          setLoading(false);
-        }
-      }, delay);
-    });
-  };
+  }, [activeLab]);
 
   // ============================================================
-  // 1. ROUTE HANDLERS (Driver / Manager)
+  // 1. ROUTE HANDLERS
   // ============================================================
 
   /**
-   * (UPDATE) Updates the status of a specific stop on a route (e.g., Delivery completed)
-   * This logic is critical for triggering final case status updates (Delivered)
+   * (UPDATE) Updates the status of a specific stop on a route.
+   * Logic: We must find the route, map over its stops to update the specific one,
+   * and then send the entire updated 'stops' array to the backend service.
    */
   const updateRouteStopStatus = useCallback(async (routeId, stopId, updates) => {
-    return await simulateApi(() => {
-        setRoutes(prevRoutes => prevRoutes.map(route => {
-            if (route.id === routeId) {
-                const updatedStops = route.stops.map(stop => {
-                    if (stop.id === stopId) {
-                        return { 
-                            ...stop, 
-                            ...updates,
-                            completedAt: updates.status === 'Completed' ? new Date().toISOString() : updates.completedAt || null
-                        };
-                    }
-                    return stop;
-                });
-                return { ...route, stops: updatedStops };
-            }
-            return route;
-        }));
-        // NOTE: In a real system, completing a Delivery Stop here would trigger a 
-        // `LabContext.updateCaseStatus` call to move associated units to 'stage-delivered'.
-    });
-  }, []);
+    try {
+      // 1. Find current route state to get existing stops
+      const currentRoute = routes.find(r => r.id === routeId);
+      if (!currentRoute) throw new Error("Route not found locally");
+
+      // 2. Calculate new stops array
+      const updatedStops = currentRoute.stops.map(stop => {
+        if (stop.id === stopId) {
+          return { 
+            ...stop, 
+            ...updates,
+            completedAt: updates.status === 'Completed' ? new Date().toISOString() : (updates.completedAt || null)
+          };
+        }
+        return stop;
+      });
+
+      // 3. Persist to Service
+      const updatedRoute = await MockService.logistics.routes.update(routeId, { 
+        stops: updatedStops 
+      });
+
+      // 4. Update State
+      setRoutes(prevRoutes => prevRoutes.map(r => r.id === routeId ? updatedRoute : r));
+      
+      return updatedRoute;
+    } catch (err) {
+      console.error("Failed to update route stop", err);
+      throw err;
+    }
+  }, [routes]);
 
   /**
-   * (CREATE) Creates a new pickup request (usually from Client Portal)
+   * (CREATE) Creates a new pickup request
    */
   const createPickupRequest = useCallback(async (requestData) => {
-    return await simulateApi(() => {
-      const newPickup = {
+    if (!activeLab) return;
+
+    try {
+      const newPickup = await MockService.logistics.pickups.create({
         ...requestData,
-        id: `pickup-${Date.now()}`,
+        labId: activeLab.id,
         status: 'Pending',
         requestTime: new Date().toISOString()
-      };
-      setPickups(prev => [...prev, newPickup]);
+      });
+
+      setPickups(prev => [newPickup, ...prev]);
       return newPickup;
-    });
-  }, []);
+    } catch (err) {
+      console.error("Failed to create pickup request", err);
+      throw err;
+    }
+  }, [activeLab]);
 
 
   // ============================================================
@@ -119,8 +119,10 @@ export const LogisticsProvider = ({ children }) => {
     // Actions
     updateRouteStopStatus,
     createPickupRequest,
-    // Future actions: assignDriverToRoute, optimizeRoutes
-  }), [routes, pickups, loading, error, updateRouteStopStatus, createPickupRequest]);
+  }), [
+    routes, pickups, loading, error, 
+    updateRouteStopStatus, createPickupRequest
+  ]);
 
   return (
     <LogisticsContext.Provider value={value}>

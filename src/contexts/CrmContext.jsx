@@ -1,38 +1,52 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
-
-// --- Mock Data Imports ---
-import clinicsData from '../_mock/data/crm/clinics.json';
-import doctorsData from '../_mock/data/crm/doctors.json';
-import priceListsData from '../_mock/data/crm/price_lists.json';
-// CATALOG DATA INTEGRATED HERE
-import productsData from '../_mock/data/catalog/products.json';
-import addonsData from '../_mock/data/catalog/addons.json';
+import { MockService } from '../_mock/service';
+import { useAuth } from './AuthContext';
 
 const CrmContext = createContext(null);
 
 export const CrmProvider = ({ children }) => {
+  const { activeLab } = useAuth(); // Get context for Multi-Tenancy
+
   // --- State ---
   const [clinics, setClinics] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [priceLists, setPriceLists] = useState([]);
-  const [products, setProducts] = useState([]); // CATALOG
-  const [addons, setAddons] = useState([]);     // CATALOG
+  const [products, setProducts] = useState([]); 
+  const [addons, setAddons] = useState([]);     
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // --- Initialize Data ---
+  // --- Load Data (Reactive to Lab Switch) ---
   useEffect(() => {
-    const initData = async () => {
+    const loadData = async () => {
+      // Don't fetch if no lab context is active (e.g. not logged in)
+      if (!activeLab?.id) return; 
+
       setLoading(true);
       try {
-        await new Promise(resolve => setTimeout(resolve, 600)); 
-        setClinics(clinicsData);
-        setDoctors(doctorsData);
-        setPriceLists(priceListsData);
-        setProducts(productsData); // LOADED
-        setAddons(addonsData);     // LOADED
+        // Fetch all resources filtered by the current Lab ID
+        const [
+          fetchedClinics, 
+          fetchedDoctors, 
+          fetchedPriceLists,
+          fetchedProducts,
+          fetchedAddons
+        ] = await Promise.all([
+          MockService.crm.clinics.getAll({ labId: activeLab.id }),
+          MockService.crm.doctors.getAll({ labId: activeLab.id }),
+          MockService.crm.priceLists.getAll({ labId: activeLab.id }),
+          MockService.catalog.products.getAll({ labId: activeLab.id }),
+          MockService.catalog.addons.getAll({ labId: activeLab.id })
+        ]);
+
+        setClinics(fetchedClinics);
+        setDoctors(fetchedDoctors);
+        setPriceLists(fetchedPriceLists);
+        setProducts(fetchedProducts);
+        setAddons(fetchedAddons);
+        setError(null);
       } catch (err) {
         console.error("Failed to load CRM data", err);
         setError("Failed to load CRM data");
@@ -40,28 +54,9 @@ export const CrmProvider = ({ children }) => {
         setLoading(false);
       }
     };
-    initData();
-  }, []);
 
-  // --- Helper for simulated API calls ---
-  const simulateApi = (callback, delay = 500) => {
-    return new Promise((resolve, reject) => {
-      setLoading(true);
-      setError(null);
-      setTimeout(() => {
-        try {
-          const result = callback();
-          resolve(result);
-        } catch (err) {
-          console.error("Mock API Error:", err.message);
-          setError(err.message);
-          reject(err);
-        } finally {
-          setLoading(false);
-        }
-      }, delay);
-    });
-  };
+    loadData();
+  }, [activeLab]); // Re-run whenever the user switches labs
 
   // ============================================================
   // 1. CLINIC HANDLERS
@@ -72,31 +67,30 @@ export const CrmProvider = ({ children }) => {
   }, [clinics]);
 
   const addClinic = useCallback(async (newClinicData) => {
-    return await simulateApi(() => {
-      const newClinic = {
+    if (!activeLab) return;
+    try {
+      const newClinic = await MockService.crm.clinics.create({
         ...newClinicData,
-        id: `clinic-${Date.now()}`,
-        status: 'Active',
-        systemInfo: { createdAt: new Date().toISOString() }
-      };
-      setClinics(prev => [...prev, newClinic]);
+        labId: activeLab.id, // Enforce tenant isolation
+        status: 'Active'
+      });
+      setClinics(prev => [newClinic, ...prev]); // Optimistic update
       return newClinic;
-    });
-  }, []);
+    } catch (err) {
+      console.error("Failed to add clinic", err);
+      throw err;
+    }
+  }, [activeLab]);
 
   const updateClinic = useCallback(async (clinicId, updates) => {
-    return await simulateApi(() => {
-      let updatedClinic = null;
-      setClinics(prev => prev.map(clinic => {
-        if (clinic.id === clinicId) {
-          updatedClinic = { ...clinic, ...updates };
-          return updatedClinic;
-        }
-        return clinic;
-      }));
-      if (!updatedClinic) throw new Error("Clinic not found");
+    try {
+      const updatedClinic = await MockService.crm.clinics.update(clinicId, updates);
+      setClinics(prev => prev.map(c => c.id === clinicId ? updatedClinic : c));
       return updatedClinic;
-    });
+    } catch (err) {
+      console.error("Failed to update clinic", err);
+      throw err;
+    }
   }, []);
 
   // ============================================================
@@ -108,32 +102,42 @@ export const CrmProvider = ({ children }) => {
   }, [doctors]);
 
   const addDoctor = useCallback(async (clinicId, doctorData) => {
-    return await simulateApi(() => {
-      const newDoctor = {
+    if (!activeLab) return;
+    try {
+      const newDoctor = await MockService.crm.doctors.create({
         ...doctorData,
-        id: `doc-${Date.now()}`,
+        labId: activeLab.id,
         clinicId: clinicId,
         isActive: true
-      };
-      setDoctors(prev => [...prev, newDoctor]);
+      });
+      setDoctors(prev => [newDoctor, ...prev]);
       return newDoctor;
-    });
-  }, []);
+    } catch (err) {
+      console.error("Failed to add doctor", err);
+      throw err;
+    }
+  }, [activeLab]);
 
   const updateDoctor = useCallback(async (doctorId, updates) => {
-    return await simulateApi(() => {
-      setDoctors(prev => prev.map(doc => 
-        doc.id === doctorId ? { ...doc, ...updates } : doc
-      ));
-    });
+    try {
+      const updatedDoctor = await MockService.crm.doctors.update(doctorId, updates);
+      setDoctors(prev => prev.map(d => d.id === doctorId ? updatedDoctor : d));
+      return updatedDoctor;
+    } catch (err) {
+      console.error("Failed to update doctor", err);
+      throw err;
+    }
   }, []);
 
   const removeDoctor = useCallback(async (doctorId) => {
-    return await simulateApi(() => {
-      setDoctors(prev => prev.map(doc => 
-        doc.id === doctorId ? { ...doc, isActive: false } : doc
-      ));
-    });
+    try {
+      // Soft delete by setting isActive: false
+      const updatedDoctor = await MockService.crm.doctors.update(doctorId, { isActive: false });
+      setDoctors(prev => prev.map(d => d.id === doctorId ? updatedDoctor : d));
+    } catch (err) {
+      console.error("Failed to remove doctor", err);
+      throw err;
+    }
   }, []);
 
   // ============================================================
@@ -145,46 +149,55 @@ export const CrmProvider = ({ children }) => {
   }, [priceLists]);
 
   const createPriceList = useCallback(async (priceListData) => {
-    return await simulateApi(() => {
-      const newList = {
+    if (!activeLab) return;
+    try {
+      const newList = await MockService.crm.priceLists.create({
         ...priceListData,
-        id: `pl-${Date.now()}`,
+        labId: activeLab.id,
         items: priceListData.items || []
-      };
-      setPriceLists(prev => [...prev, newList]);
+      });
+      setPriceLists(prev => [newList, ...prev]);
       return newList;
-    });
-  }, []);
+    } catch (err) {
+      console.error("Failed to create price list", err);
+      throw err;
+    }
+  }, [activeLab]);
 
   const updatePriceList = useCallback(async (priceListId, updates) => {
-    return await simulateApi(() => {
-      setPriceLists(prev => prev.map(pl => 
-        pl.id === priceListId ? { ...pl, ...updates } : pl
-      ));
-    });
+    try {
+      const updatedList = await MockService.crm.priceLists.update(priceListId, updates);
+      setPriceLists(prev => prev.map(pl => pl.id === priceListId ? updatedList : pl));
+      return updatedList;
+    } catch (err) {
+      console.error("Failed to update price list", err);
+      throw err;
+    }
   }, []);
 
   // ============================================================
-  // 4. CATALOG HANDLERS (Used for dynamic pricing in CaseForm)
+  // 4. CATALOG HANDLERS
   // ============================================================
   
-  /**
-   * Calculates the price of a product for a given clinic.
-   */
   const calculateProductPrice = useCallback((productId, clinicId) => {
+    // 1. Find Clinic
     const clinic = clinics.find(c => c.id === clinicId);
     if (!clinic) return null;
 
+    // 2. Find Assigned Price List (or default if configured)
     const priceList = priceLists.find(pl => pl.id === clinic.priceListId);
-    if (!priceList) return products.find(p => p.id === productId)?.defaultPrice || null;
+    
+    // 3. Fallback to Base Product Price
+    const baseProduct = products.find(p => p.id === productId);
+    if (!priceList) return baseProduct?.defaultPrice || null; // Note: products json doesn't have defaultPrice yet, usually in Price List logic
 
+    // 4. Find Item in Price List
     const priceItem = priceList.items.find(item => item.productId === productId);
     
-    if (priceItem) {
-      return priceItem.price;
-    }
+    if (priceItem) return priceItem.price;
     
-    return products.find(p => p.id === productId)?.defaultPrice || null;
+    // If product not in specific list, maybe return 0 or handle differently
+    return 0; 
   }, [clinics, priceLists, products]);
 
 
@@ -197,28 +210,25 @@ export const CrmProvider = ({ children }) => {
     clinics,
     doctors,
     priceLists,
-    products, // EXPORTED CATALOG STATE
-    addons,   // EXPORTED CATALOG STATE
+    products,
+    addons,
     loading,
     error,
 
-    // Clinic Actions
+    // Actions
     getClinicById,
     addClinic,
     updateClinic,
 
-    // Doctor Actions
     getDoctorsByClinic,
     addDoctor,
     updateDoctor,
     removeDoctor,
 
-    // Price List Actions
     getPriceListById,
     createPriceList,
     updatePriceList,
     
-    // Catalog Actions
     calculateProductPrice
   }), [
     clinics, doctors, priceLists, products, addons, loading, error,

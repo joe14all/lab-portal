@@ -1,6 +1,7 @@
 [
   {
     "id": "doc-001",
+    "labId": "lab-001",
     "clinicId": "clinic-001",
     "userId": "user-doc-01", 
     "firstName": "Sarah",
@@ -19,6 +20,7 @@
   },
   {
     "id": "doc-002",
+    "labId": "lab-001",
     "clinicId": "clinic-001",
     "firstName": "Kyle",
     "lastName": "Reese",
@@ -33,6 +35,7 @@
   },
   {
     "id": "doc-003",
+    "labId": "lab-002",
     "clinicId": "clinic-005",
     "firstName": "Robert",
     "lastName": "Brown",
@@ -47,6 +50,7 @@
   },
   {
     "id": "doc-004",
+    "labId": "lab-001",
     "clinicId": "clinic-002",
     "firstName": "Victor",
     "lastName": "Von Doom",
@@ -62,6 +66,7 @@
   },
   {
     "id": "doc-005",
+    "labId": "lab-001",
     "clinicId": "clinic-003",
     "firstName": "John",
     "lastName": "Doe",

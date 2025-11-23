@@ -1,6 +1,7 @@
 [
   {
     "id": "msg-1",
+    "labId": "lab-001",
     "caseId": "case-5002",
     "senderId": "user-tech-01",
     "senderName": "Sarah (CAD)",
@@ -12,6 +13,7 @@
   },
   {
     "id": "msg-2",
+    "labId": "lab-001",
     "caseId": "case-5002",
     "senderId": "user-doc-01",
     "senderName": "Dr. Sarah Connor",
@@ -23,6 +25,7 @@
   },
   {
     "id": "msg-3",
+    "labId": "lab-001",
     "caseId": "case-5001",
     "senderId": "user-tech-01",
     "senderName": "Sarah (CAD)",
@@ -34,6 +37,7 @@
   },
   {
     "id": "msg-4",
+    "labId": "lab-001",
     "caseId": "case-5004",
     "senderId": "user-doc-02",
     "senderName": "Dr. Kyle Reese",
@@ -45,6 +49,7 @@
   },
   {
     "id": "msg-5",
+    "labId": "lab-002",
     "caseId": "case-5005",
     "senderId": "user-tech-01",
     "senderName": "Sarah (CAD)",
@@ -56,6 +61,7 @@
   },
   {
     "id": "msg-6",
+    "labId": "lab-001",
     "caseId": "case-5007",
     "senderId": "user-manager-01",
     "senderName": "Joseph Admin",
@@ -67,6 +73,7 @@
   },
   {
     "id": "msg-7",
+    "labId": "lab-002",
     "caseId": "case-5008",
     "senderId": "user-tech-ceram",
     "senderName": "Mike (Ceramics)",

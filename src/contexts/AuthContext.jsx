@@ -1,65 +1,113 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-// In a real app, we would use a service adapter. 
-// For now, we import the JSON mock data directly to simulate the DB.
-import usersData from '../_mock/data/auth/users.json';
-import rolesData from '../_mock/data/auth/roles.json';
-// NEW IMPORT: Audit Logs
-import auditLogsData from '../_mock/data/auth/audit_logs.json'; 
+import { MockService } from '../_mock/service'; // Use the Service Adapter
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [activeLab, setActiveLab] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // NEW STATE: Audit Logs
   const [auditLogs, setAuditLogs] = useState([]); 
 
-  // --- 1. HELPER: Hydrate User with Role Permissions ---
-  const hydrateUser = useCallback((rawUser) => {
-    // Find the role definition to get permissions
-    const role = rolesData.find(r => r.id === rawUser.roleId);
-    
-    // Flatten permissions: Role permissions
-    const permissions = role ? role.permissions : [];
-    
-    const fullUser = {
-      ...rawUser,
-      roleName: role ? role.name : 'Unknown',
-      permissions: permissions,
-      // Add a convenience flag for super admins
-      isAdmin: permissions.includes('ALL_ACCESS'),
-    };
+  // --- 1. HELPER: Hydrate User with Contextual Permissions ---
+  // Now async because it fetches fresh data from the Service
+  const hydrateUser = useCallback(async (rawUser, targetLabId = null) => {
+    setLoading(true);
+    try {
+      // A. Determine Active Membership
+      let activeMembership;
+      if (targetLabId) {
+        activeMembership = rawUser.memberships.find(m => m.labId === targetLabId);
+      } else {
+        activeMembership = rawUser.memberships.find(m => m.isDefault) || rawUser.memberships[0];
+      }
 
-    setUser(fullUser);
-    setIsAuthenticated(true);
-    setError(null);
-  }, []);
+      if (!activeMembership) {
+        throw new Error("Access denied: No active lab membership found.");
+      }
 
-  // --- 2. INITIALIZE: Check for existing session & Load Audit Logs ---
+      // B. Fetch Contextual Data (Parallel for performance)
+      // We fetch the specific Role and Lab, plus all lists to map friendly names for the switcher
+      const [role, lab, allLabs, allRoles] = await Promise.all([
+        MockService.auth.roles.getById(activeMembership.roleId),
+        MockService.org.labs.getById(activeMembership.labId),
+        MockService.org.labs.getAll(),
+        MockService.auth.roles.getAll()
+      ]);
+
+      if (!role || !lab) throw new Error("Invalid membership configuration (Role or Lab missing).");
+
+      const permissions = role.permissions || [];
+
+      // C. Flatten User Object for the Session
+      const fullUser = {
+        ...rawUser,
+        // Active Context
+        labId: activeMembership.labId,
+        roleId: activeMembership.roleId,
+        clinicId: activeMembership.clinicId,
+        roleName: role.name,
+        permissions: permissions,
+        isAdmin: permissions.includes('ALL_ACCESS'),
+        
+        // Available Contexts (for UI Switcher)
+        availableLabs: rawUser.memberships.map(m => {
+          const l = allLabs.find(x => x.id === m.labId);
+          const r = allRoles.find(x => x.id === m.roleId);
+          return {
+            labId: m.labId,
+            labName: l ? l.name : m.labId,
+            roleName: r ? r.name : m.roleId
+          };
+        })
+      };
+
+      setUser(fullUser);
+      setActiveLab(lab);
+      setIsAuthenticated(true);
+      setError(null);
+    } catch (err) {
+      console.error("Hydration Failed:", err);
+      setError(err.message);
+      // Safety fallback: Logout if hydration fails completely
+      if (!user) {
+        localStorage.removeItem('lab_user_id');
+        localStorage.removeItem('lab_active_id');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []); // removed 'user' dependency to avoid loops, rely on rawUser arg
+
+  // --- 2. INITIALIZE ---
   useEffect(() => {
     const initAuth = async () => {
       setLoading(true);
-      // Simulate network latency for a "token validation" check
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Small delay to let Service initialize if needed
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       try {
         const storedUserId = localStorage.getItem('lab_user_id');
+        const storedLabId = localStorage.getItem('lab_active_id');
+
         if (storedUserId) {
-          const foundUser = usersData.find(u => u.id === storedUserId);
+          // Fetch fresh user data from DB
+          const foundUser = await MockService.auth.users.getById(storedUserId);
           if (foundUser) {
-            hydrateUser(foundUser);
+            await hydrateUser(foundUser, storedLabId);
           } else {
-            // User ID in local storage is invalid/stale/deleted
             localStorage.removeItem('lab_user_id');
+            localStorage.removeItem('lab_active_id');
           }
         }
         
-        // LOAD STATIC AUDIT LOGS
-        setAuditLogs(auditLogsData);
+        // Load logs (Optional: Filter by user privileges in real app)
+        const logs = await MockService.auth.logs.getAll();
+        setAuditLogs(logs);
 
       } catch (err) {
         console.error("Auth initialization failed", err);
@@ -72,29 +120,20 @@ export const AuthProvider = ({ children }) => {
   }, [hydrateUser]);
 
   // --- 3. ACTION: Login ---
-  const login = useCallback(async (email, password) => { // WRAPPED IN useCallback
+  const login = useCallback(async (email, password) => {
     setLoading(true);
     setError(null);
-    
-    // Simulate Network Delay
-    await new Promise(resolve => setTimeout(resolve, 800)); 
 
     try {
-      const foundUser = usersData.find(u => u.email.toLowerCase() === email.toLowerCase());
+      // Delegate to Service (Simulates network req + password check)
+      const foundUser = await MockService.auth.login(email, password);
       
-      if (!foundUser) {
-         throw new Error("Invalid email or password");
-      }
-      
-      // Simulate Audit Log creation (Backend would do this)
-      console.log(`[Audit] Login Success: User ${foundUser.id} at ${new Date().toISOString()}`);
-
-      // Persist session
+      // Persist
       localStorage.setItem('lab_user_id', foundUser.id);
       
-      // Update State
-      hydrateUser(foundUser);
-      setLoading(false);
+      // Hydrate Context
+      await hydrateUser(foundUser);
+      
       return { success: true };
 
     } catch (err) {
@@ -102,35 +141,52 @@ export const AuthProvider = ({ children }) => {
       setError(err.message);
       return { success: false, message: err.message };
     }
-  }, [hydrateUser]); // Dependency on hydrateUser
+  }, [hydrateUser]);
 
   // --- 4. ACTION: Logout ---
-  const logout = useCallback(async () => { // WRAPPED IN useCallback
-    // Simulate API call to invalidate token
+  const logout = useCallback(async () => {
+    setLoading(true);
     await new Promise(resolve => setTimeout(resolve, 300));
     
-    if (user) {
-       console.log(`[Audit] Logout: User ${user.id} at ${new Date().toISOString()}`);
-    }
-
     localStorage.removeItem('lab_user_id');
+    localStorage.removeItem('lab_active_id');
     setUser(null);
+    setActiveLab(null);
     setIsAuthenticated(false);
-  }, [user]); // Dependency on user
+    setLoading(false);
+  }, []);
 
-  // --- 5. ACTION: Update Profile/Preferences ---
-  const updateUser = useCallback(async (updates) => { // WRAPPED IN useCallback
-    // Simulate API Update
-    await new Promise(resolve => setTimeout(resolve, 500));
+  // --- 5. ACTION: Switch Lab ---
+  const switchLab = useCallback(async (newLabId) => {
+    if (!user) return;
+    
+    // We need to fetch the raw user again or use the current 'user' (which has memberships)
+    // It's safer to re-fetch to ensure memberships are up to date
+    const freshUser = await MockService.auth.users.getById(user.id);
+    
+    if (freshUser) {
+      await hydrateUser(freshUser, newLabId);
+      localStorage.setItem('lab_active_id', newLabId);
+    }
+  }, [user, hydrateUser]);
 
-    setUser(prev => {
-      if (!prev) return null;
-      return { ...prev, ...updates };
-    });
-  }, []); // No external dependencies
+  // --- 6. ACTION: Update Profile ---
+  const updateUser = useCallback(async (updates) => {
+    if (!user) return;
+    try {
+      // Update DB
+      const updatedUser = await MockService.auth.users.update(user.id, updates);
+      // Update Local State (Optimistic or via re-hydration)
+      // We can just merge for speed, but re-hydration is safer for permissions changes
+      // For profile updates (name, phone), merging is fine.
+      setUser(prev => ({ ...prev, ...updates }));
+    } catch (err) {
+      console.error("Update failed", err);
+      throw err;
+    }
+  }, [user]);
 
-  // --- 6. HELPER: Permission Checks (Unchanged) ---
-  
+  // --- Permission Helpers ---
   const hasPermission = useCallback((permissionStr) => {
     if (!user) return false;
     if (user.permissions.includes('ALL_ACCESS')) return true;
@@ -148,28 +204,25 @@ export const AuthProvider = ({ children }) => {
     return user.roleId === roleId;
   }, [user]);
 
-
-  // --- Expose Value ---
   const value = useMemo(() => ({
-    // State
     user,
+    activeLab,
     isAuthenticated,
     loading,
     error,
     auditLogs, 
     
-    // Actions (Stable Function References)
     login,
     logout,
+    switchLab,
     updateUser,
     
-    // Helpers
     hasPermission,
     hasAnyPermission,
     hasRole
   }), [
-    user, isAuthenticated, loading, error, auditLogs,
-    login, logout, updateUser, // Now stable references
+    user, activeLab, isAuthenticated, loading, error, auditLogs,
+    login, logout, switchLab, updateUser,
     hasPermission, hasAnyPermission, hasRole
   ]);
 

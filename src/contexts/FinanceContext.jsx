@@ -1,14 +1,13 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
-
-// --- Mock Data Imports ---
-import invoicesData from '../_mock/data/finance/invoices.json';
-import paymentsData from '../_mock/data/finance/payments.json';
+import { MockService } from '../_mock/service';
+import { useAuth } from './AuthContext';
 
 const FinanceContext = createContext(null);
 
 export const FinanceProvider = ({ children }) => {
+  const { activeLab } = useAuth();
+
   // --- State ---
   const [invoices, setInvoices] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -19,13 +18,18 @@ export const FinanceProvider = ({ children }) => {
   // --- Initialize Data ---
   useEffect(() => {
     const initData = async () => {
+      if (!activeLab?.id) return;
+
       setLoading(true);
       try {
-        // Simulate network latency
-        await new Promise(resolve => setTimeout(resolve, 600));
+        const [fetchedInvoices, fetchedPayments] = await Promise.all([
+          MockService.finance.invoices.getAll({ labId: activeLab.id }),
+          MockService.finance.payments.getAll({ labId: activeLab.id })
+        ]);
         
-        setInvoices(invoicesData);
-        setPayments(paymentsData);
+        setInvoices(fetchedInvoices);
+        setPayments(fetchedPayments);
+        setError(null);
       } catch (err) {
         console.error("Failed to load Finance data", err);
         setError("Failed to load Finance data");
@@ -34,27 +38,7 @@ export const FinanceProvider = ({ children }) => {
       }
     };
     initData();
-  }, []);
-
-  // --- Helper for simulated API calls ---
-  const simulateApi = (callback, delay = 500) => {
-    return new Promise((resolve, reject) => {
-      setLoading(true);
-      setError(null);
-      setTimeout(() => {
-        try {
-          const result = callback();
-          resolve(result);
-        } catch (err) {
-          console.error("Mock API Error:", err.message);
-          setError(err.message);
-          reject(err);
-        } finally {
-          setLoading(false);
-        }
-      }, delay);
-    });
-  };
+  }, [activeLab]);
 
   // ============================================================
   // 1. INVOICE HANDLERS
@@ -78,59 +62,81 @@ export const FinanceProvider = ({ children }) => {
    * (CREATE) Generate a new invoice from cases
    */
   const createInvoice = useCallback(async (invoiceData) => {
-    return await simulateApi(() => {
-      const newInvoice = {
+    if (!activeLab) return;
+    
+    try {
+      // Create payload with business logic defaults
+      const payload = {
         ...invoiceData,
-        id: `inv-${Date.now()}`,
+        labId: activeLab.id,
         invoiceNumber: `INV-2025-${Math.floor(1000 + Math.random() * 9000)}`,
         status: 'Sent',
         issueDate: new Date().toISOString(),
-        balanceDue: invoiceData.totalAmount, // Initially full amount due
+        balanceDue: invoiceData.totalAmount, 
         currency: invoiceData.currency || 'USD'
       };
+
+      const newInvoice = await MockService.finance.invoices.create(payload);
+      
+      // Optimistic Update
       setInvoices(prev => [newInvoice, ...prev]);
       return newInvoice;
-    });
-  }, []);
+    } catch (err) {
+      console.error("Failed to create invoice", err);
+      throw err;
+    }
+  }, [activeLab]);
 
   // ============================================================
   // 2. PAYMENT HANDLERS
   // ============================================================
 
   /**
-   * (CREATE) Process a payment
-   * Logic mirrors the Patient Portal's makePayment logic
-   * by updating the invoice balance.
+   * (CREATE) Process a payment and update invoice balances
    */
   const recordPayment = useCallback(async (paymentData) => {
-    return await simulateApi(() => {
-      const newPayment = {
+    if (!activeLab) return;
+
+    try {
+      // 1. Persist Payment
+      const newPayment = await MockService.finance.payments.create({
         ...paymentData,
-        id: `pay-${Date.now()}`,
+        labId: activeLab.id,
         date: new Date().toISOString(),
         status: 'Completed'
-      };
+      });
 
       setPayments(prev => [newPayment, ...prev]);
 
-      // If payment is linked to invoices, update their balances
+      // 2. Update Linked Invoices (Persist & State)
       if (newPayment.invoiceIds && newPayment.invoiceIds.length > 0) {
-        setInvoices(prevInvoices => prevInvoices.map(inv => {
+        // Calculate updates
+        const updatedInvoices = invoices.map(inv => {
           if (newPayment.invoiceIds.includes(inv.id)) {
-            // Simplistic allocation: Assume single invoice or full payment
-            // In a real app, you'd allocate specific amounts per invoice
+            // Simplistic allocation logic from original requirement
             const newBalance = Math.max(0, inv.balanceDue - newPayment.amount);
             const newStatus = newBalance <= 0 ? 'PaidInFull' : 'Partial';
             
+            // Persist change to backend (Fire & Forget for mock speed)
+            MockService.finance.invoices.update(inv.id, {
+              balanceDue: newBalance,
+              status: newStatus
+            });
+
             return { ...inv, balanceDue: newBalance, status: newStatus };
           }
           return inv;
-        }));
+        });
+
+        setInvoices(updatedInvoices);
       }
 
       return newPayment;
-    });
-  }, []);
+    } catch (err) {
+      console.error("Failed to record payment", err);
+      throw err;
+    }
+  }, [activeLab, invoices]);
 
   // ============================================================
   // EXPORT VALUE

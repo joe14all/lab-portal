@@ -1,6 +1,7 @@
 [
   {
     "id": "clinic-001",
+    "labId": "lab-001",
     "name": "Downtown Dental Center",
     "accountNumber": "DDC-1001",
     "status": "Active",
@@ -69,6 +70,7 @@
   },
   {
     "id": "clinic-002",
+    "labId": "lab-001",
     "name": "Prestige Prosthodontics",
     "accountNumber": "PP-9090",
     "status": "Active",
@@ -115,6 +117,7 @@
   },
   {
     "id": "clinic-003",
+    "labId": "lab-001",
     "name": "Valley Family Dental",
     "accountNumber": "VFD-3322",
     "status": "Active",
@@ -157,6 +160,7 @@
   },
   {
     "id": "clinic-005",
+    "labId": "lab-002",
     "name": "Smile Bright Orthodontics",
     "accountNumber": "SBO-2020",
     "status": "OnHold",

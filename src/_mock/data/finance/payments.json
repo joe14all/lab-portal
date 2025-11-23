@@ -1,6 +1,7 @@
 [
   {
     "id": "pay-8801",
+    "labId": "lab-001",
     "paymentNumber": "RCT-1001",
     "clinicId": "clinic-001",
     "invoiceIds": ["inv-2025-001"],
@@ -14,6 +15,7 @@
   },
   {
     "id": "pay-8802",
+    "labId": "lab-002",
     "paymentNumber": "RCT-1002",
     "clinicId": "clinic-005",
     "invoiceIds": [], 
@@ -27,6 +29,7 @@
   },
   {
     "id": "pay-8803",
+    "labId": "lab-001",
     "paymentNumber": "RCT-1003",
     "clinicId": "clinic-001",
     "invoiceIds": ["inv-2025-008"],
@@ -40,6 +43,7 @@
   },
   {
     "id": "pay-8804",
+    "labId": "lab-002",
     "paymentNumber": "RCT-1004",
     "clinicId": "clinic-005",
     "invoiceIds": ["inv-2025-005"],

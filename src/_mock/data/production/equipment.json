@@ -1,6 +1,7 @@
 [
   {
     "id": "mill-01",
+    "labId": "lab-001",
     "name": "VHF K5 #1",
     "type": "Dry Mill",
     "serialNumber": "VHF-1001",
@@ -14,11 +15,12 @@
   },
   {
     "id": "mill-02",
+    "labId": "lab-002",
     "name": "Roland DWX-52D",
     "type": "Dry Mill",
     "serialNumber": "ROL-2002",
-    "status": "Idle",
-    "currentJobId": null,
+    "status": "Running",
+    "currentJobId": "batch-mill-905",
     "maintenance": {
       "lastServiceDate": "2025-11-15",
       "nextServiceDue": "2026-02-15"
@@ -26,6 +28,7 @@
   },
   {
     "id": "printer-01",
+    "labId": "lab-001",
     "name": "Formlabs 3B",
     "type": "3D Printer",
     "serialNumber": "FL-3B-555",
@@ -38,7 +41,21 @@
     }
   },
   {
+    "id": "printer-02",
+    "labId": "lab-002",
+    "name": "SprintRay Pro 95",
+    "type": "3D Printer",
+    "serialNumber": "SR-9988",
+    "status": "Idle",
+    "currentJobId": null,
+    "maintenance": {
+      "lastServiceDate": "2025-10-20",
+      "nextServiceDue": "2026-01-20"
+    }
+  },
+  {
     "id": "cast-induct-01",
+    "labId": "lab-002",
     "name": "Bego Nautilus CC",
     "type": "Casting Machine",
     "serialNumber": "BEGO-9900",
@@ -51,7 +68,21 @@
     }
   },
   {
+    "id": "cast-cent-02",
+    "labId": "lab-001",
+    "name": "Kerr Centrifico",
+    "type": "Casting Machine",
+    "serialNumber": "KERR-55",
+    "status": "Idle",
+    "currentJobId": null,
+    "maintenance": {
+      "lastServiceDate": "2025-06-01",
+      "nextServiceDue": "2025-12-01"
+    }
+  },
+  {
     "id": "furnace-press-01",
+    "labId": "lab-001",
     "name": "Ivoclar Programat EP",
     "type": "Press Furnace",
     "serialNumber": "IVO-P-3000",
@@ -64,6 +95,7 @@
   },
   {
     "id": "inject-01",
+    "labId": "lab-001",
     "name": "Ivobase Injector",
     "type": "Acrylic Processor",
     "serialNumber": "IVO-B-101",
@@ -76,6 +108,7 @@
   },
   {
     "id": "scan-01",
+    "labId": "lab-001",
     "name": "3Shape E3",
     "type": "Desktop Scanner",
     "serialNumber": "3S-E3-7788",

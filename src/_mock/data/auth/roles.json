@@ -2,16 +2,14 @@
   {
     "id": "role-admin",
     "name": "Lab Administrator",
-    "description": "Full system access, including settings and user management.",
-    "permissions": [
-      "ALL_ACCESS"
-    ],
+    "description": "Full system access (System Default).",
+    "permissions": ["ALL_ACCESS"],
     "isSystem": true
   },
   {
     "id": "role-manager",
     "name": "Lab Manager",
-    "description": "Can manage operations, financials, and pricing overrides.",
+    "description": "Operations and financials (System Default).",
     "permissions": [
       "CASE_MANAGE",
       "CASE_APPROVE",
@@ -21,50 +19,73 @@
       "CRM_EDIT",
       "REPORT_VIEW"
     ],
-    "isSystem": false
+    "isSystem": true
   },
   {
     "id": "role-tech-cad",
     "name": "CAD Technician",
-    "description": "Focus on digital design workflows.",
+    "description": "Digital workflows (System Default).",
     "permissions": [
       "CASE_VIEW",
       "CASE_EDIT_DESIGN",
       "FILE_UPLOAD",
       "COMMUNICATION_SEND"
     ],
-    "isSystem": false
+    "isSystem": true
   },
   {
     "id": "role-tech-ceram",
-    "name": "Ceramist / Finisher",
-    "description": "Focus on physical production stages.",
+    "name": "Ceramist",
+    "description": "Physical production (System Default).",
     "permissions": [
       "CASE_VIEW",
       "CASE_EDIT_PRODUCTION",
       "QC_CHECK"
     ],
-    "isSystem": false
+    "isSystem": true
   },
   {
     "id": "role-driver",
-    "name": "Logistics Driver",
-    "description": "Access to route and pickup modules only.",
-    "permissions": [
-      "LOGISTICS_VIEW",
-      "LOGISTICS_UPDATE"
-    ],
-    "isSystem": false
+    "name": "Driver",
+    "description": "Logistics access (System Default).",
+    "permissions": ["LOGISTICS_VIEW", "LOGISTICS_UPDATE"],
+    "isSystem": true
   },
   {
     "id": "role-client",
-    "name": "Doctor / Clinic Staff",
-    "description": "External access for submitting and tracking cases.",
+    "name": "Client Access",
+    "description": "Portal access for doctors (System Default).",
     "permissions": [
       "ORDER_CREATE",
       "CASE_VIEW_OWN",
       "FINANCE_VIEW_OWN",
       "FINANCE_PAY"
+    ],
+    "isSystem": true
+  },
+  {
+    "id": "role-lead-ceram-001",
+    "labId": "lab-001",
+    "name": "Lead Ceramist",
+    "description": "Senior production role with QC rights.",
+    "permissions": [
+      "CASE_VIEW",
+      "CASE_EDIT_PRODUCTION",
+      "QC_CHECK",
+      "CASE_APPROVE",
+      "COMMUNICATION_SEND"
+    ],
+    "isSystem": false
+  },
+  {
+    "id": "role-ortho-tech-002",
+    "labId": "lab-002",
+    "name": "Ortho Technician",
+    "description": "Specialized for wire bending and acrylics.",
+    "permissions": [
+      "CASE_VIEW",
+      "CASE_EDIT_PRODUCTION",
+      "FILE_UPLOAD"
     ],
     "isSystem": false
   }

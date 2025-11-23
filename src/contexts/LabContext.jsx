@@ -1,22 +1,12 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
+import { MockService } from '../_mock/service';
 import { useAuth } from './AuthContext';
-
-// --- Mock Data Imports ---
-import activeCasesData from '../_mock/data/cases/active_cases.json';
-import caseStagesData from '../_mock/data/cases/case_stages.json';
-import caseFilesData from '../_mock/data/cases/case_files.json'; 
-import caseMessagesData from '../_mock/data/cases/case_messages.json'; 
-
-import materialsData from '../_mock/data/production/materials.json';
-import batchesData from '../_mock/data/production/batches.json';
-import equipmentData from '../_mock/data/production/equipment.json';
 
 const LabContext = createContext(null);
 
 export const LabProvider = ({ children }) => {
-  const { user, hasRole, hasPermission } = useAuth();
+  const { user, activeLab, hasRole } = useAuth();
 
   // --- State ---
   const [cases, setCases] = useState([]);
@@ -31,21 +21,41 @@ export const LabProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // --- Initialize Data ---
+  // --- Initialize Data (Reactive to Lab Switch) ---
   useEffect(() => {
     const initData = async () => {
+      if (!activeLab?.id) return;
+
       setLoading(true);
       try {
-        await new Promise(resolve => setTimeout(resolve, 700)); 
+        // Fetch all Lab resources in parallel
+        const [
+          fetchedCases, 
+          fetchedStages, 
+          fetchedFiles, 
+          fetchedMessages,
+          fetchedMaterials, 
+          fetchedBatches, 
+          fetchedEquipment
+        ] = await Promise.all([
+          MockService.cases.cases.getAll({ labId: activeLab.id }),
+          MockService.cases.stages.getAll(), // System Global
+          MockService.cases.files.getAll({ labId: activeLab.id }),
+          MockService.cases.messages.getAll({ labId: activeLab.id }),
+          MockService.production.inventory.getAll({ labId: activeLab.id }),
+          MockService.production.batches.getAll({ labId: activeLab.id }),
+          MockService.production.equipment.getAll({ labId: activeLab.id })
+        ]);
         
-        setCases(activeCasesData);
-        setStages(caseStagesData);
-        setCaseFiles(caseFilesData); 
-        setCaseMessages(caseMessagesData);
+        setCases(fetchedCases);
+        setStages(fetchedStages);
+        setCaseFiles(fetchedFiles);
+        setCaseMessages(fetchedMessages);
 
-        setMaterials(materialsData);
-        setBatches(batchesData);
-        setEquipment(equipmentData);
+        setMaterials(fetchedMaterials);
+        setBatches(fetchedBatches);
+        setEquipment(fetchedEquipment);
+        setError(null);
       } catch (err) {
         console.error("Failed to load Lab data", err);
         setError("Failed to load Lab data");
@@ -54,27 +64,7 @@ export const LabProvider = ({ children }) => {
       }
     };
     initData();
-  }, []);
-
-  // --- Helper for simulated API calls ---
-  const simulateApi = (callback, delay = 500) => {
-    return new Promise((resolve, reject) => {
-      setLoading(true);
-      setError(null);
-      setTimeout(() => {
-        try {
-          const result = callback();
-          resolve(result);
-        } catch (err) {
-          console.error("Mock API Error:", err.message);
-          setError(err.message);
-          reject(err);
-        } finally {
-          setLoading(false);
-        }
-      }, delay);
-    });
-  };
+  }, [activeLab]);
 
   // ============================================================
   // 0. UTILITY HELPERS
@@ -119,60 +109,65 @@ export const LabProvider = ({ children }) => {
   }, [caseMessages]);
 
   const addCaseMessage = useCallback(async (caseId, { content, isInternal }) => {
-    return await simulateApi(() => {
+    if (!activeLab) return;
+    try {
       const senderName = user?.profile 
         ? `${user.profile.firstName} ${user.profile.lastName}`.trim() 
         : user?.email || 'Unknown';
 
-      const newMessage = {
-        id: `msg-${Date.now()}`,
+      const newMessage = await MockService.cases.messages.create({
+        labId: activeLab.id,
         caseId,
         senderId: user?.id || 'system',
-        senderName: senderName,
+        senderName,
         senderRole: hasRole('role-client') ? 'Client' : 'Lab',
         content,
         isInternal: !!isInternal,
-        createdAt: new Date().toISOString(),
         readAt: null
-      };
+      });
 
       setCaseMessages(prev => [...prev, newMessage]);
       return newMessage;
-    });
-  }, [user, hasRole]);
+    } catch (err) {
+      console.error("Failed to send message", err);
+      throw err;
+    }
+  }, [activeLab, user, hasRole]);
 
-  // --- NEW: File Upload Simulation ---
   const addCaseFile = useCallback(async (caseId, fileObj, category) => {
-    return await simulateApi(() => {
-      const newFile = {
-        id: `file-new-${Date.now()}`,
+    if (!activeLab) return;
+    try {
+      const newFile = await MockService.cases.files.create({
+        labId: activeLab.id,
         caseId,
         uploaderId: user?.id || 'system',
-        category: category, // 'INPUT_SCAN', 'REFERENCE', 'PRODUCTION_DESIGN'
+        category: category, 
         subCategory: category === 'PRODUCTION_DESIGN' ? 'CAM_OUTPUT' : 'User Upload',
         fileType: fileObj.name.split('.').pop().toUpperCase(),
         fileName: fileObj.name,
-        // Convert bytes to MB
         size: `${(fileObj.size / (1024 * 1024)).toFixed(2)} MB`,
-        // Create a temporary local URL for preview
-        url: URL.createObjectURL(fileObj),
-        createdAt: new Date().toISOString(),
+        url: URL.createObjectURL(fileObj), // Local preview URL
         isLatest: true, 
         version: 1
-      };
+      });
 
       setCaseFiles(prev => [...prev, newFile]);
       return newFile;
-    });
-  }, [user]);
+    } catch (err) {
+      console.error("Failed to upload file", err);
+      throw err;
+    }
+  }, [activeLab, user]);
 
   const createCase = useCallback(async (newCaseData) => {
-    return await simulateApi(() => {
-      const newCase = {
+    if (!activeLab) return;
+    try {
+      const newCase = await MockService.cases.cases.create({
         ...newCaseData,
-        id: `case-${Date.now()}`,
+        labId: activeLab.id,
         caseNumber: `2025-${Math.floor(Math.random() * 10000)}`,
         status: 'stage-new',
+        // Ensure units have status and ID
         units: (newCaseData.units || []).map((unit, idx) => ({
            id: `unit-${Date.now()}-${idx}`,
            ...unit,
@@ -185,93 +180,113 @@ export const LabProvider = ({ children }) => {
           shipped: null
         },
         systemInfo: { createdBy: user?.id || 'system' }
-      };
-      if (newCase.items) delete newCase.items;
-      setCases(prev => [...prev, newCase]);
+      });
+
+      setCases(prev => [newCase, ...prev]);
       return newCase;
-    });
-  }, [user]);
+    } catch (err) {
+      console.error("Failed to create case", err);
+      throw err;
+    }
+  }, [activeLab, user]);
 
   const updateCase = useCallback(async (caseId, updates) => {
-    return await simulateApi(() => {
-      let updatedCase = null;
-      setCases(prev => prev.map(c => {
-        if (c.id === caseId) {
-          updatedCase = { ...c, ...updates };
-          return updatedCase;
-        }
-        return c;
-      }));
-      if (!updatedCase) throw new Error("Case not found");
+    try {
+      const updatedCase = await MockService.cases.cases.update(caseId, updates);
+      setCases(prev => prev.map(c => c.id === caseId ? updatedCase : c));
       return updatedCase;
-    });
+    } catch (err) {
+      console.error("Failed to update case", err);
+      throw err;
+    }
   }, []);
 
   const updateCaseStatus = useCallback(async (caseId, newStageId, unitId = null) => {
-    return await simulateApi(() => {
-      setCases(prev => prev.map(c => {
-        if (c.id !== caseId) return c;
+    try {
+      const currentCase = cases.find(c => c.id === caseId);
+      if (!currentCase) throw new Error("Case not found");
 
-        validateTransition(c.status, newStageId);
+      validateTransition(currentCase.status, newStageId);
 
-        let updatedUnits = c.units || [];
-        if (unitId) {
-          updatedUnits = updatedUnits.map(u => 
-            u.id === unitId ? { ...u, status: newStageId } : u
-          );
-        } else {
-          updatedUnits = updatedUnits.map(u => ({ ...u, status: newStageId }));
-        }
+      let updatedUnits = currentCase.units || [];
+      if (unitId) {
+        updatedUnits = updatedUnits.map(u => 
+          u.id === unitId ? { ...u, status: newStageId } : u
+        );
+      } else {
+        updatedUnits = updatedUnits.map(u => ({ ...u, status: newStageId }));
+      }
 
-        const derivedStatus = deriveCaseStatus(updatedUnits);
+      const derivedStatus = deriveCaseStatus(updatedUnits);
 
-        return { ...c, units: updatedUnits, status: derivedStatus };
-      }));
-    });
-  }, [validateTransition, deriveCaseStatus]);
+      const updatedCase = await MockService.cases.cases.update(caseId, {
+        units: updatedUnits,
+        status: derivedStatus
+      });
+
+      setCases(prev => prev.map(c => c.id === caseId ? updatedCase : c));
+    } catch (err) {
+      console.error("Failed to update status", err);
+      throw err;
+    }
+  }, [cases, validateTransition, deriveCaseStatus]);
 
   // ============================================================
   // 2. PRODUCTION HANDLERS
   // ============================================================
   
   const consumeMaterial = useCallback(async (materialId, quantity) => {
-    return await simulateApi(() => {
-      let success = false;
-      setMaterials(prev => prev.map(mat => {
-        if (mat.id === materialId) {
-          if (mat.stockLevel < quantity) throw new Error(`Insufficient stock.`);
-          success = true;
-          return { ...mat, stockLevel: mat.stockLevel - quantity };
-        }
-        return mat;
-      }));
-      if (!success) throw new Error("Material not found");
-    });
-  }, []);
+    try {
+      const material = materials.find(m => m.id === materialId);
+      if (!material) throw new Error("Material not found");
+      
+      if (material.stockLevel < quantity) throw new Error("Insufficient stock");
+
+      const updatedMaterial = await MockService.production.inventory.update(materialId, {
+        stockLevel: material.stockLevel - quantity
+      });
+
+      setMaterials(prev => prev.map(m => m.id === materialId ? updatedMaterial : m));
+    } catch (err) {
+      console.error("Failed to consume material", err);
+      throw err;
+    }
+  }, [materials]);
 
   const createBatch = useCallback(async (batchData) => {
-    return await simulateApi(() => {
-      const newBatch = {
+    if (!activeLab) return;
+    try {
+      const newBatch = await MockService.production.batches.create({
         ...batchData,
-        id: `batch-${Date.now()}`,
+        labId: activeLab.id,
         status: 'InProgress',
         startTime: new Date().toISOString(),
         operatorId: user?.id || 'system'
-      };
-      setBatches(prev => [...prev, newBatch]);
+      });
+      setBatches(prev => [newBatch, ...prev]);
       return newBatch;
-    });
-  }, [user]);
+    } catch (err) {
+      console.error("Failed to create batch", err);
+      throw err;
+    }
+  }, [activeLab, user]);
 
   const updateEquipmentStatus = useCallback(async (equipmentId, status, notes) => {
-    return await simulateApi(() => {
-      setEquipment(prev => prev.map(eq => 
-        eq.id === equipmentId 
-          ? { ...eq, status, maintenance: { ...eq.maintenance, notes: notes || eq.maintenance.notes } } 
-          : eq
-      ));
-    });
-  }, []);
+    try {
+      const eq = equipment.find(e => e.id === equipmentId);
+      const updatedEq = await MockService.production.equipment.update(equipmentId, {
+        status,
+        maintenance: { 
+          ...eq?.maintenance, 
+          notes: notes || eq?.maintenance?.notes 
+        }
+      });
+      setEquipment(prev => prev.map(e => e.id === equipmentId ? updatedEq : e));
+    } catch (err) {
+      console.error("Failed to update equipment", err);
+      throw err;
+    }
+  }, [equipment]);
 
   // ============================================================
   // EXPORT VALUE
@@ -290,7 +305,7 @@ export const LabProvider = ({ children }) => {
     getCaseFiles,
     getCaseMessages,
     addCaseMessage,
-    addCaseFile, // NEW
+    addCaseFile,
     createCase,
     updateCase,
     updateCaseStatus,
