@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useMemo } from 'react';
 import { useLab, useCrm } from '../../../contexts'; // Added useCrm for product lookup
 import StatusBadge from '../StatusBadge';

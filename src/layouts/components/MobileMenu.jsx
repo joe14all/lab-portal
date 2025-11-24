@@ -7,7 +7,8 @@ import {
   IconMicroscope, 
   IconInvoice, 
   IconSettings,
-  IconClose 
+  IconClose,
+  IconUser // Import User Icon
 } from './LabIcons';
 import styles from './MobileMenu.module.css';
 
@@ -19,7 +20,12 @@ const MobileMenu = ({ isOpen, onClose }) => {
     { to: "/cases", label: "Case Management", icon: <IconCase />, permission: null },
     { to: "/production", label: "Production", icon: <IconMicroscope />, permission: null },
     { to: "/finance", label: "Finance & Billing", icon: <IconInvoice />, permission: "FINANCE_VIEW" },
-    { to: "/settings", label: "Settings", icon: <IconSettings />, permission: "ALL_ACCESS" }
+    
+    // NEW: Lab Admin Link (Restricted to Managers/Admins)
+    { to: "/lab-settings", label: "Lab Admin", icon: <IconSettings />, permission: "CASE_MANAGE" },
+    
+    // NEW: User Profile Link (Accessible to everyone)
+    { to: "/settings", label: "My Profile", icon: <IconUser />, permission: null }
   ];
 
   return (
@@ -50,7 +56,8 @@ const MobileMenu = ({ isOpen, onClose }) => {
                     to={item.to}
                     onClick={onClose} // Close on click
                     className={({ isActive }) => 
-                      `${styles.navLink} ${isActive ? styles.active : ''}`
+                      // Logic: Keep active even if in sub-routes (e.g. /lab-settings/general)
+                      `${styles.navLink} ${isActive || (item.to !== '/' && window.location.pathname.startsWith(item.to)) ? styles.active : ''}`
                     }
                     end={item.to === "/"}
                   >

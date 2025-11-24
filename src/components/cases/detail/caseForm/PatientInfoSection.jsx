@@ -1,7 +1,6 @@
 import React from 'react';
-// Adjusted path: up 5 levels to src, then into layouts/components
 import { IconUser } from '../../../../layouts/components/LabIcons';
-import styles from './CaseForm.module.css';
+import styles from './PatientInfoSection.module.css';
 
 const PatientInfoSection = ({ 
   formData, 

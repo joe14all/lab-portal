@@ -1,7 +1,7 @@
 import React from 'react';
 import { TOOTH_NUMBERS } from '../../../../constants/catalog';
 import { IconClose, IconDrill, IconCheck } from '../../../../layouts/components/LabIcons';
-import styles from './CaseForm.module.css';
+import styles from './UnitRow.module.css';
 
 const ARCH_OPTIONS = ["Upper", "Lower", "Both"];
 

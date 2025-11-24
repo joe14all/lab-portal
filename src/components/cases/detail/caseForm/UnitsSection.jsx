@@ -1,7 +1,7 @@
 import React from 'react';
 import UnitRow from './UnitRow';
 import { IconTooth, IconAlert } from '../../../../layouts/components/LabIcons';
-import styles from './CaseForm.module.css';
+import styles from './UnitsSection.module.css';
 
 const UnitsSection = ({ 
   units, 

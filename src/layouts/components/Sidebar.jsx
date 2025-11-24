@@ -6,7 +6,8 @@ import {
   IconCase, 
   IconMicroscope, 
   IconInvoice, 
-  IconSettings 
+  IconSettings,
+  IconUser // Import User Icon
 } from './LabIcons';
 import styles from './Sidebar.module.css';
 
@@ -18,7 +19,12 @@ const Sidebar = () => {
     { to: "/cases", label: "Case Management", icon: <IconCase />, permission: null },
     { to: "/production", label: "Production", icon: <IconMicroscope />, permission: null },
     { to: "/finance", label: "Finance", icon: <IconInvoice />, permission: "FINANCE_VIEW" },
-    { to: "/settings", label: "Settings", icon: <IconSettings />, permission: "ALL_ACCESS" }
+    
+    // NEW: Lab Admin Link
+    { to: "/lab-settings", label: "Lab Admin", icon: <IconSettings />, permission: "CASE_MANAGE" },
+    
+    // NEW: User Profile Link
+    { to: "/settings", label: "My Profile", icon: <IconUser />, permission: null } 
   ];
 
   return (
@@ -32,7 +38,8 @@ const Sidebar = () => {
                 <NavLink
                   to={item.to}
                   className={({ isActive }) => 
-                    `${styles.navLink} ${isActive ? styles.active : ''}`
+                    // Use "startsWith" check for lab settings to keep active state on sub-pages
+                    `${styles.navLink} ${isActive || (item.to !== '/' && window.location.pathname.startsWith(item.to)) ? styles.active : ''}`
                   }
                   end={item.to === "/"}
                 >

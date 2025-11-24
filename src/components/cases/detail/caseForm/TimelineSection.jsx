@@ -1,6 +1,6 @@
 import React from 'react';
 import { IconCalendar } from '../../../../layouts/components/LabIcons';
-import styles from './CaseForm.module.css';
+import styles from './TimelineSection.module.css';
 
 const TimelineSection = ({ formData, handleChange, errors }) => {
   return (
