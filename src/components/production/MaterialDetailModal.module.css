@@ -1,0 +1,92 @@
+/* src/components/production/MaterialDetailModal.module.css */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0.5rem;
+}
+
+.stockRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: var(--bg-body);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.stockLarge {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.unit {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Sections */
+.sectionTitle {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.25rem;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+.label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+.val {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Hazmat Alert */
+.hazmatBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background-color: #fff7ed; /* Orange tint */
+  border: 1px solid #fed7aa;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  color: #9a3412;
+}
+.hazmatTitle {
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: block;
+}
+.hazmatDesc {
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* Cost Table */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.table th { text-align: left; padding: 0.25rem; color: var(--text-secondary); }
+.table td { padding: 0.25rem; color: var(--text-primary); border-bottom: 1px solid var(--border-color); }

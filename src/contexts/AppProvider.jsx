@@ -5,21 +5,24 @@ import { CrmProvider } from './CrmContext';
 import { LabProvider } from './LabContext';
 import { FinanceProvider } from './FinanceContext';
 import { LogisticsProvider } from './LogisticsContext';
-import { ToastProvider } from './ToastContext'; // NEW
+import { ProductionProvider } from './ProductionContext';
+import { ToastProvider } from './ToastContext';
 
 export const AppProvider = ({ children }) => {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <ToastProvider> {/* Added High Level Provider */}
+        <ToastProvider>
           <CrmProvider>
-            <LabProvider>
-              <FinanceProvider>
-                <LogisticsProvider>
-                  {children}
-                </LogisticsProvider>
-              </FinanceProvider>
-            </LabProvider>
+            <ProductionProvider>
+              <LabProvider>
+                <FinanceProvider>
+                  <LogisticsProvider>
+                    {children}
+                  </LogisticsProvider>
+                </FinanceProvider>
+              </LabProvider>
+            </ProductionProvider>
           </CrmProvider>
         </ToastProvider>
       </ThemeProvider>

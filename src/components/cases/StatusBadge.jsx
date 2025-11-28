@@ -3,7 +3,7 @@ import {
   IconCheck, 
   IconAlert, 
   IconClock, 
-  IconDrill, 
+  IconMill, 
   IconMicroscope,
   IconBox,     // New import for Received
   IconTooth,   // New import for Model
@@ -21,10 +21,10 @@ const STATUS_CONFIG = {
   
   // Design / Setup
   'stage-design':     { color: 'purple', icon: null,            label: 'Design' },
-  'stage-waxup':      { color: 'purple', icon: <IconDrill />,   label: 'Wax-up' },
+  'stage-waxup':      { color: 'purple', icon: <IconMill />,   label: 'Wax-up' },
   
   // Production (Analog & Digital)
-  'stage-milling':    { color: 'orange', icon: <IconDrill />,   label: 'Milling' },
+  'stage-milling':    { color: 'orange', icon: <IconMill />,   label: 'Milling' },
   'stage-casting':    { color: 'orange', icon: <IconFire />,    label: 'Casting' },
   'stage-processing': { color: 'pink',   icon: <IconLayers />,  label: 'Processing' },
   'stage-finishing':  { color: 'pink',   icon: <IconMicroscope />, label: 'Finishing' },

@@ -7,7 +7,7 @@ import {
   IconTooth, 
   IconChevronRight, 
   IconAlert,
-  IconDrill,
+  IconMill,
   IconLayers,
   IconCheck,
   IconClose,
@@ -17,7 +17,7 @@ import styles from './CaseUnitsList.module.css';
 
 const getUnitIcon = (type) => {
   const lowerType = (type || '').toLowerCase();
-  if (lowerType.includes('implant') || lowerType.includes('abutment')) return <IconDrill width="20" height="20" />;
+  if (lowerType.includes('implant') || lowerType.includes('abutment')) return <IconMill width="20" height="20" />;
   if (lowerType.includes('denture') || lowerType.includes('partial')) return <IconLayers width="20" height="20" />;
   return <IconTooth width="20" height="20" />;
 };

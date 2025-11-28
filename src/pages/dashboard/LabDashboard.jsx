@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useLab, useFinance, useLogistics, useAuth } from '../../contexts';
+import { useLab, useFinance, useLogistics, useAuth, useProduction } from '../../contexts';
 import { 
   IconCase, 
   IconInvoice, 
@@ -8,20 +8,20 @@ import {
   IconMicroscope, 
   IconClock, 
   IconAlert,
-  IconCheck,
-  IconDrill,
-  IconUser
+  IconMill
 } from '../../layouts/components/LabIcons';
 import styles from './LabDashboard.module.css';
 
 const LabDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { cases, batches, loading: labLoading } = useLab();
+  const { cases, loading: labLoading } = useLab();
   const { invoices, loading: finLoading } = useFinance();
   const { pickups, loading: logLoading } = useLogistics();
+  // Consume production stats from the new context
+  const { activeBatches, loading: prodLoading } = useProduction();
 
-  const loading = labLoading || finLoading || logLoading;
+  const loading = labLoading || finLoading || logLoading || prodLoading;
 
   // --- KPI CALCULATIONS ---
   const stats = useMemo(() => {
@@ -40,19 +40,16 @@ const LabDashboard = () => {
       .filter(inv => new Date(inv.issueDate).getMonth() === currentMonth)
       .reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
 
-    // 3. Production Load (Active Batches)
-    const activeBatches = batches.filter(b => b.status === 'InProgress');
-
-    // 4. Pending Pickups
+    // 3. Pending Pickups
     const pendingPickups = pickups.filter(p => p.status === 'Pending');
 
     return {
       activeCasesCount: activeCases.length,
       monthlyRevenue,
-      activeBatchesCount: activeBatches.length,
+      activeBatchesCount: activeBatches.length, // From ProductionContext
       pendingPickupsCount: pendingPickups.length
     };
-  }, [cases, invoices, batches, pickups, loading]);
+  }, [cases, invoices, activeBatches, pickups, loading]);
 
   // --- "DUE SOON" LIST ---
   const urgentCases = useMemo(() => {
@@ -143,7 +140,7 @@ const LabDashboard = () => {
         {/* Production */}
         <div className={styles.statCard}>
           <div className={styles.statHeader}>
-            Production <IconMicroscope width="20" className={styles.statIcon} />
+            Production <IconMill width="20" className={styles.statIcon} />
           </div>
           <div className={styles.statValue}>{stats.activeBatchesCount}</div>
           <div className={styles.statTrend}>
@@ -231,7 +228,7 @@ const LabDashboard = () => {
                 <span>New Case</span>
               </button>
               <button className={styles.quickBtn} onClick={() => navigate('/production')}>
-                <IconDrill width="24" />
+                <IconMill width="24" />
                 <span>Production</span>
               </button>
               <button className={styles.quickBtn} onClick={() => navigate('/logistics')}>

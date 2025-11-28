@@ -3,7 +3,7 @@ import { Canvas, useLoader } from '@react-three/fiber';
 import { OrbitControls, Stage, Loader, Center } from '@react-three/drei';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader';
 import Modal from '../../common/Modal';
-import { IconDrill } from '../../../layouts/components/LabIcons';
+import { IconMill } from '../../../layouts/components/LabIcons';
 import styles from './STLViewer.module.css';
 
 // 1. Model Component: Handles the async loading of the STL
@@ -38,7 +38,7 @@ const STLViewer = ({ file, isOpen, onClose }) => {
         onClose={onClose}
         title={`3D Viewer: ${file.fileName}`}
         width="900px"
-        icon={<IconDrill width="20" height="20" />}
+        icon={<IconMill width="20" height="20" />}
         footer={
           <div className={styles.footer}>
             <div className={styles.meta}>

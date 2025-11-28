@@ -6,7 +6,7 @@ import Modal from '../../common/Modal';
 import { 
   IconEye, 
   IconFile, 
-  IconDrill, 
+  IconMill, 
   IconAlert 
 } from '../../../layouts/components/LabIcons';
 
@@ -149,7 +149,7 @@ const UniversalFileViewer = ({ file, isOpen, onClose }) => {
       onClose={onClose}
       title={file.fileName}
       width="900px"
-      icon={is3D ? <IconDrill width="20" height="20" /> : <IconEye width="20" height="20" />}
+      icon={is3D ? <IconMill width="20" height="20" /> : <IconEye width="20" height="20" />}
       footer={
         <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
           <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>

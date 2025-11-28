@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Modal from '../common/Modal';
 import { useCrm } from '../../contexts';
-import { IconInvoice, IconClose, IconDrill } from '../../layouts/components/LabIcons';
+import { IconInvoice, IconClose, IconMill } from '../../layouts/components/LabIcons';
 import styles from './InvoiceFormModal.module.css';
 
 const DEFAULT_ITEM = {

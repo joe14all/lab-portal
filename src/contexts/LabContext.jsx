@@ -15,10 +15,6 @@ export const LabProvider = ({ children }) => {
   const [caseFiles, setCaseFiles] = useState([]);
   const [caseMessages, setCaseMessages] = useState([]);
   
-  const [materials, setMaterials] = useState([]);
-  const [batches, setBatches] = useState([]);
-  const [equipment, setEquipment] = useState([]);
-  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -34,19 +30,13 @@ export const LabProvider = ({ children }) => {
           fetchedStages,
           fetchedWorkflows, 
           fetchedFiles, 
-          fetchedMessages,
-          fetchedMaterials, 
-          fetchedBatches, 
-          fetchedEquipment
+          fetchedMessages
         ] = await Promise.all([
           MockService.cases.cases.getAll({ labId: activeLab.id }),
           MockService.cases.stages.getAll(), 
           MockService.settings.workflows.getAll({ labId: activeLab.id }),
           MockService.cases.files.getAll({ labId: activeLab.id }),
-          MockService.cases.messages.getAll({ labId: activeLab.id }),
-          MockService.production.inventory.getAll({ labId: activeLab.id }),
-          MockService.production.batches.getAll({ labId: activeLab.id }),
-          MockService.production.equipment.getAll({ labId: activeLab.id })
+          MockService.cases.messages.getAll({ labId: activeLab.id })
         ]);
         
         setCases(fetchedCases);
@@ -54,10 +44,6 @@ export const LabProvider = ({ children }) => {
         setWorkflows(fetchedWorkflows);
         setCaseFiles(fetchedFiles);
         setCaseMessages(fetchedMessages);
-
-        setMaterials(fetchedMaterials);
-        setBatches(fetchedBatches);
-        setEquipment(fetchedEquipment);
         setError(null);
       } catch (err) {
         console.error("Failed to load Lab data", err);
@@ -257,64 +243,7 @@ export const LabProvider = ({ children }) => {
   }, [cases, validateTransition, deriveCaseStatus]);
   
   // ============================================================
-  // 2. PRODUCTION HANDLERS
-  // ============================================================
-  
-  const consumeMaterial = useCallback(async (materialId, quantity) => {
-    try {
-      const material = materials.find(m => m.id === materialId);
-      if (!material) throw new Error("Material not found");
-      
-      if (material.stockLevel < quantity) throw new Error("Insufficient stock");
-
-      const updatedMaterial = await MockService.production.inventory.update(materialId, {
-        stockLevel: material.stockLevel - quantity
-      });
-
-      setMaterials(prev => prev.map(m => m.id === materialId ? updatedMaterial : m));
-    } catch (err) {
-      console.error("Failed to consume material", err);
-      throw err;
-    }
-  }, [materials]);
-
-  const createBatch = useCallback(async (batchData) => {
-    if (!activeLab) return;
-    try {
-      const newBatch = await MockService.production.batches.create({
-        ...batchData,
-        labId: activeLab.id,
-        status: 'InProgress',
-        startTime: new Date().toISOString(),
-        operatorId: user?.id || 'system'
-      });
-      setBatches(prev => [newBatch, ...prev]);
-      return newBatch;
-    } catch (err) {
-      console.error("Failed to create batch", err);
-      throw err;
-    }
-  }, [activeLab, user]);
-
-  const updateEquipmentStatus = useCallback(async (equipmentId, status, notes) => {
-    try {
-      const eq = equipment.find(e => e.id === equipmentId);
-      const updatedEq = await MockService.production.equipment.update(equipmentId, {
-        status,
-        maintenance: { 
-          ...eq?.maintenance, 
-          notes: notes || eq?.maintenance?.notes 
-        }
-      });
-      setEquipment(prev => prev.map(e => e.id === equipmentId ? updatedEq : e));
-    } catch (err) {
-      console.error("Failed to update equipment", err);
-      throw err;
-    }
-  }, [equipment]);
-
-  // ============================================================
-  // 3. WORKFLOW HANDLERS (NEW)
+  // 3. WORKFLOW HANDLERS
   // ============================================================
 
   const createWorkflow = useCallback(async (workflowData) => {
@@ -361,9 +290,6 @@ export const LabProvider = ({ children }) => {
     cases,
     stages,
     workflows,
-    materials,
-    batches,
-    equipment,
     loading,
     error,
     
@@ -376,19 +302,15 @@ export const LabProvider = ({ children }) => {
     createCase,
     updateCase,
     updateCaseStatus,
-
-    consumeMaterial,
-    createBatch,
-    updateEquipmentStatus,
     deriveCaseStatus,
 
     createWorkflow, 
     updateWorkflow, 
     deleteWorkflow
   }), [
-    cases, stages, workflows, materials, batches, equipment, loading, error,
+    cases, stages, workflows, loading, error,
     getCaseById, getCaseFiles, getCaseMessages, getWorkflowsForCategory, addCaseMessage, addCaseFile, createCase, updateCase, updateCaseStatus,
-    consumeMaterial, createBatch, updateEquipmentStatus, deriveCaseStatus,
+    deriveCaseStatus,
     createWorkflow, updateWorkflow, deleteWorkflow
   ]);
 

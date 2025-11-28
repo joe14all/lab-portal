@@ -12,7 +12,26 @@
     "reorderThreshold": 5,
     "unitCost": 45.00,
     "currency": "USD",
-    "status": "InStock"
+    "status": "InStock",
+    "supplierInfo": {
+      "supplierId": "sup-aidite-direct",
+      "contactEmail": "orders@aidite.com",
+      "reorderUrl": "https://b2b.aidite.com/reorder"
+    },
+    "costHistory": [
+      { "date": "2024-01-01", "unitCost": 42.00, "qty": 20 },
+      { "date": "2025-01-01", "unitCost": 45.00, "qty": 10 }
+    ],
+    "hazmat": {
+      "isHazmat": false,
+      "msdsUrl": null,
+      "storageRequirements": "Dry place, room temp"
+    },
+    "location": {
+      "zone": "Material-Room",
+      "shelf": "A1",
+      "bin": "101"
+    }
   },
   {
     "id": "mat-zirc-A2-002",
@@ -27,7 +46,14 @@
     "reorderThreshold": 3,
     "unitCost": 45.00,
     "currency": "USD",
-    "status": "InStock"
+    "status": "InStock",
+    "supplierInfo": {
+      "supplierId": "sup-henry-schein",
+      "contactEmail": "reorder@henryschein.com"
+    },
+    "costHistory": [],
+    "hazmat": { "isHazmat": false },
+    "location": { "zone": "Lab-2-Storage", "shelf": "B", "bin": "2" }
   },
   {
     "id": "mat-emax-ingot-BL1",
@@ -42,7 +68,11 @@
     "reorderThreshold": 10,
     "unitCost": 18.50,
     "currency": "USD",
-    "status": "LowStock"
+    "status": "LowStock",
+    "supplierInfo": { "supplierId": "sup-ivoclar" },
+    "costHistory": [],
+    "hazmat": { "isHazmat": false },
+    "location": { "zone": "Ceramics", "shelf": "C1", "bin": "Ingots" }
   },
   {
     "id": "mat-resin-model",
@@ -58,7 +88,15 @@
     "reorderThreshold": 2,
     "unitCost": 149.00,
     "currency": "USD",
-    "status": "ReorderNow"
+    "status": "ReorderNow",
+    "supplierInfo": { "supplierId": "sup-formlabs" },
+    "costHistory": [],
+    "hazmat": {
+      "isHazmat": true,
+      "msdsUrl": "/docs/msds/resin-grey.pdf",
+      "storageRequirements": "UV Shielded, Ventilated"
+    },
+    "location": { "zone": "Print-Room", "shelf": "Chemicals", "bin": "Resins" }
   },
   {
     "id": "mat-resin-model-002",
@@ -74,7 +112,11 @@
     "reorderThreshold": 1,
     "unitCost": 160.00,
     "currency": "USD",
-    "status": "InStock"
+    "status": "InStock",
+    "supplierInfo": { "supplierId": "sup-sprintray" },
+    "costHistory": [],
+    "hazmat": { "isHazmat": true },
+    "location": { "zone": "Lab-2", "shelf": "Flammables", "bin": "1" }
   },
   {
     "id": "mat-acrylic-base",
@@ -90,7 +132,11 @@
     "reorderThreshold": 2,
     "unitCost": 120.00,
     "currency": "USD",
-    "status": "InStock"
+    "status": "InStock",
+    "supplierInfo": { "supplierId": "sup-dentsply" },
+    "costHistory": [],
+    "hazmat": { "isHazmat": true, "storageRequirements": "Flammable Cabinet" },
+    "location": { "zone": "Denture-Dept", "shelf": "Acrylics", "bin": "A" }
   },
   {
     "id": "mat-chrome-cobalt",
@@ -106,7 +152,11 @@
     "reorderThreshold": 200,
     "unitCost": 0.85,
     "currency": "USD",
-    "status": "InStock"
+    "status": "InStock",
+    "supplierInfo": { "supplierId": "sup-bego" },
+    "costHistory": [],
+    "hazmat": { "isHazmat": false },
+    "location": { "zone": "Casting-Room", "shelf": "Metals", "bin": "CoCr" }
   },
   {
     "id": "mat-gold-alloy",
@@ -122,7 +172,14 @@
     "reorderThreshold": 10,
     "unitCost": 85.00,
     "currency": "USD",
-    "status": "LowStock"
+    "status": "LowStock",
+    "supplierInfo": { "supplierId": "sup-argen" },
+    "costHistory": [
+        { "date": "2024-11-01", "unitCost": 82.50, "qty": 50 },
+        { "date": "2025-11-01", "unitCost": 85.00, "qty": 20 }
+    ],
+    "hazmat": { "isHazmat": false },
+    "location": { "zone": "Safe", "shelf": "1", "bin": "1" }
   },
   {
     "id": "mat-thermo-disk",
@@ -138,7 +195,11 @@
     "reorderThreshold": 20,
     "unitCost": 4.50,
     "currency": "USD",
-    "status": "InStock"
+    "status": "InStock",
+    "supplierInfo": { "supplierId": "sup-glidewell" },
+    "costHistory": [],
+    "hazmat": { "isHazmat": false },
+    "location": { "zone": "Ortho", "shelf": "Sheets", "bin": "2mm" }
   },
   {
     "id": "mat-thermo-disk-002",
@@ -154,7 +215,11 @@
     "reorderThreshold": 30,
     "unitCost": 4.50,
     "currency": "USD",
-    "status": "InStock"
+    "status": "InStock",
+    "supplierInfo": { "supplierId": "sup-glidewell" },
+    "costHistory": [],
+    "hazmat": { "isHazmat": false },
+    "location": { "zone": "Lab-2", "shelf": "Thermo", "bin": "1" }
   },
   {
     "id": "mat-stone-type4",
@@ -170,7 +235,11 @@
     "reorderThreshold": 3,
     "unitCost": 65.00,
     "currency": "USD",
-    "status": "InStock"
+    "status": "InStock",
+    "supplierInfo": { "supplierId": "sup-whipmix" },
+    "costHistory": [],
+    "hazmat": { "isHazmat": false },
+    "location": { "zone": "Plaster-Room", "shelf": "Floor", "bin": "Green" }
   },
   {
     "id": "mat-wax-base",
@@ -186,6 +255,10 @@
     "reorderThreshold": 5,
     "unitCost": 35.00,
     "currency": "USD",
-    "status": "InStock"
+    "status": "InStock",
+    "supplierInfo": { "supplierId": "sup-keystone" },
+    "costHistory": [],
+    "hazmat": { "isHazmat": false },
+    "location": { "zone": "Wax-Dept", "shelf": "1", "bin": "Pink" }
   }
 ]

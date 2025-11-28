@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconDrill } from '../../../layouts/components/LabIcons'; 
+import { IconMill } from '../../../layouts/components/LabIcons'; 
 import styles from './CasePrintTicket.module.css';
 
 const CasePrintTicket = ({ activeCase }) => {
@@ -11,7 +11,7 @@ const CasePrintTicket = ({ activeCase }) => {
       {/* TICKET HEADER */}
       <header className={styles.header}>
         <div className={styles.brand}>
-          <IconDrill width="32" height="32" />
+          <IconMill width="32" height="32" />
           <div>
             <h1>JS Dental Laboratory</h1>
             <p>123 Lab Street, Tech City, CA 90210</p>

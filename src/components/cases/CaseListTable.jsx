@@ -3,7 +3,7 @@ import StatusBadge from './StatusBadge';
 import { 
   IconChevronRight, 
   IconTooth, 
-  IconDrill, 
+  IconMill, 
   IconLayers, 
   IconMicroscope,
   IconFire 
@@ -17,7 +17,7 @@ const getCaseTypeConfig = (c) => {
 
   if (tags.includes('implant') || unitTypes.includes('implant')) {
     return { 
-      icon: <IconDrill width="18" height="18" />, 
+      icon: <IconMill width="18" height="18" />, 
       label: 'Implant', 
       className: styles.typeImplant 
     };

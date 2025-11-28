@@ -1,44 +1,34 @@
-import React, { useMemo } from 'react';
-import { useLab } from '../../contexts';
+/* eslint-disable no-unused-vars */
+import React, { useMemo, useState } from 'react';
+import { useProduction } from '../../contexts';
+import EquipmentDetailModal from '../../components/production/EquipmentDetailModal';
+import MaterialDetailModal from '../../components/production/MaterialDetailModal';
+import BatchCreationModal from '../../components/production/BatchCreationModal'; // NEW IMPORT
 import { 
-  IconDrill, 
+  IconMill, 
   IconLayers, 
   IconFire, 
   IconAlert, 
-  IconCheck, 
-  IconClock 
+  IconCheck
 } from '../../layouts/components/LabIcons';
 import styles from './ProductionQueue.module.css';
 
 // Helper: Icon for Machine Type
 const getMachineIcon = (type) => {
   const t = (type || '').toLowerCase();
-  if (t.includes('mill')) return <IconDrill width="24" height="24" />;
+  if (t.includes('mill')) return <IconMill width="24" height="24" />;
   if (t.includes('print')) return <IconLayers width="24" height="24" />;
   if (t.includes('furnace') || t.includes('press')) return <IconFire width="24" height="24" />;
-  return <IconDrill width="24" height="24" />;
+  return <IconMill width="24" height="24" />;
 };
 
 const ProductionQueue = () => {
-  const { equipment, batches, materials, loading } = useLab();
+  const { equipment, batches, materials, loading, activeBatches, lowStockMaterials, equipmentStats } = useProduction();
 
-  // --- Computed Data ---
-  const activeBatches = useMemo(() => {
-    return batches.filter(b => b.status === 'InProgress' || b.status === 'Scheduled');
-  }, [batches]);
-
-  const lowMaterials = useMemo(() => {
-    return materials.filter(m => 
-      m.status === 'LowStock' || m.status === 'ReorderNow' || m.stockLevel <= m.reorderThreshold
-    );
-  }, [materials]);
-
-  const machineStats = useMemo(() => {
-    const running = equipment.filter(e => e.status === 'Running').length;
-    const idle = equipment.filter(e => e.status === 'Idle').length;
-    const down = equipment.filter(e => e.status === 'Maintenance').length;
-    return { running, idle, down };
-  }, [equipment]);
+  // --- Modal State ---
+  const [selectedMachine, setSelectedMachine] = useState(null);
+  const [selectedMaterial, setSelectedMaterial] = useState(null);
+  const [showBatchModal, setShowBatchModal] = useState(false); // NEW STATE
 
   if (loading) {
     return <div style={{ padding: '2rem' }}>Loading production floor...</div>;
@@ -54,7 +44,9 @@ const ProductionQueue = () => {
           <p>Real-time machine status and job batching.</p>
         </div>
         <div>
-          <button className="button primary">+ Create Batch</button>
+          <button className="button primary" onClick={() => setShowBatchModal(true)}>
+            + Create Batch
+          </button>
         </div>
       </header>
 
@@ -63,7 +55,7 @@ const ProductionQueue = () => {
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Machines Running</span>
           <span className={styles.statValue} style={{ color: 'var(--success-500)' }}>
-            {machineStats.running} / {equipment.length}
+            {equipmentStats.running} / {equipmentStats.total}
           </span>
         </div>
         <div className={styles.statCard}>
@@ -72,8 +64,8 @@ const ProductionQueue = () => {
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Low Stock Alerts</span>
-          <span className={styles.statValue} style={{ color: lowMaterials.length > 0 ? 'var(--error-500)' : 'inherit' }}>
-            {lowMaterials.length}
+          <span className={styles.statValue} style={{ color: lowStockMaterials.length > 0 ? 'var(--error-500)' : 'inherit' }}>
+            {lowStockMaterials.length}
           </span>
         </div>
       </div>
@@ -81,7 +73,7 @@ const ProductionQueue = () => {
       {/* EQUIPMENT STATUS */}
       <section>
         <div className={styles.sectionTitle}>
-          <IconDrill width="18" /> Equipment Status
+          <IconMill width="18" /> Equipment Status
         </div>
         <div className={styles.equipmentGrid}>
           {equipment.map(machine => {
@@ -94,13 +86,17 @@ const ProductionQueue = () => {
               : machine.status === 'Maintenance' ? styles.bgMaintenance 
               : styles.bgIdle;
 
-            // Find current batch if running
             const activeBatch = machine.currentJobId 
               ? batches.find(b => b.id === machine.currentJobId)
               : null;
 
             return (
-              <div key={machine.id} className={`${styles.machineCard} ${statusClass}`}>
+              <div 
+                key={machine.id} 
+                className={`${styles.machineCard} ${statusClass}`}
+                onClick={() => setSelectedMachine(machine)}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className={styles.machineHeader}>
                   <div>
                     <span className={styles.machineName}>{machine.name}</span>
@@ -122,7 +118,6 @@ const ProductionQueue = () => {
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                           {activeBatch.caseIds?.length || 0} Units • Ends {new Date(activeBatch.estimatedEndTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </span>
-                        {/* Fake Progress Bar for Visuals */}
                         <div className={styles.progress}>
                           <div className={styles.progressBar} style={{ width: '60%' }}></div>
                         </div>
@@ -195,10 +190,15 @@ const ProductionQueue = () => {
           <div className={styles.sectionTitle}>
             <IconAlert width="18" /> Inventory Alerts
           </div>
-          {lowMaterials.length > 0 ? (
+          {lowStockMaterials.length > 0 ? (
             <div className={styles.alertList}>
-              {lowMaterials.map(mat => (
-                <div key={mat.id} className={styles.alertItem}>
+              {lowStockMaterials.map(mat => (
+                <div 
+                  key={mat.id} 
+                  className={styles.alertItem}
+                  onClick={() => setSelectedMaterial(mat)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <IconAlert width="20" style={{ flexShrink: 0, marginTop: '2px' }} />
                   <div className={styles.alertContent}>
                     <strong>Low Stock: {mat.name}</strong>
@@ -216,6 +216,25 @@ const ProductionQueue = () => {
         </section>
 
       </div>
+
+      {/* --- MODALS --- */}
+      <EquipmentDetailModal 
+        machine={selectedMachine} 
+        isOpen={!!selectedMachine} 
+        onClose={() => setSelectedMachine(null)} 
+      />
+
+      <MaterialDetailModal
+        material={selectedMaterial}
+        isOpen={!!selectedMaterial}
+        onClose={() => setSelectedMaterial(null)}
+      />
+
+      <BatchCreationModal 
+        isOpen={showBatchModal}
+        onClose={() => setShowBatchModal(false)}
+      />
+
     </div>
   );
 };

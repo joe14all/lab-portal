@@ -1,0 +1,187 @@
+/* src/components/production/BatchCreationModal.module.css */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0.5rem;
+  min-height: 400px;
+}
+
+/* Stepper Header */
+.stepper {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 1rem;
+  margin-bottom: 1rem;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.stepActive {
+  opacity: 1;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.stepNum {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--neutral-200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+}
+
+.stepActive .stepNum {
+  background-color: var(--primary);
+  color: white;
+}
+
+/* --- STEP 1: MATERIAL GROUPING --- */
+.groupGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.materialCard {
+  background-color: var(--bg-body);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.materialCard:hover {
+  border-color: var(--primary-300);
+  background-color: var(--bg-surface-hover);
+}
+
+.matTitle {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.matCount {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* --- STEP 2: UNIT SELECTION --- */
+.selectionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  background-color: var(--bg-body);
+}
+
+.unitRow {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+}
+
+.unitRow:last-child {
+  border-bottom: none;
+}
+
+.checkbox {
+  margin-right: 1rem;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.unitInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.unitMain {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.unitSub {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.rushBadge {
+  background-color: var(--error-100);
+  color: var(--error-600);
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  margin-left: 0.5rem;
+}
+
+/* --- STEP 3: MACHINE & STOCK --- */
+.configForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.machineGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.machineOption {
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  cursor: pointer;
+  text-align: center;
+  background-color: var(--bg-surface);
+}
+
+.machineSelected {
+  border-color: var(--primary);
+  background-color: var(--primary-50);
+  color: var(--primary-700);
+}
+
+.stockWarning {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background-color: var(--warning-bg);
+  border: 1px solid var(--warning-100);
+  border-radius: 0.5rem;
+  color: var(--warning-600);
+  font-size: 0.9rem;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}

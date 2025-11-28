@@ -11,7 +11,13 @@
       "lastServiceDate": "2025-10-01",
       "nextServiceDue": "2025-12-01",
       "notes": "Spindle calibration required soon."
-    }
+    },
+    "calibrationHistory": [
+        { "date": "2025-10-01", "technician": "Tech A", "results": "Passed - Offset 0.02mm" }
+    ],
+    "utilizationMetrics": { "hoursRun": 1200, "idleTime": 45 },
+    "warranty": { "expiryDate": "2026-06-01", "provider": "VHF Care", "contractNumber": "W-9900" },
+    "operatingCost": { "perHour": 15.00, "energyConsumption": "2.2kW" }
   },
   {
     "id": "mill-02",
@@ -24,7 +30,11 @@
     "maintenance": {
       "lastServiceDate": "2025-11-15",
       "nextServiceDue": "2026-02-15"
-    }
+    },
+    "calibrationHistory": [],
+    "utilizationMetrics": { "hoursRun": 800, "idleTime": 120 },
+    "warranty": { "expiryDate": "2027-01-01", "provider": "Roland DG" },
+    "operatingCost": { "perHour": 12.50, "energyConsumption": "1.8kW" }
   },
   {
     "id": "printer-01",
@@ -38,7 +48,11 @@
       "lastServiceDate": "2025-09-01",
       "nextServiceDue": "2025-11-20",
       "notes": "Tank replacement needed."
-    }
+    },
+    "calibrationHistory": [],
+    "utilizationMetrics": { "hoursRun": 450, "idleTime": 200 },
+    "warranty": { "expiryDate": "2025-12-31", "provider": "Formlabs Pro" },
+    "operatingCost": { "perHour": 5.00, "energyConsumption": "0.3kW" }
   },
   {
     "id": "printer-02",
@@ -51,7 +65,11 @@
     "maintenance": {
       "lastServiceDate": "2025-10-20",
       "nextServiceDue": "2026-01-20"
-    }
+    },
+    "calibrationHistory": [],
+    "utilizationMetrics": { "hoursRun": 600, "idleTime": 50 },
+    "warranty": { "expiryDate": "2026-05-01", "provider": "SprintRay Shield" },
+    "operatingCost": { "perHour": 6.00, "energyConsumption": "0.4kW" }
   },
   {
     "id": "cast-induct-01",
@@ -65,7 +83,11 @@
       "lastServiceDate": "2025-10-15",
       "nextServiceDue": "2026-04-15",
       "notes": "Crucible replaced recently."
-    }
+    },
+    "calibrationHistory": [],
+    "utilizationMetrics": { "hoursRun": 300, "idleTime": 600 },
+    "warranty": { "expiryDate": "2028-01-01", "provider": "Bego" },
+    "operatingCost": { "perHour": 25.00, "energyConsumption": "5.0kW" }
   },
   {
     "id": "cast-cent-02",
@@ -78,7 +100,11 @@
     "maintenance": {
       "lastServiceDate": "2025-06-01",
       "nextServiceDue": "2025-12-01"
-    }
+    },
+    "calibrationHistory": [],
+    "utilizationMetrics": { "hoursRun": 100, "idleTime": 1000 },
+    "warranty": { "expiryDate": null, "provider": null },
+    "operatingCost": { "perHour": 2.00, "energyConsumption": "0.0kW" }
   },
   {
     "id": "furnace-press-01",
@@ -91,7 +117,13 @@
     "maintenance": {
       "lastServiceDate": "2025-08-20",
       "nextServiceDue": "2026-02-20"
-    }
+    },
+    "calibrationHistory": [
+        { "date": "2025-08-20", "technician": "Ivoclar Rep", "results": "Temp calibrated to +/- 1C" }
+    ],
+    "utilizationMetrics": { "hoursRun": 2000, "idleTime": 100 },
+    "warranty": { "expiryDate": "2026-09-01", "provider": "Ivoclar" },
+    "operatingCost": { "perHour": 8.00, "energyConsumption": "1.5kW" }
   },
   {
     "id": "inject-01",
@@ -104,7 +136,11 @@
     "maintenance": {
       "lastServiceDate": "2025-11-01",
       "nextServiceDue": "2026-05-01"
-    }
+    },
+    "calibrationHistory": [],
+    "utilizationMetrics": { "hoursRun": 150, "idleTime": 800 },
+    "warranty": null,
+    "operatingCost": { "perHour": 10.00, "energyConsumption": "0.8kW" }
   },
   {
     "id": "scan-01",
@@ -117,6 +153,12 @@
     "maintenance": {
       "lastServiceDate": "2025-09-10",
       "nextServiceDue": "2026-09-10"
-    }
+    },
+    "calibrationHistory": [
+        { "date": "2025-11-19", "technician": "Internal", "results": "Daily calibration pass" }
+    ],
+    "utilizationMetrics": { "hoursRun": 500, "idleTime": 500 },
+    "warranty": { "expiryDate": "2026-01-01", "provider": "3Shape" },
+    "operatingCost": { "perHour": 1.00, "energyConsumption": "0.2kW" }
   }
 ]

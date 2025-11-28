@@ -3,7 +3,7 @@ import { useLab, useAuth } from '../../../contexts';
 import Modal from '../../common/Modal'; 
 import { 
   IconCheck, 
-  IconDrill, 
+  IconMill, 
   IconMicroscope, 
   IconAlert,
   IconBox,
@@ -21,8 +21,8 @@ const getStageIcon = (stageId) => {
   if (stageId.includes('received')) return <IconBox width="16" height="16" />;
   if (stageId.includes('model')) return <IconTooth width="16" height="16" />;
   if (stageId.includes('design')) return <IconFile width="16" height="16" />;
-  if (stageId.includes('waxup')) return <IconDrill width="16" height="16" />; 
-  if (stageId.includes('milling')) return <IconDrill width="16" height="16" />;
+  if (stageId.includes('waxup')) return <IconMill width="16" height="16" />; 
+  if (stageId.includes('milling')) return <IconMill width="16" height="16" />;
   if (stageId.includes('casting')) return <IconFire width="16" height="16" />; 
   if (stageId.includes('processing')) return <IconLayers width="16" height="16" />; 
   if (stageId.includes('finishing')) return <IconMicroscope width="16" height="16" />;

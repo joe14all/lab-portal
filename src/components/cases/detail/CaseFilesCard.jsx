@@ -4,7 +4,7 @@ import Modal from '../../common/Modal';
 import UniversalFileViewer from './UniversalFileViewer'; // Updated Import
 import { 
   IconFile, 
-  IconDrill, 
+  IconMill, 
   IconPdf,
   IconImage,
   IconBox,
@@ -226,7 +226,7 @@ const CaseFilesCard = ({ files, caseId }) => {
             <div className={styles.catText}><strong>Reference</strong><span>Photo / PDF</span></div>
           </button>
           <button className={styles.catBtn} onClick={() => handleUpload('PRODUCTION_DESIGN')}>
-            <div className={styles.catIcon}><IconDrill /></div>
+            <div className={styles.catIcon}><IconMill /></div>
             <div className={styles.catText}><strong>Design Output</strong><span>CAM File</span></div>
           </button>
         </div>

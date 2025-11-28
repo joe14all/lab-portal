@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../../common/Modal';
-import { IconDrill } from '../../../layouts/components/LabIcons';
+import { IconMill } from '../../../layouts/components/LabIcons';
 import styles from "./ProductFormModal.module.css";
 import { COUNTRIES } from '../../../constants';
 
@@ -60,7 +60,7 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData, isDeleting, 
       isOpen={isOpen}
       onClose={onClose}
       title={initialData ? "Edit Product" : "Add New Product"}
-      icon={<IconDrill width="20" />}
+      icon={<IconMill width="20" />}
       footer={
         <div className={styles.footer}>
           {initialData ? (
