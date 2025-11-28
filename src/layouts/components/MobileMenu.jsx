@@ -4,13 +4,14 @@ import { useAuth } from '../../contexts';
 import { 
   IconDashboard, 
   IconCase, 
-  IconMicroscope, 
+  IconMill, 
   IconInvoice, 
   IconSettings,
   IconClose,
   IconUser,
   IconChevronRight,
-  IconChevronDown
+  IconChevronDown,
+  IconTruck // Added IconTruck
 } from './LabIcons';
 import styles from './MobileMenu.module.css';
 
@@ -22,7 +23,9 @@ const MobileMenu = ({ isOpen, onClose }) => {
   const navItems = [
     { to: "/", label: "Dashboard", icon: <IconDashboard />, permission: null },
     { to: "/cases", label: "Case Management", icon: <IconCase />, permission: null },
-    { to: "/production", label: "Production", icon: <IconMicroscope />, permission: null },
+    { to: "/production", label: "Production", icon: <IconMill />, permission: null },
+    // NEW: Logistics Item
+    { to: "/logistics", label: "Logistics", icon: <IconTruck />, permission: "LOGISTICS_VIEW" },
     
     // Finance Group
     { 
@@ -121,7 +124,6 @@ const MobileMenu = ({ isOpen, onClose }) => {
                       {isGroupOpen ? <IconChevronDown width="14" /> : <IconChevronRight width="14" />}
                     </button>
 
-                    {/* Wrapper for CSS animation if needed */}
                     <div className={`${styles.subListWrapper} ${isGroupOpen ? styles.expanded : ''}`}>
                       <ul className={styles.subList}>
                         {item.children.map((child) => (

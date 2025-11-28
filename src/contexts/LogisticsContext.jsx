@@ -6,11 +6,13 @@ import { useAuth } from './AuthContext';
 const LogisticsContext = createContext(null);
 
 export const LogisticsProvider = ({ children }) => {
-  const { activeLab } = useAuth();
+  const { activeLab, user } = useAuth();
 
   // --- State ---
   const [routes, setRoutes] = useState([]);
   const [pickups, setPickups] = useState([]);
+  // In a real app, "Deliveries" would be queried from Cases where status="Ready to Ship"
+  // We will mock this aggregation in the "Unassigned" pool logic below
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -41,53 +43,61 @@ export const LogisticsProvider = ({ children }) => {
   }, [activeLab]);
 
   // ============================================================
-  // 1. ROUTE HANDLERS
+  // ACTIONS
   // ============================================================
 
-  /**
-   * (UPDATE) Updates the status of a specific stop on a route.
-   * Logic: We must find the route, map over its stops to update the specific one,
-   * and then send the entire updated 'stops' array to the backend service.
-   */
-  const updateRouteStopStatus = useCallback(async (routeId, stopId, updates) => {
+  const createRoute = useCallback(async (routeData) => {
     try {
-      // 1. Find current route state to get existing stops
-      const currentRoute = routes.find(r => r.id === routeId);
-      if (!currentRoute) throw new Error("Route not found locally");
+      const newRoute = await MockService.logistics.routes.create({
+        ...routeData,
+        labId: activeLab.id,
+        status: 'Scheduled',
+        stops: []
+      });
+      setRoutes(prev => [...prev, newRoute]);
+      return newRoute;
+    } catch (err) {
+      console.error("Failed to create route", err);
+      throw err;
+    }
+  }, [activeLab]);
 
-      // 2. Calculate new stops array
-      const updatedStops = currentRoute.stops.map(stop => {
+  const updateRouteStopStatus = useCallback(async (routeId, stopId, newStatus, proofData = {}) => {
+    try {
+      const route = routes.find(r => r.id === routeId);
+      if (!route) throw new Error("Route not found");
+
+      const updatedStops = route.stops.map(stop => {
         if (stop.id === stopId) {
-          return { 
-            ...stop, 
-            ...updates,
-            completedAt: updates.status === 'Completed' ? new Date().toISOString() : (updates.completedAt || null)
+          return {
+            ...stop,
+            status: newStatus,
+            completedAt: newStatus === 'Completed' ? new Date().toISOString() : null,
+            ...proofData // signature, photo url, etc.
           };
         }
         return stop;
       });
 
-      // 3. Persist to Service
-      const updatedRoute = await MockService.logistics.routes.update(routeId, { 
-        stops: updatedStops 
+      // Check if all stops are done
+      const allDone = updatedStops.every(s => s.status === 'Completed' || s.status === 'Skipped');
+      const routeStatus = allDone ? 'Completed' : 'InProgress';
+
+      const updatedRoute = await MockService.logistics.routes.update(routeId, {
+        stops: updatedStops,
+        status: routeStatus
       });
 
-      // 4. Update State
-      setRoutes(prevRoutes => prevRoutes.map(r => r.id === routeId ? updatedRoute : r));
-      
+      setRoutes(prev => prev.map(r => r.id === routeId ? updatedRoute : r));
       return updatedRoute;
     } catch (err) {
-      console.error("Failed to update route stop", err);
+      console.error("Failed to update stop", err);
       throw err;
     }
   }, [routes]);
 
-  /**
-   * (CREATE) Creates a new pickup request
-   */
   const createPickupRequest = useCallback(async (requestData) => {
     if (!activeLab) return;
-
     try {
       const newPickup = await MockService.logistics.pickups.create({
         ...requestData,
@@ -95,34 +105,71 @@ export const LogisticsProvider = ({ children }) => {
         status: 'Pending',
         requestTime: new Date().toISOString()
       });
-
       setPickups(prev => [newPickup, ...prev]);
       return newPickup;
     } catch (err) {
-      console.error("Failed to create pickup request", err);
+      console.error("Failed to create pickup", err);
       throw err;
     }
   }, [activeLab]);
 
+  // Mock function to "Assign" a pending item to a route
+  // In a real backend, this would move the entity from "Pool" to "Route.stops"
+  const assignToRoute = useCallback(async (routeId, task) => {
+    try {
+      const route = routes.find(r => r.id === routeId);
+      const newStop = {
+        id: `stop-${Date.now()}`,
+        sequence: route.stops.length + 1,
+        clinicId: task.clinicId,
+        type: task.type, // 'Pickup' or 'Delivery'
+        status: 'Pending',
+        // Copy relevant details
+        pickupTasks: task.type === 'Pickup' ? [task] : [],
+        deliveryManifest: task.type === 'Delivery' ? [task] : []
+      };
+
+      const updatedRoute = await MockService.logistics.routes.update(routeId, {
+        stops: [...route.stops, newStop]
+      });
+
+      setRoutes(prev => prev.map(r => r.id === routeId ? updatedRoute : r));
+      
+      // If it was a pickup, update its status to 'Assigned'
+      if (task.type === 'Pickup') {
+        const updatedPickup = await MockService.logistics.pickups.update(task.id, { status: 'Assigned' });
+        setPickups(prev => prev.map(p => p.id === task.id ? updatedPickup : p));
+      }
+
+    } catch (err) {
+      console.error("Failed to assign task", err);
+      throw err;
+    }
+  }, [routes]);
 
   // ============================================================
-  // EXPORT VALUE
+  // SELECTORS
   // ============================================================
+  
+  // Filter routes for the current user (if driver)
+  const myRoutes = useMemo(() => {
+    if (!user) return [];
+    // If user is a driver, only show their routes. Admin sees all.
+    const isDriver = user.roleId === 'role-driver'; 
+    return isDriver ? routes.filter(r => r.driverId === user.id) : routes;
+  }, [routes, user]);
 
   const value = useMemo(() => ({
-    // State
     routes,
     pickups,
     loading,
     error,
-
-    // Actions
+    myRoutes,
+    createRoute,
     updateRouteStopStatus,
     createPickupRequest,
-  }), [
-    routes, pickups, loading, error, 
-    updateRouteStopStatus, createPickupRequest
-  ]);
+    assignToRoute
+  }), [routes, pickups, loading, error, myRoutes, createRoute, updateRouteStopStatus, createPickupRequest, assignToRoute]);
 
   return (
     <LogisticsContext.Provider value={value}>
@@ -131,11 +178,8 @@ export const LogisticsProvider = ({ children }) => {
   );
 };
 
-// Hook
 export const useLogistics = () => {
   const context = useContext(LogisticsContext);
-  if (!context) {
-    throw new Error('useLogistics must be used within a LogisticsProvider');
-  }
+  if (!context) throw new Error('useLogistics must be used within a LogisticsProvider');
   return context;
 };

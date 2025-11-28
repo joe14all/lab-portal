@@ -4,12 +4,13 @@ import { useAuth } from '../../contexts';
 import { 
   IconDashboard, 
   IconCase, 
-  IconMicroscope, 
+  IconMill, 
   IconInvoice, 
   IconSettings,
   IconUser,
   IconChevronRight,
-  IconChevronDown
+  IconChevronDown,
+  IconTruck // Added IconTruck
 } from './LabIcons';
 import styles from './Sidebar.module.css';
 
@@ -22,7 +23,9 @@ const Sidebar = () => {
   const navItems = [
     { to: "/", label: "Dashboard", icon: <IconDashboard />, permission: null },
     { to: "/cases", label: "Case Management", icon: <IconCase />, permission: null },
-    { to: "/production", label: "Production", icon: <IconMicroscope />, permission: null },
+    { to: "/production", label: "Production", icon: <IconMill />, permission: null },
+    // NEW: Logistics Item
+    { to: "/logistics", label: "Logistics", icon: <IconTruck />, permission: "LOGISTICS_VIEW" },
     
     // Expandable: Finance
     { 
@@ -74,7 +77,7 @@ const Sidebar = () => {
         }
       }
     });
-  }, [location.pathname]); // Added dependency to re-check on route change
+  }, [location.pathname]); 
 
   const toggleGroup = (id) => {
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }));

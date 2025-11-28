@@ -29,7 +29,7 @@ import LabCatalogSettings from '../pages/lab-settings/LabCatalogSettings';
 import LabFinancialSettings from '../pages/lab-settings/LabFinancialSettings';
 import LabPriceLists from '../pages/lab-settings/LabPriceLists';
 import LabPriceListDetail from '../pages/lab-settings/LabPriceListDetail';
-import LabWorkflows from '../pages/lab-settings/LabWorkflows'; // NEW IMPORT
+import LabWorkflows from '../pages/lab-settings/LabWorkflows';
 
 export const AppRouter = () => {
   return (
@@ -55,11 +55,12 @@ export const AppRouter = () => {
 
             <Route path="production" element={<ProductionQueue />} />
             
+            {/* NEW: Logistics Route (Protected) */}
             <Route element={<ProtectedRoute requiredPermissions={['LOGISTICS_VIEW']} />}>
                <Route path="logistics" element={<LogisticsRoutes />} />
             </Route>
 
-            {/* FINANCE MODULE (Updated) */}
+            {/* FINANCE MODULE */}
             <Route element={<ProtectedRoute requiredPermissions={['FINANCE_VIEW']} />}>
                <Route path="finance">
                  <Route index element={<Navigate to="invoices" replace />} />
@@ -84,7 +85,6 @@ export const AppRouter = () => {
                 <Route path="price-lists" element={<LabPriceLists />} />
                 <Route path="price-lists/:id" element={<LabPriceListDetail />} />
                 <Route path="financials" element={<LabFinancialSettings />} />
-                {/* Updated Route */}
                 <Route path="workflows" element={<LabWorkflows />} />
               </Route>
             </Route>

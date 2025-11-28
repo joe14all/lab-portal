@@ -1,0 +1,1535 @@
+# Lab Portal - Production Domain Technical & UX Analysis
+**Enterprise Architecture Document**  
+**Date:** November 28, 2025  
+**Version:** 1.0  
+**Author:** Senior Engineering Team
+
+---
+
+## Executive Summary
+
+This document provides a comprehensive technical and UX analysis of the **Production Domain** within the Lab Portal ecosystem, which serves as a core module in a broader dental EHR platform. The analysis covers data models, state management, workflow orchestration, integration points, and AWS deployment architecture.
+
+### Key Findings
+- ✅ **Strengths:** Well-structured context separation, clear batch scheduling logic, modular component architecture
+- ⚠️ **Critical Gaps:** Missing real-time sync mechanisms, incomplete audit trails, limited quality metrics tracking
+- 🔧 **Recommendations:** Implement WebSocket connections, enhance material tracking, add predictive maintenance
+
+---
+
+## Table of Contents
+
+1. [Domain Overview](#1-domain-overview)
+2. [Data Model Analysis](#2-data-model-analysis)
+3. [Entity Relationship Mapping](#3-entity-relationship-mapping)
+4. [State Management Architecture](#4-state-management-architecture)
+5. [Workflow Analysis](#5-workflow-analysis)
+6. [Component Architecture](#6-component-architecture)
+7. [Integration Points](#7-integration-points)
+8. [Missing Elements & Gaps](#8-missing-elements--gaps)
+9. [AWS Deployment Architecture](#9-aws-deployment-architecture)
+10. [Security & Access Control](#10-security--access-control)
+11. [Performance Optimization](#11-performance-optimization)
+12. [Implementation Roadmap](#12-implementation-roadmap)
+
+---
+
+## 1. Domain Overview
+
+### 1.1 Production Domain Scope
+
+The Production domain manages the **physical manufacturing lifecycle** of dental prosthetics and appliances within the lab. It orchestrates:
+
+- **Equipment Management:** CAD/CAM mills, 3D printers, furnaces, casting machines
+- **Batch Scheduling:** Grouping units by material type and production method
+- **Inventory Tracking:** Raw materials (discs, ingots, resins, alloys)
+- **Quality Control:** First-pass yield, defect tracking, operator performance
+- **Maintenance Logging:** Equipment uptime, service scheduling, breakdown reporting
+
+### 1.2 Domain Boundaries
+
+**Upstream Dependencies:**
+- **Cases Context:** Provides units ready for production (stage-design, stage-model)
+- **Workflows Context:** Defines production stage sequences per product type
+- **CRM Context:** Doctor preferences, clinic delivery schedules
+
+**Downstream Consumers:**
+- **Finance Context:** Production costs, material consumption for invoicing
+- **Logistics Context:** Completed batches ready for shipping
+- **Analytics:** Production KPIs, efficiency metrics, utilization rates
+
+---
+
+## 2. Data Model Analysis
+
+### 2.1 Core Entities
+
+#### 2.1.1 Equipment (Machines)
+
+```typescript
+interface Equipment {
+  id: string;
+  labId: string;
+  name: string;                    // "VHF K5 #1"
+  type: string;                    // "Dry Mill", "3D Printer", "Press Furnace"
+  serialNumber: string;
+  status: 'Running' | 'Idle' | 'Maintenance';
+  currentJobId: string | null;     // Active batch reference
+  maintenance: {
+    lastServiceDate: ISO8601;
+    nextServiceDue: ISO8601;
+    notes: string;
+  };
+  
+  // MISSING FIELDS (Critical):
+  calibrationData?: {              // For precision tracking
+    lastCalibration: ISO8601;
+    toleranceMetrics: Record<string, number>;
+  };
+  utilizationHistory?: {           // For predictive maintenance
+    totalHours: number;
+    lastResetDate: ISO8601;
+  };
+  capabilities?: string[];         // ["zirconia", "titanium", "pmma"]
+}
+```
+
+**Issues Identified:**
+- ❌ No `createdAt` or `updatedAt` timestamps (audit requirement)
+- ❌ No `deletedAt` for soft deletes (compliance)
+- ❌ Missing machine-specific parameters (spindle speed, build volume)
+- ❌ No geolocation for multi-lab deployments
+
+**Recommendations:**
+```typescript
+// Enhanced Equipment Model
+interface EquipmentEnhanced extends Equipment {
+  metadata: {
+    manufacturer: string;
+    modelNumber: string;
+    purchaseDate: ISO8601;
+    warrantyExpiry: ISO8601;
+  };
+  specifications: {
+    maxMaterialSize: { width: number; height: number };
+    supportedMaterials: string[];
+    avgCycleTimeMinutes: number;
+  };
+  operationalMetrics: {
+    totalJobsCompleted: number;
+    totalDowntimeHours: number;
+    meanTimeBetweenFailure: number; // MTBF
+  };
+  location: {
+    labId: string;
+    room: string;              // "Milling Room", "Print Lab"
+    position: { x: number; y: number }; // For floor plan
+  };
+  createdAt: ISO8601;
+  updatedAt: ISO8601;
+  deletedAt: ISO8601 | null;
+}
+```
+
+---
+
+#### 2.1.2 Batches (Production Jobs)
+
+```typescript
+interface Batch {
+  id: string;
+  labId: string;
+  type: 'Milling' | 'Printing' | 'Casting' | 'Pressing';
+  machineId: string;
+  materialId: string;              // Inventory item consumed
+  operatorId: string;
+  status: 'Scheduled' | 'InProgress' | 'Completed';
+  startTime: ISO8601 | null;
+  endTime: ISO8601 | null;
+  estimatedEndTime: ISO8601;
+  caseIds: string[];               // Cases included in this batch
+  materialConsumed: {
+    units?: number;
+    percentage?: number;
+    volumeMl?: number;
+    weightGrams?: number;
+  };
+  qualityMetrics?: {
+    successRate: number;           // 0-100
+    defectCount: number;
+    reworkRequired: boolean;
+  };
+  
+  // MISSING FIELDS (Critical):
+  priority?: 'STANDARD' | 'RUSH' | 'EMERGENCY';
+  nestingFileUrl?: string;         // CAM file location (S3)
+  actualDurationMinutes?: number;
+  temperatureLog?: TemperatureReading[];  // For furnaces
+  failureReason?: string;
+}
+```
+
+**Issues Identified:**
+- ❌ No `nestingFileUrl` for CAM programs (must be stored in S3)
+- ❌ Missing `actualDurationMinutes` for efficiency analysis
+- ❌ No link to `WorkflowStage` for automatic case progression
+- ❌ Missing `batchNumber` (human-readable identifier)
+
+**Recommendations:**
+```typescript
+interface BatchEnhanced extends Batch {
+  batchNumber: string;             // "B-2025-1234"
+  workflowStageId: string;         // Links to case stage automation
+  nestingData: {
+    fileUrl: string;               // s3://bucket/nc-files/batch-123.nc
+    fileSize: number;
+    generatedBy: string;           // CAD software version
+    efficiency: number;            // Material utilization %
+  };
+  timeline: {
+    queuedAt: ISO8601;
+    startedAt: ISO8601;
+    completedAt: ISO8601;
+    actualDurationSeconds: number;
+  };
+  alerts: Array<{
+    timestamp: ISO8601;
+    type: 'MaterialLow' | 'ToolWear' | 'QualityIssue';
+    message: string;
+    acknowledged: boolean;
+  }>;
+  parentBatchId?: string;          // For rework batches
+  
+  // VERSIONING for audit
+  version: number;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: ISO8601;
+  updatedAt: ISO8601;
+}
+```
+
+---
+
+#### 2.1.3 Materials (Inventory)
+
+```typescript
+interface Material {
+  id: string;
+  labId: string;
+  name: string;                    // "Zirconia Disc - 98mm - Shade A2"
+  type: 'Disc' | 'Ingot' | 'Liquid' | 'Powder' | 'Sheet';
+  manufacturer: string;
+  sku: string;
+  lotNumber: string;
+  expiryDate: ISO8601;
+  stockLevel: number;
+  reorderThreshold: number;
+  unit: string;                    // "Liters", "Sheets", "DWT"
+  unitCost: number;
+  currency: string;
+  status: 'InStock' | 'LowStock' | 'ReorderNow';
+  
+  // MISSING FIELDS (Critical):
+  receivedDate?: ISO8601;
+  storageLocation?: string;        // Shelf/Cabinet number
+  vendor?: {
+    id: string;
+    name: string;
+    leadTimeDays: number;
+  };
+  chemicalComposition?: Record<string, number>;
+  safetyDataSheet?: string;        // SDS document URL
+}
+```
+
+**Issues Identified:**
+- ❌ No `receivedDate` for FIFO tracking
+- ❌ Missing `storageLocation` for warehouse management
+- ❌ No `batchConsumptionHistory` for traceability
+- ❌ Missing `vendor` relationship for auto-reordering
+
+**Recommendations:**
+```typescript
+interface MaterialEnhanced extends Material {
+  procurement: {
+    vendorId: string;
+    purchaseOrderId: string;
+    receivedDate: ISO8601;
+    leadTimeDays: number;
+    minimumOrderQuantity: number;
+  };
+  storage: {
+    location: string;              // "Cabinet-A, Shelf-3"
+    temperature?: number;          // For temperature-sensitive materials
+    humidity?: number;
+  };
+  traceability: {
+    consumptionHistory: Array<{
+      batchId: string;
+      quantityUsed: number;
+      consumedAt: ISO8601;
+    }>;
+    qualityTests: Array<{
+      testDate: ISO8601;
+      testType: string;
+      result: 'PASS' | 'FAIL';
+    }>;
+  };
+  compliance: {
+    certifications: string[];      // ["FDA", "CE", "ISO 13485"]
+    sdsUrl: string;
+    disposalInstructions: string;
+  };
+  reorderRule: {
+    autoReorder: boolean;
+    preferredVendorId: string;
+    reorderQuantity: number;
+  };
+}
+```
+
+---
+
+### 2.2 Data Integrity Issues
+
+#### 2.2.1 Missing Relationships
+
+**Current State:**
+```javascript
+// batches.json
+{
+  "materialId": "mat-zirc-A2",
+  "caseIds": ["case-5001"]
+}
+
+// No direct link to:
+// - Invoice line items (billing)
+// - Quality inspection records
+// - Operator performance metrics
+```
+
+**Required Relationships:**
+```typescript
+// Add to Batch model
+interface BatchRelations {
+  // Financial
+  invoiceLineItemIds?: string[];   // Links to finance module
+  laborCost?: number;
+  
+  // Quality
+  inspectionRecordId?: string;     // Separate QC entity
+  
+  // Personnel
+  operatorId: string;
+  supervisorId?: string;
+  
+  // Maintenance
+  maintenanceTriggeredId?: string; // If batch caused machine issue
+}
+```
+
+#### 2.2.2 Redundant Data
+
+**Issue:** Material names are duplicated across inventory and batches
+
+```javascript
+// batches.json contains materialId: "mat-zirc-A2"
+// But equipment selection uses material TYPE not specific lot
+
+// Solution: Normalize to material CATEGORIES
+interface MaterialCategory {
+  id: string;
+  name: string;                    // "Zirconia"
+  compatibleEquipment: string[];   // ["mill-01", "mill-02"]
+  compatibleProducts: string[];    // ["prod-zirc-crn"]
+}
+```
+
+---
+
+## 3. Entity Relationship Mapping
+
+### 3.1 Production Domain ERD
+
+```mermaid
+erDiagram
+    LAB ||--o{ EQUIPMENT : owns
+    LAB ||--o{ MATERIAL : stocks
+    LAB ||--o{ BATCH : produces
+    LAB ||--o{ USER : employs
+    
+    CASE ||--o{ UNIT : contains
+    UNIT ||--o{ BATCH : scheduled_in
+    
+    BATCH ||--|| EQUIPMENT : uses
+    BATCH ||--|| MATERIAL : consumes
+    BATCH ||--|| USER : operated_by
+    BATCH ||--o{ QC_RECORD : inspected
+    
+    EQUIPMENT ||--o{ MAINTENANCE_LOG : has
+    EQUIPMENT ||--o{ CALIBRATION_LOG : requires
+    
+    MATERIAL ||--|| VENDOR : supplied_by
+    MATERIAL ||--o{ REORDER_EVENT : triggers
+    
+    BATCH }o--|| WORKFLOW_STAGE : advances_to
+    
+    INVOICE_LINE_ITEM }o--|| BATCH : bills_for
+```
+
+### 3.2 Cross-Domain Relationships
+
+#### Production → Cases
+```javascript
+// When batch completes, update all units
+await updateCaseStatus(unitId, 'stage-finishing', metadata: {
+  batchId: completedBatch.id,
+  completedAt: batch.endTime,
+  qualityGrade: metrics.successRate > 95 ? 'A' : 'B'
+});
+```
+
+#### Production → Finance
+```javascript
+// Calculate production cost for invoice
+const productionCost = {
+  materialCost: material.unitCost * consumed.units,
+  laborCost: batch.actualDurationMinutes * operator.hourlyRate / 60,
+  equipmentCost: equipment.costPerHour * (duration / 60),
+  overhead: (materialCost + laborCost) * 0.15
+};
+```
+
+#### Production → Logistics
+```javascript
+// Completed batches ready for packaging
+const readyForShipping = batches.filter(b => 
+  b.status === 'Completed' && 
+  b.qualityMetrics.successRate === 100
+);
+```
+
+---
+
+## 4. State Management Architecture
+
+### 4.1 Current Implementation (ProductionContext)
+
+**Strengths:**
+✅ Clean separation from LabContext  
+✅ Derived state (activeBatches, lowStockMaterials) uses useMemo  
+✅ Optimistic updates with error rollback  
+
+**Weaknesses:**
+❌ No offline support (requires Redux Persist or similar)  
+❌ Missing real-time updates (WebSocket integration needed)  
+❌ Large state trees may cause re-render issues  
+
+### 4.2 Recommended State Structure
+
+```typescript
+// Production State Shape
+interface ProductionState {
+  // Normalized Entities (indexed by ID)
+  entities: {
+    equipment: Record<string, Equipment>;
+    batches: Record<string, Batch>;
+    materials: Record<string, Material>;
+    maintenanceLogs: Record<string, MaintenanceLog>;
+  };
+  
+  // UI State
+  ui: {
+    selectedEquipmentId: string | null;
+    activeFilters: {
+      equipmentStatus: string[];
+      batchType: string[];
+      materialStatus: string[];
+    };
+    sortBy: 'name' | 'status' | 'stockLevel';
+    viewMode: 'grid' | 'list' | 'kanban';
+  };
+  
+  // Computed Selectors (Reselect)
+  computed: {
+    activeBatchIds: string[];
+    lowStockMaterialIds: string[];
+    equipmentUtilization: {
+      running: number;
+      idle: number;
+      maintenance: number;
+    };
+  };
+  
+  // Network State
+  network: {
+    loading: boolean;
+    error: string | null;
+    lastSync: ISO8601;
+    pendingMutations: Mutation[];
+  };
+}
+```
+
+### 4.3 State Management Patterns
+
+#### 4.3.1 Normalized State (Redux Toolkit)
+
+```typescript
+// Instead of arrays, use normalized slices
+import { createEntityAdapter, createSlice } from '@reduxjs/toolkit';
+
+const equipmentAdapter = createEntityAdapter<Equipment>();
+
+const equipmentSlice = createSlice({
+  name: 'equipment',
+  initialState: equipmentAdapter.getInitialState(),
+  reducers: {
+    equipmentUpdated: equipmentAdapter.updateOne,
+    equipmentAdded: equipmentAdapter.addOne,
+  },
+});
+
+// Selectors (memoized)
+const {
+  selectAll: selectAllEquipment,
+  selectById: selectEquipmentById,
+} = equipmentAdapter.getSelectors((state) => state.production.equipment);
+```
+
+#### 4.3.2 Optimistic Updates
+
+```typescript
+// Current Implementation (Good):
+const startBatch = async (batchId) => {
+  // Optimistic update
+  setBatches(prev => prev.map(b => 
+    b.id === batchId ? { ...b, status: 'InProgress' } : b
+  ));
+  
+  try {
+    const updated = await API.startBatch(batchId);
+    setBatches(prev => prev.map(b => b.id === batchId ? updated : b));
+  } catch (err) {
+    // Rollback on failure
+    setBatches(prev => prev.map(b => 
+      b.id === batchId ? { ...b, status: 'Scheduled' } : b
+    ));
+    throw err;
+  }
+};
+```
+
+#### 4.3.3 Real-Time Sync (WebSocket)
+
+```typescript
+// Add to ProductionContext
+useEffect(() => {
+  const socket = io(WS_URL, {
+    auth: { token: user.token },
+    query: { labId: activeLab.id }
+  });
+  
+  socket.on('batch:updated', (batch) => {
+    setBatches(prev => prev.map(b => b.id === batch.id ? batch : b));
+  });
+  
+  socket.on('equipment:status_changed', (equipment) => {
+    setEquipment(prev => prev.map(e => e.id === equipment.id ? equipment : e));
+  });
+  
+  return () => socket.disconnect();
+}, [activeLab.id]);
+```
+
+---
+
+## 5. Workflow Analysis
+
+### 5.1 Batch Creation Workflow
+
+**Current Flow:**
+```
+1. User clicks "Create Batch"
+2. Modal Step 1: Select Material Group (Zirconia, E.max)
+   └─ BatchScheduler.getProductionCandidates(cases)
+3. Modal Step 2: Select Units from filtered group
+4. Modal Step 3: Select Machine & Inventory Lot
+   └─ BatchScheduler.getCompatibleMachines(material, equipment)
+5. Create Batch → Status: 'Scheduled'
+```
+
+**Issues:**
+- ❌ No validation if machine is available at estimated time
+- ❌ Missing conflict detection (double-booking machines)
+- ❌ No auto-nesting optimization (units per disc)
+
+**Enhanced Workflow:**
+
+```mermaid
+stateDiagram-v2
+    [*] --> SelectMaterial
+    SelectMaterial --> SelectUnits
+    SelectUnits --> ValidateCapacity
+    
+    ValidateCapacity --> CheckMachine: Capacity OK
+    ValidateCapacity --> ShowWarning: Exceeds Capacity
+    
+    ShowWarning --> SelectUnits
+    
+    CheckMachine --> SelectInventory: Available
+    CheckMachine --> SuggestAlternative: Busy/Maintenance
+    
+    SuggestAlternative --> CheckMachine
+    
+    SelectInventory --> OptimizeNesting
+    OptimizeNesting --> ReviewBatch
+    ReviewBatch --> ScheduleBatch
+    
+    ScheduleBatch --> [*]
+```
+
+### 5.2 Batch Execution Lifecycle
+
+```typescript
+// State Machine Definition
+const batchStateMachine = {
+  initial: 'Scheduled',
+  states: {
+    Scheduled: {
+      on: {
+        START: 'InProgress',
+        CANCEL: 'Cancelled',
+      },
+    },
+    InProgress: {
+      on: {
+        COMPLETE: 'QualityControl',
+        FAIL: 'Failed',
+        PAUSE: 'Paused',
+      },
+      entry: ['startTimer', 'updateMachineStatus'],
+    },
+    Paused: {
+      on: {
+        RESUME: 'InProgress',
+        CANCEL: 'Cancelled',
+      },
+    },
+    QualityControl: {
+      on: {
+        PASS: 'Completed',
+        FAIL: 'Rework',
+      },
+    },
+    Rework: {
+      on: {
+        RESTART: 'InProgress',
+      },
+    },
+    Completed: {
+      entry: ['updateCases', 'freeMachine', 'generateInvoice'],
+    },
+    Failed: {
+      entry: ['logFailure', 'freeMachine', 'notifySupervisor'],
+    },
+    Cancelled: {},
+  },
+};
+```
+
+### 5.3 Material Consumption Tracking
+
+**Current Issue:** Material consumption is logged but not deducted from inventory automatically.
+
+**Solution:**
+```typescript
+// On batch completion
+const completeBatch = async (batchId, qcMetrics) => {
+  const batch = await getBatchById(batchId);
+  
+  // 1. Deduct inventory
+  await consumeMaterial(batch.materialId, batch.materialConsumed.units);
+  
+  // 2. Check reorder threshold
+  const material = await getMaterialById(batch.materialId);
+  if (material.stockLevel <= material.reorderThreshold) {
+    await triggerReorderWorkflow(material);
+  }
+  
+  // 3. Update batch
+  await updateBatch(batchId, { 
+    status: 'Completed',
+    qualityMetrics: qcMetrics 
+  });
+  
+  // 4. Advance cases
+  for (const caseId of batch.caseIds) {
+    await updateCaseStatus(caseId, getNextStage(batch.type));
+  }
+};
+```
+
+---
+
+## 6. Component Architecture
+
+### 6.1 Component Hierarchy
+
+```
+ProductionQueue (Page)
+├── KPI Stats
+├── Equipment Status Grid
+│   └── EquipmentCard (x N)
+│       └── [Click] → EquipmentDetailModal
+├── Active Batches Table
+│   └── BatchRow (x N)
+│       └── [Start/Complete] → QualityCheckModal
+├── Inventory Alerts
+│   └── MaterialAlert (x N)
+│       └── [Click] → MaterialDetailModal
+└── Modals
+    ├── BatchCreationModal
+    ├── QualityCheckModal
+    ├── MaintenanceModal
+    ├── EquipmentDetailModal
+    └── MaterialDetailModal
+```
+
+### 6.2 Missing Components
+
+#### 6.2.1 NestingOptimizer (Critical)
+```jsx
+// src/components/production/NestingOptimizer.jsx
+const NestingOptimizer = ({ units, materialType }) => {
+  const optimizedLayout = useMemo(() => {
+    // Algorithm to maximize units per disc/sheet
+    return nestingAlgorithm(units, getMaterialDimensions(materialType));
+  }, [units, materialType]);
+  
+  return (
+    <div className={styles.nestingPreview}>
+      <Canvas2D layout={optimizedLayout} />
+      <div className={styles.stats}>
+        <span>Efficiency: {optimizedLayout.efficiency}%</span>
+        <span>Waste: {optimizedLayout.waste} mm²</span>
+      </div>
+    </div>
+  );
+};
+```
+
+#### 6.2.2 ProductionTimeline (For Gantt View)
+```jsx
+// src/components/production/ProductionTimeline.jsx
+const ProductionTimeline = ({ batches, equipment }) => {
+  return (
+    <GanttChart
+      tasks={batches.map(b => ({
+        id: b.id,
+        resourceId: b.machineId,
+        start: b.startTime,
+        end: b.estimatedEndTime,
+        status: b.status,
+      }))}
+      resources={equipment}
+    />
+  );
+};
+```
+
+#### 6.2.3 MaintenanceScheduler
+```jsx
+// src/components/production/MaintenanceScheduler.jsx
+const MaintenanceScheduler = ({ equipment }) => {
+  const upcomingMaintenance = equipment
+    .filter(e => isWithinDays(e.maintenance.nextServiceDue, 7))
+    .sort((a, b) => new Date(a.maintenance.nextServiceDue) - new Date(b.maintenance.nextServiceDue));
+  
+  return (
+    <div className={styles.maintenanceCalendar}>
+      {upcomingMaintenance.map(eq => (
+        <MaintenanceCard key={eq.id} equipment={eq} />
+      ))}
+    </div>
+  );
+};
+```
+
+---
+
+## 7. Integration Points
+
+### 7.1 EHR Integration Architecture
+
+```typescript
+// Integration Layer
+interface EHRIntegration {
+  // Patient Data Sync
+  syncPatientRecords: (caseId: string) => Promise<Patient>;
+  
+  // Imaging Integration
+  retrieveDICOM: (caseId: string) => Promise<ImageSet>;
+  uploadScanResult: (caseId: string, file: File) => Promise<void>;
+  
+  // Scheduling
+  getDeliverySlots: (clinicId: string, date: Date) => Promise<TimeSlot[]>;
+  reserveDeliverySlot: (caseId: string, slot: TimeSlot) => Promise<Booking>;
+  
+  // Billing
+  createChargeItem: (batchId: string) => Promise<ChargeItem>;
+  syncInsuranceCodes: (productId: string) => Promise<InsuranceCode>;
+}
+```
+
+### 7.2 External System Connectors
+
+#### 7.2.1 CAD/CAM Software Integration
+```typescript
+// exocad, 3Shape, etc.
+interface CADConnector {
+  exportDesign: (caseId: string) => Promise<STLFile>;
+  generateToolpath: (stlFile: STLFile, material: Material) => Promise<NCFile>;
+  uploadToMachine: (ncFile: NCFile, machineIp: string) => Promise<void>;
+}
+```
+
+#### 7.2.2 Material Vendor APIs
+```typescript
+interface VendorAPI {
+  checkAvailability: (sku: string, quantity: number) => Promise<{
+    inStock: boolean;
+    leadTimeDays: number;
+  }>;
+  createPurchaseOrder: (items: OrderItem[]) => Promise<PO>;
+  trackShipment: (poNumber: string) => Promise<ShipmentStatus>;
+}
+```
+
+---
+
+## 8. Missing Elements & Gaps
+
+### 8.1 Data Gaps
+
+| Missing Element | Impact | Priority | Effort |
+|----------------|--------|----------|--------|
+| Real-time equipment telemetry | Cannot detect failures early | HIGH | Medium |
+| Operator skill matrix | Cannot optimize assignments | MEDIUM | Low |
+| Material batch tracking | Compliance/traceability issue | HIGH | Medium |
+| Energy consumption logs | Cannot optimize costs | LOW | Low |
+| Nesting file versioning | Cannot reproduce errors | MEDIUM | Low |
+
+### 8.2 Functionality Gaps
+
+#### 8.2.1 Predictive Maintenance
+**Current:** Reactive maintenance (machine breaks → log issue)  
+**Needed:** Predictive alerts based on:
+- Total operating hours
+- Number of cycles completed
+- Vibration/temperature anomalies (IoT sensors)
+
+```typescript
+// Predictive Model
+interface MaintenancePredictor {
+  calculateRemainingLife: (equipment: Equipment) => {
+    mtbf: number;              // Mean Time Between Failure
+    confidenceInterval: number;
+    recommendedAction: 'Continue' | 'Schedule' | 'Urgent';
+  };
+}
+```
+
+#### 8.2.2 Automated Batch Scheduling
+**Current:** Manual batch creation  
+**Needed:** AI-driven scheduler that:
+- Groups cases by due date + material
+- Minimizes machine changeover time
+- Balances workload across shifts
+
+```typescript
+interface AutoScheduler {
+  generateOptimalSchedule: (
+    cases: Case[],
+    equipment: Equipment[],
+    materials: Material[],
+    constraints: SchedulingConstraints
+  ) => {
+    batches: Batch[];
+    utilizationRate: number;
+    estimatedCompletionDate: Date;
+  };
+}
+```
+
+### 8.3 UX Gaps
+
+#### 8.3.1 Missing Dashboards
+- ❌ Equipment utilization heatmap (by hour/day)
+- ❌ Material consumption forecast
+- ❌ Operator productivity leaderboard
+- ❌ Real-time floor plan view (machines as colored dots)
+
+#### 8.3.2 Mobile Experience
+**Current:** Desktop-only UI  
+**Needed:** Mobile app for:
+- Operators to start/complete batches on the floor
+- QC technicians to log defects with photos
+- Lab managers to approve emergency batches
+
+---
+
+## 9. AWS Deployment Architecture
+
+### 9.1 Microservices Breakdown
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   API Gateway (REST + WebSocket)         │
+└─────────────────────────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+┌───────▼────────┐  ┌───────▼────────┐  ┌──────▼──────┐
+│ Equipment Svc  │  │  Batch Svc     │  │Material Svc │
+│ (Lambda)       │  │  (Lambda)      │  │ (Lambda)    │
+└────────────────┘  └────────────────┘  └─────────────┘
+        │                   │                   │
+        └───────────────────┼───────────────────┘
+                            │
+                    ┌───────▼────────┐
+                    │   DynamoDB     │
+                    │  (Multi-table) │
+                    └────────────────┘
+```
+
+### 9.2 Lambda Functions
+
+#### 9.2.1 Equipment Service
+```typescript
+// POST /equipment/{id}/start-maintenance
+export const handler = async (event: APIGatewayEvent) => {
+  const { id } = event.pathParameters;
+  const { notes, scheduledDate } = JSON.parse(event.body);
+  
+  // 1. Update DynamoDB
+  await dynamoDB.update({
+    TableName: 'Production',
+    Key: { PK: `EQUIP#${id}`, SK: 'METADATA' },
+    UpdateExpression: 'SET #status = :status, maintenance.#notes = :notes',
+    ExpressionAttributeNames: {
+      '#status': 'status',
+      '#notes': 'notes',
+    },
+    ExpressionAttributeValues: {
+      ':status': 'Maintenance',
+      ':notes': notes,
+    },
+  });
+  
+  // 2. Emit Event (EventBridge)
+  await eventBridge.putEvents({
+    Entries: [{
+      Source: 'production.equipment',
+      DetailType: 'MaintenanceStarted',
+      Detail: JSON.stringify({ equipmentId: id, scheduledDate }),
+    }],
+  });
+  
+  // 3. Notify WebSocket clients
+  await sendToConnectedClients({
+    type: 'EQUIPMENT_STATUS_CHANGED',
+    payload: { id, status: 'Maintenance' },
+  });
+  
+  return { statusCode: 200, body: JSON.stringify({ success: true }) };
+};
+```
+
+#### 9.2.2 Batch Service
+```typescript
+// POST /batches
+export const createBatch = async (event) => {
+  const batch = JSON.parse(event.body);
+  
+  // 1. Generate Batch ID
+  const batchId = `batch-${Date.now()}`;
+  
+  // 2. Store in DynamoDB
+  await dynamoDB.put({
+    TableName: 'Production',
+    Item: {
+      PK: `BATCH#${batchId}`,
+      SK: 'METADATA',
+      ...batch,
+      createdAt: new Date().toISOString(),
+      GSI1PK: `LAB#${batch.labId}`,
+      GSI1SK: `STATUS#${batch.status}`,
+    },
+  });
+  
+  // 3. Generate Nesting File (async)
+  await sqs.sendMessage({
+    QueueUrl: process.env.NESTING_QUEUE_URL,
+    MessageBody: JSON.stringify({ batchId, units: batch.caseIds }),
+  });
+  
+  return { statusCode: 201, body: JSON.stringify({ batchId }) };
+};
+```
+
+### 9.3 DynamoDB Schema Design
+
+#### 9.3.1 Single-Table Design
+
+```
+Production Table
+┌────────────────┬─────────────────┬──────────────────────────────┐
+│ PK             │ SK              │ Attributes                    │
+├────────────────┼─────────────────┼──────────────────────────────┤
+│ EQUIP#mill-01  │ METADATA        │ name, type, status, ...      │
+│ EQUIP#mill-01  │ MAINT#2025-11   │ date, notes, technician      │
+│ EQUIP#mill-01  │ JOB#batch-123   │ startTime, endTime, output   │
+├────────────────┼─────────────────┼──────────────────────────────┤
+│ BATCH#123      │ METADATA        │ machineId, status, ...       │
+│ BATCH#123      │ CASE#5001       │ unitIds, material, ...       │
+├────────────────┼─────────────────┼──────────────────────────────┤
+│ MATERIAL#A2    │ METADATA        │ name, sku, stockLevel, ...   │
+│ MATERIAL#A2    │ CONSUME#batch-1 │ quantity, timestamp          │
+└────────────────┴─────────────────┴──────────────────────────────┘
+
+GSI1 (by Lab + Status)
+┌────────────────┬────────────────┐
+│ GSI1PK         │ GSI1SK         │
+├────────────────┼────────────────┤
+│ LAB#lab-001    │ STATUS#Running │
+│ LAB#lab-001    │ STATUS#Idle    │
+└────────────────┴────────────────┘
+```
+
+**Access Patterns:**
+```typescript
+// 1. Get all equipment for a lab
+const equipment = await query({
+  TableName: 'Production',
+  IndexName: 'GSI1',
+  KeyConditionExpression: 'GSI1PK = :labId AND begins_with(GSI1SK, :prefix)',
+  ExpressionAttributeValues: {
+    ':labId': 'LAB#lab-001',
+    ':prefix': 'EQUIP',
+  },
+});
+
+// 2. Get all batches in progress
+const activeBatches = await query({
+  TableName: 'Production',
+  IndexName: 'GSI1',
+  KeyConditionExpression: 'GSI1PK = :labId AND GSI1SK = :status',
+  ExpressionAttributeValues: {
+    ':labId': 'LAB#lab-001',
+    ':status': 'STATUS#InProgress',
+  },
+});
+```
+
+### 9.4 S3 Storage Strategy
+
+```
+s3://lab-portal-production/
+├── nc-files/
+│   ├── {batchId}/
+│   │   ├── program.nc
+│   │   ├── nesting-layout.svg
+│   │   └── metadata.json
+├── qc-photos/
+│   ├── {batchId}/
+│   │   ├── unit-001-defect.jpg
+│   │   └── unit-002-pass.jpg
+├── maintenance/
+│   ├── {equipmentId}/
+│   │   ├── service-report-2025-11.pdf
+│   │   └── calibration-cert.pdf
+└── material-sds/
+    ├── {materialId}/
+    │   └── safety-data-sheet.pdf
+```
+
+**Lifecycle Policies:**
+- NC files: Transition to Glacier after 90 days
+- QC photos: Delete after 2 years (compliance)
+- Maintenance docs: Retain indefinitely
+
+### 9.5 EventBridge Event Patterns
+
+```typescript
+// Event Schemas
+const events = {
+  'BatchCompleted': {
+    source: 'production.batch',
+    detailType: 'BatchCompleted',
+    detail: {
+      batchId: string,
+      machineId: string,
+      caseIds: string[],
+      qualityMetrics: QualityMetrics,
+    },
+  },
+  'MaterialLowStock': {
+    source: 'production.inventory',
+    detailType: 'StockThresholdReached',
+    detail: {
+      materialId: string,
+      currentStock: number,
+      threshold: number,
+    },
+  },
+  'EquipmentBreakdown': {
+    source: 'production.equipment',
+    detailType: 'EquipmentFault',
+    detail: {
+      equipmentId: string,
+      errorCode: string,
+      batchAffected: string,
+    },
+  },
+};
+
+// Consumers
+// Rule 1: On BatchCompleted → Trigger Invoice Generation
+{
+  "source": ["production.batch"],
+  "detail-type": ["BatchCompleted"],
+  "detail": {
+    "qualityMetrics": {
+      "successRate": [{ "numeric": [">=", 95] }]
+    }
+  }
+}
+// Target: Lambda → finance.createInvoiceLineItem
+
+// Rule 2: On MaterialLowStock → Send PO to vendor
+{
+  "source": ["production.inventory"],
+  "detail-type": ["StockThresholdReached"]
+}
+// Target: SQS → procurement-queue
+```
+
+### 9.6 Cognito User Pools
+
+```typescript
+// User Attributes (Custom)
+interface LabUser extends CognitoUser {
+  'custom:labId': string;
+  'custom:role': 'Admin' | 'Manager' | 'Technician' | 'Driver';
+  'custom:department': 'CAD' | 'Milling' | 'Ceramics' | 'Shipping';
+  'custom:certifications': string[]; // ["Zirconia", "E.max"]
+}
+
+// Authorization Lambda
+export const authorizer = async (event: CustomAuthorizerEvent) => {
+  const token = event.authorizationToken;
+  const decoded = jwt.verify(token, process.env.COGNITO_PUBLIC_KEY);
+  
+  // Check permissions
+  const canAccessProduction = ['Admin', 'Manager', 'Technician'].includes(
+    decoded['custom:role']
+  );
+  
+  return {
+    principalId: decoded.sub,
+    policyDocument: {
+      Statement: [{
+        Action: 'execute-api:Invoke',
+        Effect: canAccessProduction ? 'Allow' : 'Deny',
+        Resource: event.methodArn,
+      }],
+    },
+    context: {
+      labId: decoded['custom:labId'],
+      role: decoded['custom:role'],
+    },
+  };
+};
+```
+
+---
+
+## 10. Security & Access Control
+
+### 10.1 Role-Based Access Control (RBAC)
+
+```typescript
+// Permission Matrix
+const permissions = {
+  'PRODUCTION_VIEW': ['Admin', 'Manager', 'Technician', 'Client'],
+  'BATCH_CREATE': ['Admin', 'Manager', 'Technician'],
+  'BATCH_START': ['Admin', 'Manager', 'Technician'],
+  'BATCH_COMPLETE': ['Admin', 'Manager', 'QC'],
+  'EQUIPMENT_MAINTAIN': ['Admin', 'Manager'],
+  'MATERIAL_CONSUME': ['Admin', 'Manager', 'Technician'],
+  'MATERIAL_ORDER': ['Admin', 'Manager'],
+};
+
+// Frontend Guard
+const RequirePermission = ({ permission, children }) => {
+  const { hasPermission } = useAuth();
+  return hasPermission(permission) ? children : <AccessDenied />;
+};
+
+// Usage
+<RequirePermission permission="BATCH_CREATE">
+  <button onClick={() => setShowBatchModal(true)}>
+    + Create Batch
+  </button>
+</RequirePermission>
+```
+
+### 10.2 Data Privacy Considerations
+
+**PHI Redaction:** Production data should NOT contain:
+- Patient names (use IDs only)
+- Doctor names (use IDs only)
+- Clinic addresses
+
+```typescript
+// Sanitized Batch Display
+const BatchSafeView = ({ batch }) => {
+  const { cases } = useLab();
+  
+  return (
+    <div>
+      <h3>Batch #{batch.id.split('-').pop()}</h3>
+      <p>Cases: {batch.caseIds.length} units</p>
+      {/* NO patient names here */}
+    </div>
+  );
+};
+```
+
+---
+
+## 11. Performance Optimization
+
+### 11.1 Frontend Optimizations
+
+#### 11.1.1 Virtual Scrolling for Large Lists
+```jsx
+import { FixedSizeList } from 'react-window';
+
+const MaterialInventoryList = ({ materials }) => {
+  return (
+    <FixedSizeList
+      height={600}
+      itemCount={materials.length}
+      itemSize={80}
+    >
+      {({ index, style }) => (
+        <div style={style}>
+          <MaterialRow material={materials[index]} />
+        </div>
+      )}
+    </FixedSizeList>
+  );
+};
+```
+
+#### 11.1.2 Debounced Search
+```typescript
+const useEquipmentSearch = () => {
+  const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounce(query, 300);
+  
+  const filteredEquipment = useMemo(() => {
+    return equipment.filter(e => 
+      e.name.toLowerCase().includes(debouncedQuery.toLowerCase())
+    );
+  }, [debouncedQuery, equipment]);
+  
+  return { filteredEquipment, setQuery };
+};
+```
+
+### 11.2 Backend Optimizations
+
+#### 11.2.1 DynamoDB Query Optimization
+```typescript
+// BAD: Scan entire table
+const allBatches = await dynamoDB.scan({
+  TableName: 'Production',
+  FilterExpression: '#status = :status',
+});
+
+// GOOD: Query using GSI
+const activeBatches = await dynamoDB.query({
+  TableName: 'Production',
+  IndexName: 'StatusIndex',
+  KeyConditionExpression: 'GSI1PK = :pk AND GSI1SK = :status',
+  ExpressionAttributeValues: {
+    ':pk': 'LAB#lab-001',
+    ':status': 'STATUS#InProgress',
+  },
+});
+```
+
+#### 11.2.2 Lambda Cold Start Mitigation
+```typescript
+// Provisioned Concurrency for critical functions
+Resources:
+  CreateBatchFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      ProvisionedConcurrencyConfig:
+        ProvisionedConcurrentExecutions: 5
+```
+
+---
+
+## 12. Implementation Roadmap
+
+### Phase 1: Foundation (Weeks 1-4)
+- [ ] Enhance data models with missing fields
+- [ ] Implement normalized state management (Redux Toolkit)
+- [ ] Add WebSocket real-time updates
+- [ ] Create missing components (NestingOptimizer, Timeline)
+
+### Phase 2: Integration (Weeks 5-8)
+- [ ] Build EventBridge event bus
+- [ ] Implement Case → Production → Finance flow
+- [ ] Add CAD/CAM connector (exocad API)
+- [ ] Material vendor API integration
+
+### Phase 3: Analytics (Weeks 9-12)
+- [ ] Predictive maintenance model
+- [ ] Auto-scheduler algorithm
+- [ ] Production KPI dashboards
+- [ ] Mobile operator app (React Native)
+
+### Phase 4: Optimization (Weeks 13-16)
+- [ ] Performance profiling & tuning
+- [ ] Security audit & penetration testing
+- [ ] Load testing (1000 concurrent users)
+- [ ] Documentation & training materials
+
+---
+
+## Appendix A: Utility Functions
+
+### A.1 batchScheduler.js Enhancements
+
+```typescript
+// src/utils/production/batchScheduler.ts
+
+export const BatchScheduler = {
+  /**
+   * NEW: Conflict Detection
+   */
+  detectScheduleConflicts: (
+    proposedBatch: Batch,
+    existingBatches: Batch[]
+  ): Conflict[] => {
+    const conflicts: Conflict[] = [];
+    
+    existingBatches.forEach(existing => {
+      if (existing.machineId !== proposedBatch.machineId) return;
+      
+      const overlap = timeRangesOverlap(
+        { start: proposedBatch.startTime, end: proposedBatch.estimatedEndTime },
+        { start: existing.startTime, end: existing.estimatedEndTime }
+      );
+      
+      if (overlap) {
+        conflicts.push({
+          batchId: existing.id,
+          overlapMinutes: overlap,
+          resolution: 'DELAY_START',
+        });
+      }
+    });
+    
+    return conflicts;
+  },
+  
+  /**
+   * NEW: Material Utilization Calculator
+   */
+  calculateMaterialEfficiency: (
+    units: Unit[],
+    material: Material
+  ): { unitsPerDisc: number; wastePercentage: number } => {
+    const dimensions = getMaterialDimensions(material.type);
+    const totalArea = dimensions.width * dimensions.height;
+    
+    const unitAreas = units.map(u => estimateUnitArea(u.type));
+    const usedArea = unitAreas.reduce((sum, area) => sum + area, 0);
+    
+    return {
+      unitsPerDisc: Math.floor(totalArea / averageArea(unitAreas)),
+      wastePercentage: ((totalArea - usedArea) / totalArea) * 100,
+    };
+  },
+};
+```
+
+### A.2 productionMetrics.js
+
+```typescript
+// src/utils/production/productionMetrics.ts
+
+export const ProductionMetrics = {
+  calculateOEE: (equipment: Equipment, batches: Batch[]): number => {
+    // Overall Equipment Effectiveness
+    const availability = calculateAvailability(equipment);
+    const performance = calculatePerformance(batches);
+    const quality = calculateQuality(batches);
+    
+    return availability * performance * quality;
+  },
+  
+  calculateMTBF: (equipment: Equipment): number => {
+    // Mean Time Between Failures
+    const maintenanceLogs = equipment.maintenance;
+    // ... calculation logic
+    return 720; // hours
+  },
+  
+  calculateThroughput: (batches: Batch[], period: 'day' | 'week'): number => {
+    const completed = batches.filter(b => 
+      b.status === 'Completed' && 
+      isWithinPeriod(b.endTime, period)
+    );
+    
+    return completed.reduce((sum, b) => sum + b.caseIds.length, 0);
+  },
+};
+```
+
+---
+
+## Appendix B: API Endpoint Specifications
+
+### B.1 Production API (OpenAPI 3.0)
+
+```yaml
+openapi: 3.0.0
+info:
+  title: Lab Portal - Production API
+  version: 1.0.0
+
+paths:
+  /production/batches:
+    post:
+      summary: Create a new production batch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBatchRequest'
+      responses:
+        '201':
+          description: Batch created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Batch'
+        '400':
+          description: Invalid request (machine busy, material out of stock)
+        '403':
+          description: Insufficient permissions
+
+  /production/batches/{batchId}/start:
+    post:
+      summary: Start a scheduled batch
+      parameters:
+        - name: batchId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Batch started
+        '409':
+          description: Machine already running another job
+
+  /production/equipment/{equipmentId}/telemetry:
+    get:
+      summary: Get real-time machine telemetry (IoT)
+      parameters:
+        - name: equipmentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: metrics
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [temperature, vibration, rpm, power]
+      responses:
+        '200':
+          description: Telemetry data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp: { type: string, format: date-time }
+                  metrics:
+                    type: object
+                    properties:
+                      temperature: { type: number }
+                      vibration: { type: number }
+                      rpm: { type: number }
+                      power: { type: number }
+
+components:
+  schemas:
+    CreateBatchRequest:
+      type: object
+      required:
+        - machineId
+        - materialId
+        - caseIds
+      properties:
+        machineId: { type: string }
+        materialId: { type: string }
+        caseIds: { type: array, items: { type: string } }
+        priority: { type: string, enum: [STANDARD, RUSH, EMERGENCY] }
+```
+
+---
+
+## Conclusion
+
+This analysis reveals a **solid foundation** with clear opportunities for enhancement:
+
+### Immediate Actions (Sprint 1)
+1. Add missing data fields (equipment calibration, material traceability)
+2. Implement real-time WebSocket updates
+3. Create NestingOptimizer component
+4. Add conflict detection to batch scheduler
+
+### Medium-Term Goals (Q1 2026)
+1. Deploy AWS infrastructure (Lambda + DynamoDB)
+2. Build EHR integration connectors
+3. Implement predictive maintenance
+4. Launch mobile operator app
+
+### Long-Term Vision (2026)
+1. AI-powered batch optimization
+2. IoT sensor integration for machines
+3. Blockchain for material provenance
+4. AR overlays for equipment maintenance
+
+---
+
+**Document Control:**
+- **Version:** 1.0
+- **Last Updated:** November 28, 2025
+- **Reviewed By:** [Pending]
+- **Next Review:** December 15, 2025
