@@ -12,6 +12,7 @@ import LabDashboard from '../pages/dashboard/LabDashboard';
 import CaseList from '../pages/cases/CaseList';
 import CaseDetail from '../pages/cases/CaseDetail';
 import ProductionQueue from '../pages/production/ProductionQueue';
+import ProcurementDashboard from '../pages/production/procurement/ProcurementDashboard';
 import Invoices from '../pages/finance/Invoices';
 import Payments from '../pages/finance/Payments'; 
 import LogisticsRoutes from '../pages/logistics/LogisticsRoutes';
@@ -53,9 +54,14 @@ export const AppRouter = () => {
               <Route path=":caseId" element={<CaseDetail />} />
             </Route>
 
-            <Route path="production" element={<ProductionQueue />} />
+            {/* UPDATED PRODUCTION ROUTES */}
+            <Route path="production">
+              <Route index element={<Navigate to="queue" replace />} />
+              <Route path="queue" element={<ProductionQueue />} />
+              <Route path="procurement" element={<ProcurementDashboard />} />
+            </Route>
             
-            {/* NEW: Logistics Route (Protected) */}
+            {/* Logistics Route (Protected) */}
             <Route element={<ProtectedRoute requiredPermissions={['LOGISTICS_VIEW']} />}>
                <Route path="logistics" element={<LogisticsRoutes />} />
             </Route>

@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import { MockService } from '../_mock/service';
 import { useAuth } from './AuthContext';
+import { LabEventBus, EVENTS } from '../utils/eventBus';
 
 const ProductionContext = createContext(null);
 
@@ -45,7 +46,7 @@ export const ProductionProvider = ({ children }) => {
   }, [activeLab]);
 
   // ============================================================
-  // DERIVED STATE (Selectors)
+  // DERIVED STATE
   // ============================================================
   
   const activeBatches = useMemo(() => {
@@ -76,16 +77,58 @@ export const ProductionProvider = ({ children }) => {
       const material = materials.find(m => m.id === materialId);
       if (!material) throw new Error("Material not found");
       
-      if (material.stockLevel < quantity) throw new Error("Insufficient stock");
-
+      const newLevel = Math.max(0, material.stockLevel - quantity);
+      
+      // Update DB
       const updatedMaterial = await MockService.production.inventory.update(materialId, {
-        stockLevel: material.stockLevel - quantity
+        stockLevel: newLevel,
+        status: newLevel <= material.reorderThreshold ? 'ReorderNow' : 'InStock'
+      });
+
+      // Update Local
+      setMaterials(prev => prev.map(m => m.id === materialId ? updatedMaterial : m));
+      
+      // Emit event if low stock
+      if (newLevel <= material.reorderThreshold) {
+        LabEventBus.publish(EVENTS.MATERIAL_LOW, { 
+          materialId, 
+          currentStock: newLevel,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      return updatedMaterial;
+    } catch (err) {
+      console.error("Failed to consume material", err);
+      throw err;
+    }
+  }, [materials]);
+
+  // --- NEW: Restock Action for Procurement ---
+  const restockMaterial = useCallback(async (materialId, quantityAdded, costPerUnit) => {
+    try {
+      const material = materials.find(m => m.id === materialId);
+      if (!material) throw new Error("Material not found");
+
+      const newLevel = material.stockLevel + quantityAdded;
+      
+      // Add to cost history
+      const historyEntry = {
+        date: new Date().toISOString(),
+        unitCost: costPerUnit,
+        qty: quantityAdded
+      };
+      
+      const updatedMaterial = await MockService.production.inventory.update(materialId, {
+        stockLevel: newLevel,
+        status: 'InStock',
+        costHistory: [...(material.costHistory || []), historyEntry]
       });
 
       setMaterials(prev => prev.map(m => m.id === materialId ? updatedMaterial : m));
       return updatedMaterial;
     } catch (err) {
-      console.error("Failed to consume material", err);
+      console.error("Failed to restock material", err);
       throw err;
     }
   }, [materials]);
@@ -96,7 +139,7 @@ export const ProductionProvider = ({ children }) => {
       const newBatch = await MockService.production.batches.create({
         ...batchData,
         labId: activeLab.id,
-        status: 'Scheduled', // Batches start as Scheduled
+        status: 'Scheduled',
         startTime: null,
         operatorId: user?.id || 'system'
       });
@@ -108,17 +151,13 @@ export const ProductionProvider = ({ children }) => {
     }
   }, [activeLab]);
 
-  // --- NEW: Operational Actions ---
-
   const startBatch = useCallback(async (batchId) => {
     try {
-      // 1. Update Batch
       const updatedBatch = await MockService.production.batches.update(batchId, {
         status: 'InProgress',
         startTime: new Date().toISOString()
       });
 
-      // 2. Update Machine Status automatically
       if (updatedBatch.machineId) {
         const updatedMachine = await MockService.production.equipment.update(updatedBatch.machineId, {
           status: 'Running',
@@ -137,14 +176,12 @@ export const ProductionProvider = ({ children }) => {
 
   const completeBatch = useCallback(async (batchId, qualityMetrics) => {
     try {
-      // 1. Close Batch
       const updatedBatch = await MockService.production.batches.update(batchId, {
         status: 'Completed',
         endTime: new Date().toISOString(),
-        qualityMetrics // Save pass/fail counts
+        qualityMetrics
       });
 
-      // 2. Free up Machine
       if (updatedBatch.machineId) {
         const updatedMachine = await MockService.production.equipment.update(updatedBatch.machineId, {
           status: 'Idle',
@@ -154,28 +191,32 @@ export const ProductionProvider = ({ children }) => {
       }
 
       setBatches(prev => prev.map(b => b.id === batchId ? updatedBatch : b));
+
+      // Emit Event
+      LabEventBus.publish(EVENTS.BATCH_COMPLETED, {
+        batch: updatedBatch,
+        labId: activeLab.id,
+        timestamp: new Date().toISOString()
+      });
+
       return updatedBatch;
     } catch (err) {
       console.error("Failed to complete batch", err);
       throw err;
     }
-  }, []);
+  }, [activeLab]);
 
-  // Updated to separate maintenance logic from generic updates
   const logMaintenance = useCallback(async (equipmentId, logData) => {
     try {
       const eq = equipment.find(e => e.id === equipmentId);
-      
-      // Update machine to Idle if it was in Maintenance
       const updatedEq = await MockService.production.equipment.update(equipmentId, {
         status: 'Idle',
         maintenance: {
           lastServiceDate: new Date().toISOString(),
-          nextServiceDue: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(), // +90 days
+          nextServiceDue: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
           notes: logData.notes
         }
       });
-      
       setEquipment(prev => prev.map(e => e.id === equipmentId ? updatedEq : e));
       return updatedEq;
     } catch (err) {
@@ -203,20 +244,16 @@ export const ProductionProvider = ({ children }) => {
   }, [equipment]);
 
   const value = useMemo(() => ({
-    // State
     materials,
     batches,
     equipment,
     loading,
     error,
-
-    // Computed
     activeBatches,
     lowStockMaterials,
     equipmentStats,
-
-    // Actions
     consumeMaterial,
+    restockMaterial, // EXPORTED
     createBatch,
     startBatch,
     completeBatch,
@@ -225,7 +262,7 @@ export const ProductionProvider = ({ children }) => {
   }), [
     materials, batches, equipment, loading, error,
     activeBatches, lowStockMaterials, equipmentStats,
-    consumeMaterial, createBatch, startBatch, completeBatch, logMaintenance, updateEquipmentStatus
+    consumeMaterial, restockMaterial, createBatch, startBatch, completeBatch, logMaintenance, updateEquipmentStatus
   ]);
 
   return (

@@ -10,7 +10,8 @@ import {
   IconUser,
   IconChevronRight,
   IconChevronDown,
-  IconTruck // Added IconTruck
+  IconTruck,
+  IconBox // Added for Procurement
 } from './LabIcons';
 import styles from './Sidebar.module.css';
 
@@ -23,8 +24,19 @@ const Sidebar = () => {
   const navItems = [
     { to: "/", label: "Dashboard", icon: <IconDashboard />, permission: null },
     { to: "/cases", label: "Case Management", icon: <IconCase />, permission: null },
-    { to: "/production", label: "Production", icon: <IconMill />, permission: null },
-    // NEW: Logistics Item
+    
+    // Expandable: Production Suite
+    {
+      id: "production-suite",
+      label: "Production",
+      icon: <IconMill />,
+      permission: null, // Allow all to see group, sub-items gated
+      children: [
+        { to: "/production/queue", label: "Floor Queue" },
+        { to: "/production/procurement", label: "Procurement" }
+      ]
+    },
+
     { to: "/logistics", label: "Logistics", icon: <IconTruck />, permission: "LOGISTICS_VIEW" },
     
     // Expandable: Finance

@@ -6,5 +6,6 @@ export { useCrm } from './CrmContext';
 export { useLab } from './LabContext';
 export { useFinance } from './FinanceContext';
 export { useLogistics } from './LogisticsContext';
+export {useProcurement} from './ProcurementContext'
 export { useProduction } from './ProductionContext';
 export { useToast } from './ToastContext';

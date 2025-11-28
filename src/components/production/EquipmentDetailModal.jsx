@@ -1,15 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
-import { IconDrill, IconCheck, IconAlert, IconClock } from '../../layouts/components/LabIcons';
+import { IconDrill, IconCheck, IconAlert, IconClock, IconMicroscope } from '../../layouts/components/LabIcons';
 import styles from './EquipmentDetailModal.module.css';
+import { TelemetryGenerator } from '../../utils/production/telemetry'; // NEW
+import { PredictiveModel } from '../../utils/production/predictiveModel'; // NEW
+import TelemetryChart from './analytics/TelemetryChart'; // NEW
 
 const EquipmentDetailModal = ({ machine, isOpen, onClose, onReportIssue }) => {
   const [activeTab, setActiveTab] = useState('overview');
+  
+  // IoT State
+  const [telemetry, setTelemetry] = useState([]);
+  const [health, setHealth] = useState(null);
+
+  // Simulate Live Connection
+  useEffect(() => {
+    if (isOpen && machine?.status === 'Running') {
+      // 1. Load Initial History
+      const history = TelemetryGenerator.generateHistory(machine.type);
+      setTelemetry(history);
+
+      // 2. Start Live Stream
+      const interval = setInterval(() => {
+        setTelemetry(prev => {
+          const next = TelemetryGenerator.nextPoint(machine.type, prev[prev.length - 1]);
+          const newData = [...prev.slice(1), next]; // Keep window size constant
+          
+          // 3. Run Analysis
+          const analysis = PredictiveModel.analyze(newData, machine.type);
+          setHealth(analysis);
+          
+          return newData;
+        });
+      }, 2000); // Update every 2 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [isOpen, machine]);
 
   if (!machine) return null;
 
   const handleReportClick = () => {
-    // Trigger the breakdown workflow
     onReportIssue(machine.id);
     onClose();
   };
@@ -47,6 +78,63 @@ const EquipmentDetailModal = ({ machine, isOpen, onClose, onReportIssue }) => {
                   ({machine.operatingCost?.energyConsumption || '-'})
                 </span>
               </span>
+            </div>
+          </div>
+        );
+
+      case 'telemetry': // NEW TAB
+        if (machine.status !== 'Running') {
+          return (
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+              <IconAlert width="32" style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
+              <p>Machine is offline. Telemetry unavailable.</p>
+            </div>
+          );
+        }
+        return (
+          <div className={styles.container}>
+            {/* Health Score Header */}
+            <div style={{ 
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+              padding: '1rem', backgroundColor: 'var(--bg-body)', borderRadius: '0.5rem',
+              borderLeft: `4px solid ${health?.score < 80 ? '#f59e0b' : '#10b981'}`
+            }}>
+              <div>
+                <span className={styles.label}>AI Health Score</span>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
+                  {health?.score || 100}/100
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ 
+                  fontSize: '0.8rem', fontWeight: 600, 
+                  color: health?.score < 80 ? 'var(--warning-500)' : 'var(--success-500)'
+                }}>
+                  {health?.status || 'Analyzing...'}
+                </span>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                  {health?.recommendation}
+                </div>
+              </div>
+            </div>
+
+            {/* Charts */}
+            <div style={{ marginTop: '1.5rem' }}>
+              <TelemetryChart 
+                data={telemetry} dataKey="temperature" 
+                label="Temperature (°C)" unit="°C" color="#ef4444" 
+                domain={[20, 80]}
+              />
+              <TelemetryChart 
+                data={telemetry} dataKey="rpm" 
+                label="Spindle Speed (RPM)" unit="rpm" color="#3b82f6" 
+                domain={[0, 40000]}
+              />
+              <TelemetryChart 
+                data={telemetry} dataKey="vibration" 
+                label="Vibration (mm/s)" unit="mm/s" color="#f59e0b" 
+                domain={[0, 5]}
+              />
             </div>
           </div>
         );
@@ -150,7 +238,6 @@ const EquipmentDetailModal = ({ machine, isOpen, onClose, onReportIssue }) => {
       width="600px"
       footer={
         <div style={{display:'flex', justifyContent:'space-between', width:'100%'}}>
-          {/* Header Action for convenience */}
           {machine.status !== 'Maintenance' ? (
              <button className="button text danger" onClick={handleReportClick}>
                <IconAlert width="14" style={{marginRight:'4px'}}/> Report Breakdown
@@ -175,7 +262,7 @@ const EquipmentDetailModal = ({ machine, isOpen, onClose, onReportIssue }) => {
 
         {/* Tabs */}
         <div className={styles.tabs}>
-          {['overview', 'maintenance', 'calibration', 'metrics'].map(tab => (
+          {['overview', 'telemetry', 'maintenance', 'calibration', 'metrics'].map(tab => (
             <button
               key={tab}
               className={`${styles.tabBtn} ${activeTab === tab ? styles.tabActive : ''}`}

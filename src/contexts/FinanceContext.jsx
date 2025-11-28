@@ -2,11 +2,14 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import { MockService } from '../_mock/service';
 import { useAuth } from './AuthContext';
+import { LabEventBus, EVENTS } from '../utils/eventBus';
+import { useToast } from './ToastContext';
 
 const FinanceContext = createContext(null);
 
 export const FinanceProvider = ({ children }) => {
   const { activeLab } = useAuth();
+  const { addToast } = useToast();
 
   // --- State ---
   const [invoices, setInvoices] = useState([]);
@@ -190,6 +193,70 @@ export const FinanceProvider = ({ children }) => {
       throw err;
     }
   }, [activeLab, invoices]);
+
+  // ============================================================
+  // 3. AUTOMATION LISTENERS (EventBus)
+  // ============================================================
+  
+  useEffect(() => {
+    // Handler: When production is done, create a draft invoice item
+    const handleBatchComplete = async (event) => {
+      console.log("Finance received Batch Complete:", event);
+      const { batch } = event;
+      
+      // Simplified Logic: 
+      // 1. Identify Clinic from cases in batch (Assumes batch is single-clinic for this demo, or we iterate)
+      //    In reality, we'd fetch the cases to get clinicIds. 
+      //    For this mock, let's assume we fetch cases or just mock the clinic ID extraction.
+      
+      // Let's create a "Production Charge" invoice for the first case found in the batch to demonstrate flow.
+      // We'll create a new Draft Invoice for demonstration.
+      
+      if (!batch.caseIds || batch.caseIds.length === 0) return;
+      
+      // Mock lookup: In real app, query Case Service. Here we improvise or fetch.
+      // We will assume a fixed price for the demo automation.
+      
+      // NOTE: Since we can't easily query cross-context synchronously here without bloating,
+      // we'll fetch the FULL case data for the first case to get the clinic ID.
+      try {
+        const caseId = batch.caseIds[0];
+        const caseData = await MockService.cases.cases.getById(caseId);
+        
+        if (caseData && caseData.clinicId) {
+          const description = `Production Batch #${batch.id.split('-').pop()} - ${batch.type}`;
+          const amount = 150.00; // Mock standard fee
+
+          const invoicePayload = {
+            clinicId: caseData.clinicId,
+            items: [{
+              id: Date.now(),
+              productId: 'auto-charge',
+              description: description,
+              quantity: 1,
+              unitPrice: amount,
+              taxRate: 0,
+              taxAmount: 0,
+              total: amount,
+              itemType: 'Production'
+            }],
+            currency: 'USD',
+            status: 'Draft',
+            notes: 'Automatically generated from Production completion.'
+          };
+
+          await createInvoice(invoicePayload);
+          addToast(`Draft Invoice created for Batch #${batch.id.split('-').pop()}`, 'info');
+        }
+      } catch (err) {
+        console.error("Auto-invoice failed", err);
+      }
+    };
+
+    const unsubscribe = LabEventBus.subscribe(EVENTS.BATCH_COMPLETED, handleBatchComplete);
+    return () => unsubscribe();
+  }, [createInvoice, addToast]);
+
 
   // ============================================================
   // EXPORT VALUE

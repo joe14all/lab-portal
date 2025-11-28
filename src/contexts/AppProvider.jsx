@@ -6,6 +6,7 @@ import { LabProvider } from './LabContext';
 import { FinanceProvider } from './FinanceContext';
 import { LogisticsProvider } from './LogisticsContext';
 import { ProductionProvider } from './ProductionContext';
+import { ProcurementProvider } from './ProcurementContext'; // NEW
 import { ToastProvider } from './ToastContext';
 
 export const AppProvider = ({ children }) => {
@@ -14,14 +15,17 @@ export const AppProvider = ({ children }) => {
       <ThemeProvider>
         <ToastProvider>
           <CrmProvider>
+            {/* Procurement depends on Production for Inventory updates */}
             <ProductionProvider>
-              <LabProvider>
-                <FinanceProvider>
-                  <LogisticsProvider>
-                    {children}
-                  </LogisticsProvider>
-                </FinanceProvider>
-              </LabProvider>
+              <ProcurementProvider>
+                <LabProvider>
+                  <FinanceProvider>
+                    <LogisticsProvider>
+                      {children}
+                    </LogisticsProvider>
+                  </FinanceProvider>
+                </LabProvider>
+              </ProcurementProvider>
             </ProductionProvider>
           </CrmProvider>
         </ToastProvider>
