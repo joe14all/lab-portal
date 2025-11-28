@@ -1,0 +1,175 @@
+/* src/components/production/analytics/ProductionMetrics.module.css */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- KPI GRID --- */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.kpiCard {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.kpiLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+}
+
+.kpiValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.kpiSub {
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.trendUp { color: var(--success-500); }
+.trendDown { color: var(--error-500); }
+.trendNeutral { color: var(--text-secondary); }
+
+/* --- SECTIONS --- */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* --- UTILIZATION BAR --- */
+.utilizationCard {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+.progressBar {
+  height: 24px;
+  width: 100%;
+  background-color: var(--neutral-100);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  margin: 1rem 0;
+}
+
+.barSegment {
+  height: 100%;
+  transition: width 0.5s ease;
+  position: relative;
+}
+.barSegment:hover { opacity: 0.9; }
+
+.segRunning { background-color: var(--success-500); }
+.segIdle { background-color: var(--neutral-300); }
+.segDown { background-color: var(--error-500); }
+
+.legend {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* --- SVG CHART --- */
+.chartCard {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chartArea {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 2%;
+  padding-top: 2rem;
+}
+
+.chartBar {
+  flex: 1;
+  background-color: var(--primary-100);
+  border-radius: 4px 4px 0 0;
+  position: relative;
+  transition: height 0.5s ease;
+  min-height: 4px;
+}
+
+.chartBar:hover {
+  background-color: var(--primary-300);
+}
+
+.barLabel {
+  position: absolute;
+  bottom: -1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.barValue {
+  position: absolute;
+  top: -1.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}

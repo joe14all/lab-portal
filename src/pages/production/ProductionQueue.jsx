@@ -1,11 +1,12 @@
 /* eslint-disable no-unused-vars */
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react'; // Added useState
 import { useProduction, useLab, useToast } from '../../contexts';
 import EquipmentDetailModal from '../../components/production/EquipmentDetailModal';
 import MaterialDetailModal from '../../components/production/MaterialDetailModal';
 import BatchCreationModal from '../../components/production/BatchCreationModal';
 import QualityCheckModal from '../../components/production/QualityCheckModal';
 import MaintenanceModal from '../../components/production/MaintenanceModal';
+import ProductionMetrics from '../../components/production/analytics/ProductionMetrics'; // NEW IMPORT
 import { 
   IconMill, 
   IconLayers, 
@@ -30,8 +31,10 @@ const ProductionQueue = () => {
     startBatch, completeBatch, logMaintenance, updateEquipmentStatus
   } = useProduction();
   
-  const { updateCaseStatus } = useLab();
   const { addToast } = useToast();
+
+  // --- View State ---
+  const [activeTab, setActiveTab] = useState('queue'); // 'queue' | 'analytics'
 
   // --- Modal State ---
   const [selectedMachine, setSelectedMachine] = useState(null);
@@ -41,7 +44,6 @@ const ProductionQueue = () => {
   const [maintenanceMachine, setMaintenanceMachine] = useState(null);
 
   // --- Handlers ---
-
   const handleStartBatch = async (batchId) => {
     try {
       await startBatch(batchId);
@@ -51,9 +53,7 @@ const ProductionQueue = () => {
     }
   };
 
-  const handleCompleteClick = (batch) => {
-    setQcBatch(batch);
-  };
+  const handleCompleteClick = (batch) => setQcBatch(batch);
 
   const handleQCSubmit = async (batchId, metrics) => {
     try {
@@ -70,12 +70,12 @@ const ProductionQueue = () => {
       await logMaintenance(eqId, data);
       addToast("Maintenance logged successfully.", "success");
       setMaintenanceMachine(null);
+      setSelectedMachine(null); 
     } catch (err) {
       addToast("Failed to log maintenance", "error");
     }
   };
 
-  // NEW: Handle breaking a machine
   const handleReportBreakdown = async (eqId) => {
     try {
       await updateEquipmentStatus(eqId, 'Maintenance', 'Reported breakdown via Dashboard');
@@ -93,235 +93,248 @@ const ProductionQueue = () => {
   return (
     <div className={styles.container}>
       
+      {/* HEADER WITH TABS */}
       <header className={styles.header}>
         <div>
           <h1>Production Queue</h1>
           <p>Real-time machine status and job batching.</p>
         </div>
-        <div>
+        
+        {/* Toggle Controls */}
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div style={{ display: 'flex', backgroundColor: 'var(--bg-surface)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+            <button 
+              onClick={() => setActiveTab('queue')}
+              style={{ 
+                border: 'none', 
+                backgroundColor: activeTab === 'queue' ? 'var(--neutral-100)' : 'transparent',
+                color: activeTab === 'queue' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer'
+              }}
+            >
+              Floor View
+            </button>
+            <button 
+              onClick={() => setActiveTab('analytics')}
+              style={{ 
+                border: 'none', 
+                backgroundColor: activeTab === 'analytics' ? 'var(--neutral-100)' : 'transparent',
+                color: activeTab === 'analytics' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer'
+              }}
+            >
+              Analytics
+            </button>
+          </div>
+
           <button className="button primary" onClick={() => setShowBatchModal(true)}>
             + Create Batch
           </button>
         </div>
       </header>
 
-      {/* KPI STATS */}
-      <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Machines Running</span>
-          <span className={styles.statValue} style={{ color: 'var(--success-500)' }}>
-            {equipmentStats.running} / {equipmentStats.total}
-          </span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Active Batches</span>
-          <span className={styles.statValue}>{activeBatches.length}</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Low Stock Alerts</span>
-          <span className={styles.statValue} style={{ color: lowStockMaterials.length > 0 ? 'var(--error-500)' : 'inherit' }}>
-            {lowStockMaterials.length}
-          </span>
-        </div>
-      </div>
+      {/* --- CONDITIONAL RENDER --- */}
+      {activeTab === 'analytics' ? (
+        <ProductionMetrics />
+      ) : (
+        <>
+          {/* KPI STATS (Queue View Only) */}
+          <div className={styles.statsGrid}>
+            <div className={styles.statCard}>
+              <span className={styles.statLabel}>Machines Running</span>
+              <span className={styles.statValue} style={{ color: 'var(--success-500)' }}>
+                {equipmentStats.running} / {equipmentStats.total}
+              </span>
+            </div>
+            <div className={styles.statCard}>
+              <span className={styles.statLabel}>Active Batches</span>
+              <span className={styles.statValue}>{activeBatches.length}</span>
+            </div>
+            <div className={styles.statCard}>
+              <span className={styles.statLabel}>Low Stock Alerts</span>
+              <span className={styles.statValue} style={{ color: lowStockMaterials.length > 0 ? 'var(--error-500)' : 'inherit' }}>
+                {lowStockMaterials.length}
+              </span>
+            </div>
+          </div>
 
-      {/* EQUIPMENT STATUS */}
-      <section>
-        <div className={styles.sectionTitle}>
-          <IconMill width="18" /> Equipment Status
-        </div>
-        <div className={styles.equipmentGrid}>
-          {equipment.map(machine => {
-            const isRunning = machine.status === 'Running';
-            const isMaintenance = machine.status === 'Maintenance';
-            const statusClass = isRunning ? styles.statusRunning 
-              : isMaintenance ? styles.statusMaintenance 
-              : styles.statusIdle;
-            
-            const badgeClass = isRunning ? styles.bgRunning 
-              : isMaintenance ? styles.bgMaintenance 
-              : styles.bgIdle;
+          {/* EQUIPMENT STATUS */}
+          <section>
+            <div className={styles.sectionTitle}>
+              <IconMill width="18" /> Equipment Status
+            </div>
+            <div className={styles.equipmentGrid}>
+              {equipment.map(machine => {
+                const isRunning = machine.status === 'Running';
+                const isMaintenance = machine.status === 'Maintenance';
+                const statusClass = isRunning ? styles.statusRunning 
+                  : isMaintenance ? styles.statusMaintenance 
+                  : styles.statusIdle;
+                const badgeClass = isRunning ? styles.bgRunning 
+                  : isMaintenance ? styles.bgMaintenance 
+                  : styles.bgIdle;
+                const activeBatch = machine.currentJobId 
+                  ? batches.find(b => b.id === machine.currentJobId)
+                  : null;
 
-            const activeBatch = machine.currentJobId 
-              ? batches.find(b => b.id === machine.currentJobId)
-              : null;
-
-            return (
-              <div 
-                key={machine.id} 
-                className={`${styles.machineCard} ${statusClass}`}
-                // Logic: If Maintenance -> Log Service. If OK -> View Details (and optionally report break)
-                onClick={() => isMaintenance ? setMaintenanceMachine(machine) : setSelectedMachine(machine)}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className={styles.machineHeader}>
-                  <div>
-                    <span className={styles.machineName}>{machine.name}</span>
-                    <span className={styles.machineType}>{machine.type}</span>
-                  </div>
-                  <span className={`${styles.statusBadge} ${badgeClass}`}>
-                    {machine.status}
-                  </span>
-                </div>
-
-                <div className={styles.machineBody}>
-                  {isRunning && activeBatch ? (
-                    <div className={styles.currentJob}>
-                      <div style={{ color: 'var(--primary)', opacity: 0.8 }}>
-                        {getMachineIcon(machine.type)}
+                return (
+                  <div 
+                    key={machine.id} 
+                    className={`${styles.machineCard} ${statusClass}`}
+                    onClick={() => isMaintenance ? setMaintenanceMachine(machine) : setSelectedMachine(machine)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className={styles.machineHeader}>
+                      <div>
+                        <span className={styles.machineName}>{machine.name}</span>
+                        <span className={styles.machineType}>{machine.type}</span>
                       </div>
-                      <div className={styles.jobMeta} style={{ flex: 1 }}>
-                        <strong>Batch #{activeBatch.id.split('-').pop()}</strong>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                          Ends: {new Date(activeBatch.estimatedEndTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                        </span>
-                        <div className={styles.progress}>
-                          <div className={styles.progressBar} style={{ width: '60%' }}></div>
+                      <span className={`${styles.statusBadge} ${badgeClass}`}>
+                        {machine.status}
+                      </span>
+                    </div>
+
+                    <div className={styles.machineBody}>
+                      {isRunning && activeBatch ? (
+                        <div className={styles.currentJob}>
+                          <div style={{ color: 'var(--primary)', opacity: 0.8 }}>
+                            {getMachineIcon(machine.type)}
+                          </div>
+                          <div className={styles.jobMeta} style={{ flex: 1 }}>
+                            <strong>Batch #{activeBatch.id.split('-').pop()}</strong>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                              Ends: {new Date(activeBatch.estimatedEndTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            </span>
+                            <div className={styles.progress}>
+                              <div className={styles.progressBar} style={{ width: '60%' }}></div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', padding: '0.5rem 0' }}>
+                          {isMaintenance ? `Service Required. Click to log.` : 'Ready for assignment'}
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', padding: '0.5rem 0' }}>
-                      {isMaintenance 
-                        ? `Service Required. Click to log.`
-                        : 'Ready for assignment'}
-                    </div>
-                  )}
-                </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* SPLIT: QUEUE & ALERTS */}
+          <div className={styles.splitView}>
+            <section>
+              <div className={styles.sectionTitle}>
+                <IconLayers width="18" /> Active Batches
               </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* SPLIT: QUEUE & ALERTS */}
-      <div className={styles.splitView}>
-        <section>
-          <div className={styles.sectionTitle}>
-            <IconLayers width="18" /> Active Batches
-          </div>
-          <div className={styles.queueCard}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Batch ID</th>
-                  <th>Machine</th>
-                  <th>Status</th>
-                  <th style={{textAlign:'right'}}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activeBatches.length > 0 ? activeBatches.map(batch => {
-                  const machine = equipment.find(e => e.id === batch.machineId);
-                  return (
-                    <tr key={batch.id}>
-                      <td style={{ fontWeight: 500 }}>
-                        {batch.id}
-                        <div style={{fontSize:'0.75rem', color:'var(--text-secondary)'}}>
-                          {batch.materialId} • {batch.caseIds?.length || 0} Units
-                        </div>
-                      </td>
-                      <td>{machine?.name || 'Unassigned'}</td>
-                      <td>
-                        {batch.status === 'InProgress' 
-                          ? <span style={{ color: 'var(--primary)', fontWeight: 600 }}>In Progress</span> 
-                          : batch.status}
-                      </td>
-                      <td style={{textAlign:'right'}}>
-                        {batch.status === 'Scheduled' && (
-                          <button 
-                            className="button secondary small"
-                            onClick={() => handleStartBatch(batch.id)}
-                          >
-                            Start
-                          </button>
-                        )}
-                        {batch.status === 'InProgress' && (
-                          <button 
-                            className="button primary small"
-                            onClick={() => handleCompleteClick(batch)}
-                          >
-                            Complete
-                          </button>
-                        )}
-                      </td>
+              <div className={styles.queueCard}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Batch ID</th>
+                      <th>Machine</th>
+                      <th>Status</th>
+                      <th style={{textAlign:'right'}}>Actions</th>
                     </tr>
-                  );
-                }) : (
-                  <tr>
-                    <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-                      No active batches. Create one to get started.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
+                  </thead>
+                  <tbody>
+                    {activeBatches.length > 0 ? activeBatches.map(batch => {
+                      const machine = equipment.find(e => e.id === batch.machineId);
+                      return (
+                        <tr key={batch.id}>
+                          <td style={{ fontWeight: 500 }}>
+                            {batch.id}
+                            <div style={{fontSize:'0.75rem', color:'var(--text-secondary)'}}>
+                              {batch.materialId} • {batch.caseIds?.length || 0} Units
+                            </div>
+                          </td>
+                          <td>{machine?.name || 'Unassigned'}</td>
+                          <td>
+                            {batch.status === 'InProgress' 
+                              ? <span style={{ color: 'var(--primary)', fontWeight: 600 }}>In Progress</span> 
+                              : batch.status}
+                          </td>
+                          <td style={{textAlign:'right'}}>
+                            {batch.status === 'Scheduled' && (
+                              <button className="button secondary small" onClick={() => handleStartBatch(batch.id)}>Start</button>
+                            )}
+                            {batch.status === 'InProgress' && (
+                              <button className="button primary small" onClick={() => handleCompleteClick(batch)}>Complete</button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    }) : (
+                      <tr>
+                        <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No active batches.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
 
-        <section>
-          <div className={styles.sectionTitle}>
-            <IconAlert width="18" /> Inventory Alerts
-          </div>
-          {lowStockMaterials.length > 0 ? (
-            <div className={styles.alertList}>
-              {lowStockMaterials.map(mat => (
-                <div 
-                  key={mat.id} 
-                  className={styles.alertItem}
-                  onClick={() => setSelectedMaterial(mat)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <IconAlert width="20" style={{ flexShrink: 0, marginTop: '2px' }} />
-                  <div className={styles.alertContent}>
-                    <strong>Low Stock: {mat.name}</strong>
-                    <p>Remaining: {mat.stockLevel} {mat.unit || 'units'} (Threshold: {mat.reorderThreshold})</p>
-                  </div>
+            <section>
+              <div className={styles.sectionTitle}>
+                <IconAlert width="18" /> Inventory Alerts
+              </div>
+              {lowStockMaterials.length > 0 ? (
+                <div className={styles.alertList}>
+                  {lowStockMaterials.map(mat => (
+                    <div 
+                      key={mat.id} 
+                      className={styles.alertItem}
+                      onClick={() => setSelectedMaterial(mat)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <IconAlert width="20" style={{ flexShrink: 0, marginTop: '2px' }} />
+                      <div className={styles.alertContent}>
+                        <strong>Low Stock: {mat.name}</strong>
+                        <p>Remaining: {mat.stockLevel} {mat.unit || 'units'}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className={styles.queueCard} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-              <IconCheck width="32" style={{ color: 'var(--success-500)', marginBottom: '0.5rem' }} />
-              <p>Inventory levels are good.</p>
-            </div>
-          )}
-        </section>
-      </div>
+              ) : (
+                <div className={styles.queueCard} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                  <IconCheck width="32" style={{ color: 'var(--success-500)', marginBottom: '0.5rem' }} />
+                  <p>Inventory levels are good.</p>
+                </div>
+              )}
+            </section>
+          </div>
+        </>
+      )}
 
-      {/* --- MODALS --- */}
+      {/* --- MODALS (Shared across views) --- */}
       <EquipmentDetailModal 
         machine={selectedMachine} 
         isOpen={!!selectedMachine} 
         onClose={() => setSelectedMachine(null)}
-        onReportIssue={handleReportBreakdown} // Wired Up
+        onReportIssue={handleReportBreakdown} 
       />
-
       <MaterialDetailModal
         material={selectedMaterial}
         isOpen={!!selectedMaterial}
         onClose={() => setSelectedMaterial(null)}
       />
-
       <BatchCreationModal 
         isOpen={showBatchModal}
         onClose={() => setShowBatchModal(false)}
       />
-
       <QualityCheckModal 
         batch={qcBatch}
         isOpen={!!qcBatch}
         onClose={() => setQcBatch(null)}
         onComplete={handleQCSubmit}
       />
-
       <MaintenanceModal
         machine={maintenanceMachine}
         isOpen={!!maintenanceMachine}
         onClose={() => setMaintenanceMachine(null)}
         onSave={handleMaintenanceSave}
       />
-
     </div>
   );
 };
