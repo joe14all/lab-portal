@@ -1,328 +1,258 @@
-/* --- SHARED HEADER --- */
-.sectionTitle {
+/* src/components/cases/detail/CaseFilesCard.module.css */
+
+/* --- CARD CONTAINER --- */
+.card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; 
+  /* Fix: Limit height relative to viewport or fixed value to prevent blowout */
+  max-height: 60vh; 
+  min-height: 300px;
+}
+
+/* --- HEADER --- */
+.header {
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0; /* Header never shrinks */
+  z-index: 10;
+}
+
+.title {
+  margin: 0;
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
-.headerRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border-color);
+.countBadge {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background-color: var(--neutral-100);
+  padding: 0.15rem 0.6rem;
+  border-radius: 99px;
+  font-weight: 500;
 }
 
-/* --- FILE LIST --- */
-.fileList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+/* --- SCROLLABLE LIST AREA --- */
+.contentArea {
+  flex: 1; /* Takes remaining space */
+  overflow-y: auto; /* Internal scroll */
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1.25rem;
+  background-color: var(--bg-body);
 }
 
-/* --- FILE ITEM CARD (The "Card") --- */
+/* --- DATE GROUPS --- */
+.dateGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dateHeader {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-left: 0.25rem;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: sticky;
+  top: 0;
+}
+
+/* --- FILE ROW ITEM --- */
 .fileItem {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 1rem;
-  
-  /* Better Outline & Depth */
-  border: 1px solid var(--neutral-200); /* Slightly darker than default border */
-  border-radius: 0.75rem;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
   background-color: var(--bg-surface);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); /* Subtle shadow for depth */
-  
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
   position: relative;
-  z-index: 2;
-  gap: 1rem; /* Ensure space between Info and Actions */
-}
-
-:global(body.dark) .fileItem {
-  border-color: var(--neutral-700);
-  box-shadow: none;
 }
 
 .fileItem:hover {
   border-color: var(--primary-300);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* Lift effect */
-  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transform: translateY(-1px);
+  z-index: 2;
 }
 
-/* File Info Column */
-.fileInfo {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  overflow: hidden;
-  
-  /* CRITICAL FIX: Allow shrinking to prevent overlap */
-  flex: 1; 
-  min-width: 0; 
-}
-
-.iconWrapper {
-  flex-shrink: 0;
+/* Icon Box - Fixed width prevents squashing */
+.iconBox {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background-color: var(--neutral-100);
-  transition: background-color 0.2s;
+  flex-shrink: 0; /* CRITICAL: Never shrink */
 }
 
-.fileItem:hover .iconWrapper {
-  background-color: var(--bg-body);
-  box-shadow: inset 0 0 0 1px var(--border-color);
-}
+/* Semantic Colors */
+.iconPdf { color: #ef4444; background-color: #fef2f2; }
+.iconImg { color: #10b981; background-color: #ecfdf5; }
+.iconStl { color: #f59e0b; background-color: #fffbeb; }
+.iconGeneric { color: var(--primary); background-color: var(--primary-50); }
 
-/* Icon Color Variants */
-.iconPdf { color: #ef4444; }
-.iconImg { color: #10b981; }
-.iconStl { color: #f59e0b; }
-.iconGeneric { color: var(--text-secondary); }
-
-/* Text Data */
-.textGroup {
+/* Text Info - Flex 1 takes available space */
+.fileInfo {
+  flex: 1;
+  min-width: 0; /* CRITICAL: Allows text truncation */
   display: flex;
   flex-direction: column;
-  min-width: 0; /* Necessary for text-overflow to work inside flex item */
+  justify-content: center;
   gap: 0.1rem;
 }
 
 .fileName {
+  font-size: 0.85rem;
   font-weight: 600;
-  font-size: 0.9rem;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.fileLink {
+  text-overflow: ellipsis; /* CRITICAL: Truncate long names */
   text-decoration: none;
-  color: inherit;
-  transition: color 0.2s;
+  display: block;
 }
-.fileLink:hover {
+.fileName:hover {
   color: var(--primary);
   text-decoration: underline;
 }
 
 .fileMeta {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-secondary);
   display: flex;
   align-items: center;
+  gap: 0.4rem;
   white-space: nowrap;
+  overflow: hidden;
 }
 
 .dot {
-  margin: 0 0.4rem;
-  color: var(--neutral-300);
-}
-
-/* Badges */
-.badgeLatest {
-  font-size: 0.65rem;
-  background-color: var(--success-100);
-  color: var(--success-600);
-  padding: 0.15rem 0.4rem;
-  border-radius: 4px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-left: 0.5rem;
+  width: 3px;
+  height: 3px;
+  background-color: var(--neutral-300);
+  border-radius: 50%;
   flex-shrink: 0;
 }
 
-/* --- ACTIONS (Buttons) --- */
+/* --- ACTIONS --- */
 .actions {
   display: flex;
   gap: 0.5rem;
+  flex-shrink: 0; /* CRITICAL: Buttons never shrink */
   align-items: center;
-  
-  /* CRITICAL FIX: Prevent buttons from being squashed */
-  flex-shrink: 0; 
+  margin-left: 0.5rem; /* Ensure spacing from text */
 }
 
-/* Custom Button Styling within Actions for clean look */
-.actions button {
+/* Buttons */
+.actionBtn {
+  background: transparent;
   border: 1px solid var(--border-color);
-  background-color: transparent;
   color: var(--text-secondary);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 500;
-  padding: 0.4rem 0.8rem;
-  border-radius: 0.5rem;
-  transition: all 0.2s;
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.375rem;
   cursor: pointer;
-  white-space: nowrap; /* Keep buttons one line */
+  transition: all 0.2s;
+  white-space: nowrap; /* Keep text on one line */
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
-.actions button:hover {
+.actionBtn:hover {
   border-color: var(--primary);
   color: var(--primary);
   background-color: var(--primary-50);
 }
 
-/* --- RESPONSIVE STACKING --- */
-@media (max-width: 480px) {
-  .fileItem {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-  
-  .fileInfo {
-    width: 100%;
-  }
-  
-  .actions {
-    width: 100%;
-    justify-content: flex-end;
-    padding-top: 0.75rem;
-    border-top: 1px dashed var(--border-color);
-  }
+.viewBtn {
+  background-color: var(--neutral-50);
+  color: var(--text-primary);
 }
 
-/* --- DRAG & DROP ZONE --- */
+/* --- FOOTER / DROPZONE --- */
 .dropZone {
-  border: 2px dashed var(--neutral-300); /* Clearer dashed line */
-  border-radius: 0.75rem;
-  padding: 2rem;
-  transition: all 0.2s ease;
-  background-color: var(--bg-body); /* Inset look */
-  position: relative;
+  flex-shrink: 0; /* Footer never shrinks */
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+  padding: 0.75rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  min-height: 140px;
-}
-
-.dropZone:hover {
-  border-color: var(--primary-300);
-  background-color: var(--bg-surface);
+  gap: 0.5rem;
+  transition: background-color 0.2s;
 }
 
 .dropZone.dragActive {
-  border-color: var(--primary);
   background-color: var(--primary-50);
-  transform: scale(1.01);
 }
 
-.uploadAction {
-  display: flex;
-  justify-content: center;
+.uploadBtn {
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border: 1px dashed var(--neutral-400);
+  border-radius: 0.5rem;
+  background-color: var(--bg-body);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.uploadBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background-color: var(--primary-50);
 }
 
 /* --- EMPTY STATES --- */
 .emptyText {
-  font-size: 0.9rem; 
-  color: var(--text-secondary);
   text-align: center;
-  padding: 2rem;
-  background-color: var(--bg-body);
-  border-radius: 0.75rem;
-  border: 1px dashed var(--border-color);
-}
-
-.emptyStateDesign {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
+  padding: 2rem 1rem;
   color: var(--text-secondary);
   font-style: italic;
-  margin-bottom: 1rem;
+  font-size: 0.85rem;
 }
 
-/* --- MODAL CATEGORY BUTTONS --- */
-.categoryGrid {
-  display: grid;
-  gap: 0.75rem;
-}
-
+/* --- MODAL --- */
+.categoryGrid { display: grid; gap: 0.75rem; padding: 1.5rem; }
 .catBtn {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-surface);
-  border-radius: 0.75rem;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  text-align: left;
-  position: relative;
-  overflow: hidden;
+  display: flex; align-items: center; gap: 1rem; padding: 1rem;
+  border: 1px solid var(--border-color); background-color: var(--bg-surface);
+  border-radius: 0.75rem; cursor: pointer; text-align: left;
+  transition: all 0.2s;
 }
-
-.catBtn:hover {
-  border-color: var(--primary);
-  background-color: var(--primary-50);
-  transform: translateX(4px);
-  box-shadow: var(--shadow-sm);
-}
-
+.catBtn:hover { border-color: var(--primary); background-color: var(--primary-50); transform: translateX(4px); }
 .catIcon {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--neutral-50);
-  border-radius: 10px;
-  color: var(--text-secondary);
+  width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+  background-color: var(--neutral-50); border-radius: 10px; color: var(--text-secondary);
   border: 1px solid var(--border-color);
-  transition: color 0.2s, border-color 0.2s;
 }
-
-.catBtn:hover .catIcon {
-  color: var(--primary);
-  border-color: var(--primary-200);
-  background-color: var(--white);
-}
-
-.catText {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.catText strong {
-  font-size: 0.95rem;
-  color: var(--text-primary);
-}
-
-.catText span {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-/* --- UTILS --- */
-.spinner {
-  animation: spin 1s linear infinite;
-  display: inline-block;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
+.catText strong { display: block; font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.1rem; }
+.catText span { font-size: 0.75rem; color: var(--text-secondary); }

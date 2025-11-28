@@ -1,59 +1,88 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { useToast, useLab } from '../../../contexts';
 import Modal from '../../common/Modal';
-import STLViewer from './STLViewer'; 
+import UniversalFileViewer from './UniversalFileViewer'; // Updated Import
 import { 
   IconFile, 
   IconDrill, 
   IconPdf,
   IconImage,
-  IconBox 
+  IconBox,
+  IconCalendar,
+  IconEye,
+  IconArrowDown
 } from '../../../layouts/components/LabIcons';
 import styles from './CaseFilesCard.module.css';
 
+// --- Helper: Icon Logic ---
 const getFileIcon = (fileName, type) => {
   const lowerName = fileName.toLowerCase();
-  if (lowerName.endsWith('.pdf')) return <IconPdf className={styles.iconPdf} />;
-  if (lowerName.match(/\.(jpg|jpeg|png)$/)) return <IconImage className={styles.iconImg} />;
-  if (lowerName.endsWith('.stl') || lowerName.endsWith('.ply')) return <IconBox className={styles.iconStl} />;
-  return type === 'PRODUCTION_DESIGN' ? <IconDrill className={styles.iconGeneric} /> : <IconFile className={styles.iconGeneric} />;
+  const iconProps = { width: "18", height: "18" };
+  
+  if (lowerName.endsWith('.pdf')) return { icon: <IconPdf {...iconProps} />, style: styles.iconPdf };
+  if (lowerName.match(/\.(jpg|jpeg|png|gif)$/)) return { icon: <IconImage {...iconProps} />, style: styles.iconImg };
+  if (lowerName.endsWith('.stl') || lowerName.endsWith('.ply') || lowerName.endsWith('.obj')) {
+    return { icon: <IconBox {...iconProps} />, style: styles.iconStl };
+  }
+  
+  return { icon: <IconFile {...iconProps} />, style: styles.iconGeneric };
 };
 
-const FileListItem = ({ file, onView, onDownload }) => {
-  const icon = getFileIcon(file.fileName, file.category);
-  const isSTL = file.fileName.toLowerCase().endsWith('.stl');
-  
+// --- Single File Row ---
+const FileRow = ({ file, onView, onDownload }) => {
+  const { icon, style } = getFileIcon(file.fileName, file.category);
+  const timeString = new Date(file.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  // Check if we can preview this file type in the UniversalViewer
+  const canPreview = file.fileName.match(/\.(stl|ply|obj|pdf|jpg|jpeg|png|gif)$/i);
+
   return (
-    <li className={styles.fileItem}>
-      <div className={styles.fileInfo}>
-        <div className={styles.iconWrapper}>{icon}</div>
-        <div className={styles.textGroup}>
-          <div className={styles.fileName}>
-            <a href={file.url} target="_blank" rel="noreferrer" className={styles.fileLink}>{file.fileName}</a>
-            {file.isLatest && <span className={styles.badgeLatest}>Latest</span>}
-          </div>
-          <div className={styles.fileMeta}>
-            <span>{file.subCategory || file.category}</span>
-            <span className={styles.dot}>•</span>
-            <span>{file.size}</span>
-            {file.version && <><span className={styles.dot}>•</span><span>v{file.version}</span></>}
-          </div>
-        </div>
+    <div className={styles.fileItem}>
+      <div className={`${styles.iconBox} ${style}`}>
+        {icon}
       </div>
       
+      <div className={styles.fileInfo}>
+        {/* Title now opens preview if available, else download */}
+        <span 
+          className={styles.fileName} 
+          title={file.fileName}
+          onClick={() => canPreview ? onView(file) : onDownload(file)}
+          style={{ cursor: 'pointer' }}
+        >
+          {file.fileName}
+        </span>
+        <div className={styles.fileMeta}>
+          <span>{timeString}</span>
+          <span className={styles.dot} />
+          <span>{file.subCategory || file.category}</span>
+          <span className={styles.dot} />
+          <span>{file.size}</span>
+        </div>
+      </div>
+
       <div className={styles.actions}>
-        {isSTL ? (
-          <>
-            <button onClick={() => onView(file)}>View</button>
-            <button onClick={() => onDownload(file)}>Download</button>
-          </>
-        ) : (
-          <button onClick={() => onDownload(file)}>
-            {file.category === 'PRODUCTION_DESIGN' ? 'Download' : 'View'}
+        {/* View Button: Only show if supported type */}
+        {canPreview && (
+          <button 
+            className={`${styles.actionBtn} ${styles.viewBtn}`} 
+            onClick={() => onView(file)}
+            title="Preview"
+          >
+            <IconEye width="14" height="14" />
+            View
           </button>
         )}
+        
+        <button 
+          className={styles.actionBtn} 
+          onClick={() => onDownload(file)}
+          title="Download"
+        >
+          <IconArrowDown width="14" height="14" />
+        </button>
       </div>
-    </li>
+    </div>
   );
 };
 
@@ -66,13 +95,34 @@ const CaseFilesCard = ({ files, caseId }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   
   const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [viewingFile, setViewingFile] = useState(null);
+  const [viewingFile, setViewingFile] = useState(null); // Passed to UniversalViewer
   const [pendingFile, setPendingFile] = useState(null);
 
+  // --- Unified List (Input + Output) ---
+  const allFiles = useMemo(() => {
+    return [...files.inputs, ...files.designs];
+  }, [files]);
+
+  // --- Group by Date ---
+  const groupedFiles = useMemo(() => {
+    if (allFiles.length === 0) return {};
+    
+    const sorted = [...allFiles].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    return sorted.reduce((groups, file) => {
+      const dateKey = new Date(file.createdAt).toLocaleDateString(undefined, { 
+        weekday: 'short', month: 'short', day: 'numeric' 
+      });
+      if (!groups[dateKey]) groups[dateKey] = [];
+      groups[dateKey].push(file);
+      return groups;
+    }, {});
+  }, [allFiles]);
+
+  // --- Handlers ---
   const processFiles = (fileList) => {
     if (!fileList || fileList.length === 0) return;
-    const file = fileList[0];
-    setPendingFile(file);
+    setPendingFile(fileList[0]);
     setShowCategoryModal(true);
   };
 
@@ -83,10 +133,9 @@ const CaseFilesCard = ({ files, caseId }) => {
     setIsUploading(true);
     try {
       await addCaseFile(caseId, pendingFile, category);
-      addToast(`Successfully uploaded ${pendingFile.name}`, 'success');
+      addToast(`Uploaded ${pendingFile.name}`, 'success');
     } catch (error) {
-      console.error("Upload failed:", error);
-      addToast("Failed to upload file", 'error');
+      addToast("Upload failed", 'error');
     } finally {
       setIsUploading(false);
       setPendingFile(null);
@@ -94,100 +143,97 @@ const CaseFilesCard = ({ files, caseId }) => {
     }
   };
 
-  const handleCancelUpload = () => {
-    setShowCategoryModal(false);
-    setPendingFile(null);
-    setIsDragOver(false);
+  const handleDrag = (e, active) => {
+    e.preventDefault();
+    setIsDragOver(active);
   };
-
-  const handleViewFile = (file) => { setViewingFile(file); };
-  const handleDownloadFile = (file) => { window.open(file.url, '_blank'); };
-
-  const handleDragOver = (e) => { e.preventDefault(); setIsDragOver(true); };
-  const handleDragLeave = (e) => { e.preventDefault(); setIsDragOver(false); };
-  const handleDrop = (e) => { e.preventDefault(); processFiles(e.dataTransfer.files); };
-  const handleFileChange = (e) => { processFiles(e.target.files); };
-  const onUploadClick = () => { fileInputRef.current?.click(); };
 
   return (
     <>
-      <div className="card">
-        <h3 className={styles.sectionTitle}>Clinical Records (Inputs)</h3>
-        {files.inputs.length > 0 ? (
-          <ul className={styles.fileList}>
-            {files.inputs.map(file => (
-              <FileListItem key={file.id} file={file} onView={handleViewFile} onDownload={handleDownloadFile} />
-            ))}
-          </ul>
-        ) : (
-          <p className={styles.emptyText}>No clinical files attached.</p>
-        )}
-      </div>
-      
-      <div className="card">
-        <div className={styles.headerRow}>
-          <h3 className={styles.sectionTitle} style={{border:0, margin:0, padding:0}}>
-            Lab Designs ({files.designs.length})
-          </h3>
+      <div className={styles.card}>
+        {/* Header */}
+        <div className={styles.header}>
+          <h3 className={styles.title}>Case Files</h3>
+          <span className={styles.countBadge}>{allFiles.length}</span>
         </div>
 
+        {/* Scrollable List */}
+        <div className={styles.contentArea}>
+          {Object.keys(groupedFiles).length > 0 ? (
+            Object.entries(groupedFiles).map(([date, groupFiles]) => (
+              <div key={date} className={styles.dateGroup}>
+                <div className={styles.dateHeader}>
+                  <IconCalendar width="12" height="12" /> {date}
+                </div>
+                {groupFiles.map(file => (
+                  <FileRow 
+                    key={file.id} 
+                    file={file} 
+                    onView={setViewingFile} 
+                    onDownload={(f) => window.open(f.url, '_blank')} 
+                  />
+                ))}
+              </div>
+            ))
+          ) : (
+            <div className={styles.emptyText}>No files uploaded yet.</div>
+          )}
+        </div>
+
+        {/* Footer Dropzone */}
         <div 
           className={`${styles.dropZone} ${isDragOver ? styles.dragActive : ''}`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
+          onDragOver={(e) => handleDrag(e, true)}
+          onDragLeave={(e) => handleDrag(e, false)}
+          onDrop={(e) => { handleDrag(e, false); processFiles(e.dataTransfer.files); }}
         >
-          <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} accept=".stl,.ply,.obj,.dcm,.pdf,.jpg,.png" />
-          
-          {files.designs.length > 0 ? (
-            <ul className={styles.fileList}>
-              {files.designs.map(file => (
-                <FileListItem key={file.id} file={file} onView={handleViewFile} onDownload={handleDownloadFile} />
-              ))}
-            </ul>
-          ) : (
-            <div className={styles.emptyStateDesign}>
-              <p>No designs generated yet.</p>
-            </div>
-          )}
-
-          <div className={styles.uploadAction}>
-            <button className="button secondary" onClick={onUploadClick} disabled={isUploading}>
-              {isUploading ? <span className={styles.spinner}>⟳ Uploading...</span> : <span>+ Upload File or Drag Here</span>}
-            </button>
-          </div>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            style={{ display: 'none' }} 
+            onChange={(e) => processFiles(e.target.files)} 
+          />
+          <button 
+            className={styles.uploadBtn} 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+          >
+            {isUploading ? 'Uploading...' : (
+              <>
+                <IconFile width="16" height="16" />
+                Upload New File
+              </>
+            )}
+          </button>
         </div>
       </div>
 
+      {/* Upload Modal */}
       <Modal
         isOpen={showCategoryModal}
-        onClose={handleCancelUpload}
-        title="Classify File"
+        onClose={() => setShowCategoryModal(false)}
+        title="Classify Upload"
         width="400px"
-        footer={<button className="button text" onClick={handleCancelUpload}>Cancel</button>}
+        footer={<button className="button text" onClick={() => setShowCategoryModal(false)}>Cancel</button>}
       >
-        <div className={styles.modalBody}>
-          <p style={{ marginTop: 0, marginBottom: '1rem', color: 'var(--text-secondary)' }}>
-            How should <strong>{pendingFile?.name}</strong> be categorized?
-          </p>
-          <div className={styles.categoryGrid}>
-            <button className={styles.catBtn} onClick={() => handleUpload('INPUT_SCAN')}>
-              <div className={styles.catIcon}><IconBox /></div>
-              <div className={styles.catText}><strong>Input Scan</strong><span>Patient impressions / STL</span></div>
-            </button>
-            <button className={styles.catBtn} onClick={() => handleUpload('REFERENCE')}>
-              <div className={styles.catIcon}><IconImage /></div>
-              <div className={styles.catText}><strong>Reference</strong><span>Photos, PDF RX, Notes</span></div>
-            </button>
-            <button className={styles.catBtn} onClick={() => handleUpload('PRODUCTION_DESIGN')}>
-              <div className={styles.catIcon}><IconDrill /></div>
-              <div className={styles.catText}><strong>Design File</strong><span>Final CAM Output / CAD</span></div>
-            </button>
-          </div>
+        <div className={styles.categoryGrid}>
+          <button className={styles.catBtn} onClick={() => handleUpload('INPUT_SCAN')}>
+            <div className={styles.catIcon}><IconBox /></div>
+            <div className={styles.catText}><strong>Input Scan</strong><span>STL / PLY</span></div>
+          </button>
+          <button className={styles.catBtn} onClick={() => handleUpload('REFERENCE')}>
+            <div className={styles.catIcon}><IconImage /></div>
+            <div className={styles.catText}><strong>Reference</strong><span>Photo / PDF</span></div>
+          </button>
+          <button className={styles.catBtn} onClick={() => handleUpload('PRODUCTION_DESIGN')}>
+            <div className={styles.catIcon}><IconDrill /></div>
+            <div className={styles.catText}><strong>Design Output</strong><span>CAM File</span></div>
+          </button>
         </div>
       </Modal>
 
-      <STLViewer 
+      {/* UNIVERSAL VIEWER */}
+      <UniversalFileViewer 
         file={viewingFile} 
         isOpen={!!viewingFile} 
         onClose={() => setViewingFile(null)} 

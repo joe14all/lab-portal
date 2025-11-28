@@ -1,0 +1,260 @@
+/* src/pages/production/ProductionQueue.module.css */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- HEADER --- */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  color: var(--text-primary);
+}
+
+.header p {
+  margin: 0.5rem 0 0 0;
+  color: var(--text-secondary);
+}
+
+/* --- TOP STATS --- */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.statCard {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.statValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* --- EQUIPMENT GRID --- */
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.equipmentGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.machineCard {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.machineCard:hover {
+  border-color: var(--primary-300);
+  box-shadow: var(--shadow-md);
+}
+
+/* Status Line (Top Border) */
+.machineCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+}
+
+.statusRunning::before { background-color: var(--success-500); }
+.statusIdle::before { background-color: var(--neutral-300); }
+.statusMaintenance::before { background-color: var(--error-500); }
+
+.machineHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.machineName {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 1rem;
+  display: block;
+}
+
+.machineType {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.statusBadge {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 99px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.bgRunning { background-color: var(--success-100); color: var(--success-600); }
+.bgIdle { background-color: var(--neutral-100); color: var(--neutral-600); }
+.bgMaintenance { background-color: var(--error-100); color: var(--error-600); }
+
+.machineBody {
+  font-size: 0.9rem;
+}
+
+.currentJob {
+  background-color: var(--bg-body);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px dashed var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.jobMeta {
+  display: flex;
+  flex-direction: column;
+}
+
+.progress {
+  height: 4px;
+  background-color: var(--neutral-200);
+  border-radius: 2px;
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  background-color: var(--primary);
+  width: 0%; /* Dynamic */
+  transition: width 1s linear;
+}
+
+/* --- BATCH LIST --- */
+.splitView {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .splitView {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+.queueCard {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background-color: var(--bg-surface-hover);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table td {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+/* --- ALERTS --- */
+.alertList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.alertItem {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: var(--warning-bg);
+  border: 1px solid var(--warning-100);
+  border-radius: 0.5rem;
+  color: var(--warning-500); /* Darker yellow/brown text usually */
+}
+
+/* Dark mode fix for alert text contrast */
+:global(body.dark) .alertItem {
+  color: #fbbf24;
+  border-color: #451a03;
+}
+
+.alertContent strong {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 0.1rem;
+}
+
+.alertContent p {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.9;
+}

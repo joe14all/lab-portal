@@ -3,13 +3,18 @@
   display: none; /* Hidden on mobile */
   flex-direction: column;
   width: 260px;
-  height: calc(100vh - 64px); /* Full height minus header */
-  position: sticky;
-  top: 64px;
+  
+  /* --- CHANGED SECTION --- */
+  /* Remove calc() and sticky. Fill the available height from the parent. */
+  height: 100%; 
+  /* position: sticky;  <-- Remove this */
+  /* top: 64px;         <-- Remove this */
+  /* ----------------------- */
+
   background-color: var(--bg-surface);
   border-right: 1px solid var(--border-color);
   padding: 1.5rem;
-  overflow-y: auto; /* Allow scroll if menu is tall */
+  overflow-y: auto; /* Keeps the menu scrollable if it's very long */
 }
 
 .nav {

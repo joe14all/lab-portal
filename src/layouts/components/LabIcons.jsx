@@ -267,3 +267,13 @@ export const IconTrash = (props) => (
     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
   </svg>
 );
+
+
+export const IconArrowDown = (props) => (
+  <svg {...defaultProps} {...props}>
+    <line x1="12" y1="5" x2="12" y2="19"></line>
+    <polyline points="19 12 12 19 5 12"></polyline>
+  </svg>
+);
+
+

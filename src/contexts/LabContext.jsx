@@ -75,28 +75,17 @@ export const LabProvider = ({ children }) => {
 
   const deriveCaseStatus = useCallback((units = []) => {
     if (!units || units.length === 0) return 'stage-new';
-
-    // 1. Priority: HOLD (Any unit on hold puts case on hold)
     if (units.some(u => u.status === 'stage-hold')) return 'stage-hold';
-
-    // 2. Priority: SHIPPED (Only if ALL are shipped)
     const allShipped = units.every(u => u.status === 'stage-shipped' || u.status === 'stage-delivered');
     if (allShipped) return 'stage-shipped';
 
-    // 3. Priority: LOWEST ACTIVE STAGE
-    // Filter to find valid stage objects for current unit statuses
     const activeUnitStages = units
       .map(u => stages.find(s => s.id === u.status))
-      .filter(Boolean); // Remove undefined if stage not found
+      .filter(Boolean);
 
-    if (activeUnitStages.length === 0) return 'stage-new'; // Fallback
-
-    // Sort by Order ASC (Lowest first) - The case is only as far as its "slowest" unit
+    if (activeUnitStages.length === 0) return 'stage-new';
     activeUnitStages.sort((a, b) => a.order - b.order);
-
-    // Return the ID of the earliest stage (e.g., 'stage-design')
     return activeUnitStages[0].id;
-
   }, [stages]); 
 
   const validateTransition = useCallback((currentStage, nextStage) => {
@@ -325,13 +314,53 @@ export const LabProvider = ({ children }) => {
   }, [equipment]);
 
   // ============================================================
+  // 3. WORKFLOW HANDLERS (NEW)
+  // ============================================================
+
+  const createWorkflow = useCallback(async (workflowData) => {
+    if (!activeLab) return;
+    try {
+      const newWf = await MockService.settings.workflows.create({
+        ...workflowData,
+        labId: activeLab.id
+      });
+      setWorkflows(prev => [...prev, newWf]);
+      return newWf;
+    } catch (err) {
+      console.error("Failed to create workflow", err);
+      throw err;
+    }
+  }, [activeLab]);
+
+  const updateWorkflow = useCallback(async (id, updates) => {
+    try {
+      const updatedWf = await MockService.settings.workflows.update(id, updates);
+      setWorkflows(prev => prev.map(w => w.id === id ? updatedWf : w));
+      return updatedWf;
+    } catch (err) {
+      console.error("Failed to update workflow", err);
+      throw err;
+    }
+  }, []);
+
+  const deleteWorkflow = useCallback(async (id) => {
+    try {
+      await MockService.settings.workflows.delete(id);
+      setWorkflows(prev => prev.filter(w => w.id !== id));
+    } catch (err) {
+      console.error("Failed to delete workflow", err);
+      throw err;
+    }
+  }, []);
+
+  // ============================================================
   // EXPORT VALUE
   // ============================================================
 
   const value = useMemo(() => ({
     cases,
     stages,
-    workflows, // New
+    workflows,
     materials,
     batches,
     equipment,
@@ -341,7 +370,7 @@ export const LabProvider = ({ children }) => {
     getCaseById,
     getCaseFiles,
     getCaseMessages,
-    getWorkflowsForCategory, // New
+    getWorkflowsForCategory,
     addCaseMessage,
     addCaseFile,
     createCase,
@@ -351,11 +380,16 @@ export const LabProvider = ({ children }) => {
     consumeMaterial,
     createBatch,
     updateEquipmentStatus,
-    deriveCaseStatus, 
+    deriveCaseStatus,
+
+    createWorkflow, 
+    updateWorkflow, 
+    deleteWorkflow
   }), [
     cases, stages, workflows, materials, batches, equipment, loading, error,
     getCaseById, getCaseFiles, getCaseMessages, getWorkflowsForCategory, addCaseMessage, addCaseFile, createCase, updateCase, updateCaseStatus,
-    consumeMaterial, createBatch, updateEquipmentStatus, deriveCaseStatus
+    consumeMaterial, createBatch, updateEquipmentStatus, deriveCaseStatus,
+    createWorkflow, updateWorkflow, deleteWorkflow
   ]);
 
   return (

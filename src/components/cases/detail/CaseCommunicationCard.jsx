@@ -10,26 +10,29 @@ const CaseCommunicationCard = ({ messages, caseId }) => {
   const [inputValue, setInputValue] = useState('');
   const [isInternal, setIsInternal] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const messagesEndRef = useRef(null);
+  
+  // 1. CHANGE: Use a ref for the CONTAINER, not a dummy div at the end
+  const streamRef = useRef(null);
 
   // --- Permissions ---
-  // Clients cannot send internal notes.
   const isClient = user?.roleId === 'role-client';
   const canSendInternal = !isClient;
 
+  // 2. CHANGE: Scroll the container's scrollTop instead of using scrollIntoView
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (streamRef.current) {
+      // This scrolls ONLY the internal chat box to the bottom
+      streamRef.current.scrollTop = streamRef.current.scrollHeight;
+    }
   }, [messages]);
 
   const handleSend = async () => {
     if (!inputValue.trim()) return;
     setIsSending(true);
     try {
-      // Ensure clients can't force internal flag
       const messageType = canSendInternal ? isInternal : false;
       await addCaseMessage(caseId, { content: inputValue, isInternal: messageType });
       setInputValue('');
-      // We keep the 'isInternal' toggle state as is for workflow continuity for admins
     } catch (error) {
       console.error("Failed to send:", error);
     } finally {
@@ -56,8 +59,10 @@ const CaseCommunicationCard = ({ messages, caseId }) => {
         <span className={styles.countBadge}>{messages.length} messages</span>
       </div>
       
-      {/* STREAM */}
-      <div className={styles.stream}>
+      {/* 3. CHANGE: Attach the ref to the stream container 
+         and remove the old messagesEndRef div 
+      */}
+      <div className={styles.stream} ref={streamRef}>
         {messages.length > 0 ? messages.map(msg => {
           const isMe = msg.senderId === user?.id;
           
@@ -102,14 +107,13 @@ const CaseCommunicationCard = ({ messages, caseId }) => {
             <small>Messages sent here are visible to the clinic.</small>
           </div>
         )}
-        <div ref={messagesEndRef} />
+        {/* Removed <div ref={messagesEndRef} /> as it's no longer needed */}
       </div>
 
       {/* COMPOSER */}
       <div className={`${styles.composer} ${isInternal ? styles.composerInternal : ''}`}>
         <div className={styles.toolbar}>
           
-          {/* PERMISSION GATE: Toggle only for Lab Staff */}
           {canSendInternal ? (
             <label className={`${styles.toggle} ${isInternal ? styles.toggleActive : ''}`}>
               <input 
