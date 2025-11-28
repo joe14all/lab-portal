@@ -13,6 +13,7 @@ import CaseList from '../pages/cases/CaseList';
 import CaseDetail from '../pages/cases/CaseDetail';
 import ProductionQueue from '../pages/production/ProductionQueue';
 import Invoices from '../pages/finance/Invoices';
+import Payments from '../pages/finance/Payments'; 
 import LogisticsRoutes from '../pages/logistics/LogisticsRoutes';
 import NotFound from '../pages/NotFound';
 
@@ -58,8 +59,13 @@ export const AppRouter = () => {
                <Route path="logistics" element={<LogisticsRoutes />} />
             </Route>
 
+            {/* FINANCE MODULE (Updated) */}
             <Route element={<ProtectedRoute requiredPermissions={['FINANCE_VIEW']} />}>
-               <Route path="finance" element={<Invoices />} />
+               <Route path="finance">
+                 <Route index element={<Navigate to="invoices" replace />} />
+                 <Route path="invoices" element={<Invoices />} />
+                 <Route path="payments" element={<Payments />} />
+               </Route>
             </Route>
 
             {/* --- USER SETTINGS (Profile, Theme) --- */}

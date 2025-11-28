@@ -1,70 +1,136 @@
 /* src/pages/lab-settings/LabCatalogSettings.module.css */
 
-.header {
+.container {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: fadeIn 0.3s ease-out;
 }
 
-.header h2, 
-.header h3 {
-  margin: 0;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 0.5rem;
+}
+
+.sectionHeader h2, .sectionHeader h3 {
+  margin: 0 0 0.25rem 0;
   color: var(--text-primary);
+  font-size: 1.25rem;
+}
+
+.sectionHeader p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
 }
 
 .marginTop {
-  margin-top: 3rem;
-  margin-bottom: 1rem; /* Adjusted specific spacing for sub-sections */
+  margin-top: 2rem;
+  border-top: 1px dashed var(--border-color);
+  padding-top: 2rem;
 }
 
+/* Table */
 .tableCard {
   padding: 0;
-  overflow: hidden; /* Ensures rounded corners clip the table */
+  overflow: hidden;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-sm);
 }
 
-/* Table Styles */
+.tableWrapper {
+  overflow-x: auto;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px;
 }
 
 .table th {
   text-align: left;
-  padding: 1rem;
-  font-size: 0.85rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-secondary);
   background-color: var(--bg-surface-hover);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .table td {
-  padding: 1rem;
+  padding: 0.75rem 1.25rem;
   border-bottom: 1px solid var(--border-color);
-  color: var(--text-primary);
-  font-size: 0.95rem;
   vertical-align: middle;
+  font-size: 0.9rem;
 }
 
 .table tr:last-child td {
   border-bottom: none;
 }
 
-/* Specific Columns */
-.actionCell {
-  text-align: right;
+.clickableRow {
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.clickableRow:hover {
+  background-color: var(--bg-surface-hover);
 }
 
-.skuText {
+/* Cell Types */
+.itemName {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.itemMeta {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-family: monospace;
+  margin-top: 2px;
+}
+
+.categoryBadge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background-color: var(--neutral-100);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.metaText {
   color: var(--text-secondary);
   font-size: 0.85rem;
 }
 
+.priceCell {
+  text-align: right;
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.actionCell {
+  text-align: right;
+  width: 80px;
+}
+
 .emptyState {
   text-align: center;
-  padding: 2rem;
+  padding: 3rem;
   color: var(--text-secondary);
   font-style: italic;
 }

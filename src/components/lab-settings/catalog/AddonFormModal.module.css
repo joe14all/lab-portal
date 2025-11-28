@@ -3,9 +3,143 @@
 .form {
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
+  padding: 0.5rem 0;
+}
+
+.topRow {
+  display: flex;
   gap: 1rem;
 }
 
+.priceGroup {
+  display: flex;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+/* Association Section */
+.associationSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.listHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.listHeader label {
+  margin: 0; /* Reset global label margin for alignment */
+}
+
+.listTools {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Mini Search */
+.searchBox {
+  position: relative;
+  width: 180px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.searchBox input {
+  width: 100%;
+  padding: 0.35rem 0.5rem 0.35rem 1.75rem;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.linkBtn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+/* Scrollable List */
+.productsList {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1px; /* Divider effect via bg */
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  background-color: var(--bg-surface);
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid var(--neutral-100);
+  transition: background-color 0.15s;
+}
+
+.checkboxLabel:last-child {
+  border-bottom: none;
+}
+
+.checkboxLabel:hover {
+  background-color: var(--bg-surface-hover);
+}
+
+.checkboxLabel input {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+}
+
+.prodName {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.prodCat {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background-color: var(--neutral-100);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.emptyState {
+  padding: 2rem;
+  text-align: center;
+  font-style: italic;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.summaryText {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+/* Footer */
 .footer {
   display: flex;
   justify-content: space-between;
@@ -15,42 +149,4 @@
 .actions {
   display: flex;
   gap: 0.5rem;
-}
-
-.topRow {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 1rem;
-}
-
-.labelBlock {
-  margin-bottom: 0.5rem;
-  display: block;
-}
-
-.productsList {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-  max-height: 200px;
-  overflow-y: auto;
-  border: 1px solid var(--border-color);
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-  background-color: var(--bg-body);
-}
-
-.checkboxLabel {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  cursor: pointer;
-  user-select: none;
-  color: var(--text-primary);
-}
-
-.checkboxLabel input {
-  /* Reset width so checkbox doesn't stretch like a text input */
-  width: auto; 
 }

@@ -8,29 +8,39 @@
     "issueDate": "2025-11-30",
     "dueDate": "2025-12-30",
     "currency": "USD",
+    "appliedPriceListId": "pl-standard-2025",
     "items": [
       {
+        "id": "ii-2025-001-01",
         "caseId": "case-5001",
+        "productId": "prod-zirc-crn",
+        "itemType": "Production",
         "patientName": "John Smith",
         "description": "Zirconia Crown (Full Contour) - Tooth #14",
         "quantity": 1,
         "unitPrice": 99.00,
+        "taxRate": 0.00,
+        "taxAmount": 0.00,
         "total": 99.00
       },
       {
+        "id": "ii-2025-001-02",
         "caseId": "case-5002",
+        "productId": "prod-emax-ven",
+        "itemType": "Production",
         "patientName": "Alice Johnson",
         "description": "E.max Veneer - Tooth #8",
         "quantity": 1,
         "unitPrice": 149.00,
+        "taxRate": 0.00,
+        "taxAmount": 0.00,
         "total": 149.00
       }
     ],
     "subtotal": 248.00,
-    "taxRate": 0.00,
-    "taxAmount": 0.00,
+    "taxTotal": 0.00,
     "totalAmount": 248.00,
-    "balanceDue": 149.00, 
+    "balanceDue": 149.00,
     "notes": "Please pay by check or portal."
   },
   {
@@ -42,17 +52,24 @@
     "issueDate": "2025-10-30",
     "dueDate": "2025-11-29",
     "currency": "USD",
+    "appliedPriceListId": "pl-group-discount",
     "items": [
       {
+        "id": "ii-2025-005-01",
         "caseId": "case-5003",
+        "productId": "prod-imp-screw",
+        "itemType": "Production",
         "patientName": "Robert Brown",
         "description": "Implant Crown (Titanium Base)",
         "quantity": 1,
         "unitPrice": 250.00,
+        "taxRate": 0.00,
+        "taxAmount": 0.00,
         "total": 250.00
       }
     ],
     "subtotal": 250.00,
+    "taxTotal": 0.00,
     "totalAmount": 250.00,
     "balanceDue": 250.00
   },
@@ -65,25 +82,37 @@
     "issueDate": null,
     "dueDate": null,
     "currency": "USD",
+    "appliedPriceListId": "pl-standard-2025",
     "items": [
       {
+        "id": "ii-2025-006-01",
         "caseId": "case-5004",
+        "productId": "prod-denture-comp",
+        "itemType": "Production",
         "patientName": "Mary Williams",
         "description": "Complete Denture (Upper) - Premium Teeth",
         "quantity": 1,
         "unitPrice": 239.00,
+        "taxRate": 0.00,
+        "taxAmount": 0.00,
         "total": 239.00
       },
       {
+        "id": "ii-2025-006-02",
         "caseId": "case-5006",
+        "productId": "prod-nightguard",
+        "itemType": "Production",
         "patientName": "Sarah Connor",
         "description": "Nightguard (Hard/Soft) - Upper",
         "quantity": 1,
         "unitPrice": 89.00,
+        "taxRate": 0.00,
+        "taxAmount": 0.00,
         "total": 89.00
       }
     ],
     "subtotal": 328.00,
+    "taxTotal": 0.00,
     "totalAmount": 328.00,
     "balanceDue": 328.00,
     "notes": "Draft - Pending final weight/alloy adjustments."
@@ -97,17 +126,24 @@
     "issueDate": "2025-11-20",
     "dueDate": "2025-12-20",
     "currency": "USD",
+    "appliedPriceListId": "pl-group-discount",
     "items": [
       {
+        "id": "ii-2025-007-01",
         "caseId": "case-5008",
+        "productId": "prod-partial-cast",
+        "itemType": "Production",
         "patientName": "Emily Chen",
         "description": "Cast Partial Frame (Lower) - Chrome Cobalt",
         "quantity": 1,
         "unitPrice": 289.00,
+        "taxRate": 0.00,
+        "taxAmount": 0.00,
         "total": 289.00
       }
     ],
     "subtotal": 289.00,
+    "taxTotal": 0.00,
     "totalAmount": 289.00,
     "balanceDue": 289.00
   },
@@ -116,21 +152,28 @@
     "labId": "lab-001",
     "invoiceNumber": "INV-2025-1008",
     "clinicId": "clinic-001",
-    "status": "PaidInFull",
+    "status": "Paid",
     "issueDate": "2025-11-15",
     "dueDate": "2025-12-15",
     "currency": "USD",
+    "appliedPriceListId": "pl-standard-2025",
     "items": [
       {
+        "id": "ii-2025-008-01",
         "caseId": "case-5007",
+        "productId": "prod-pfm",
+        "itemType": "Production",
         "patientName": "William Davis",
         "description": "PFM Bridge (High Noble) - 3 Units",
         "quantity": 3,
         "unitPrice": 129.00,
+        "taxRate": 0.00,
+        "taxAmount": 0.00,
         "total": 387.00
       }
     ],
     "subtotal": 387.00,
+    "taxTotal": 0.00,
     "totalAmount": 387.00,
     "balanceDue": 0.00,
     "paymentDate": "2025-11-18"

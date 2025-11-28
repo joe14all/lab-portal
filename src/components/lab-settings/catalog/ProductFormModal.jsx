@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../../common/Modal';
 import { IconDrill } from '../../../layouts/components/LabIcons';
 import styles from "./ProductFormModal.module.css";
-import { COUNTRIES } from '../../../constants'; // Fixed Import Path
+import { COUNTRIES } from '../../../constants';
 
 const CATEGORIES = [
   "Crown & Bridge", "Removables", "Implants", "Orthodontics", "Fees", "Services"
@@ -36,31 +36,31 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData, isDeleting, 
         currency: defaultCurrency
       };
 
-      // Defer the state update to avoid synchronous setState inside the effect
-      // Also added dependency check to prevent loops
-      if (JSON.stringify(formData) !== JSON.stringify(nextData)) {
-        const id = setTimeout(() => {
-          setFormData(nextData);
-        }, 0);
-        return () => clearTimeout(id);
-      }
+      // Defer state update to avoid render-cycle conflicts
+      const t = setTimeout(() => {
+        setFormData(prev => {
+          if (JSON.stringify(prev) === JSON.stringify(nextData)) return prev;
+          return nextData;
+        });
+      }, 0);
+
+      return () => clearTimeout(t);
     }
-  }, [initialData, isOpen, defaultCurrency]); // Removed formData from dep array to strict logic
+  }, [initialData, isOpen, defaultCurrency]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(formData);
   };
 
-  // Safely derive symbol
-  const currentSymbol = COUNTRIES?.find(c => c.currency === formData.currency)?.symbol || '$';
+  const currentSymbol = COUNTRIES.find(c => c.currency === formData.currency)?.symbol || '$';
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={initialData ? "Edit Product" : "Add New Product"}
-      icon={<IconDrill />}
+      icon={<IconDrill width="20" />}
       footer={
         <div className={styles.footer}>
           {initialData ? (
@@ -81,19 +81,21 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData, isDeleting, 
       }
     >
       <form id="prodForm" onSubmit={handleSubmit} className={styles.form}>
-        <div className="form-group">
-          <label>Product Name *</label>
-          <input 
-            required
-            type="text" 
-            value={formData.name} 
-            onChange={e => setFormData({...formData, name: e.target.value})}
-            placeholder="e.g., Zirconia Crown"
-          />
-        </div>
-
-        <div className={styles.grid}>
-          <div className="form-group">
+        
+        {/* Row 1: Identity */}
+        <div className={styles.row}>
+          <div className="form-group" style={{ flex: 1.5 }}>
+            <label>Product Name *</label>
+            <input 
+              required
+              type="text" 
+              value={formData.name} 
+              onChange={e => setFormData({...formData, name: e.target.value})}
+              placeholder="e.g., Zirconia Crown"
+              autoFocus
+            />
+          </div>
+          <div className="form-group" style={{ flex: 1 }}>
             <label>Category</label>
             <select 
               value={formData.category} 
@@ -102,7 +104,11 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData, isDeleting, 
               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-          <div className="form-group">
+        </div>
+
+        {/* Row 2: Operations */}
+        <div className={styles.row}>
+          <div className="form-group" style={{ flex: 1 }}>
             <label>SKU / Code</label>
             <input 
               type="text" 
@@ -111,35 +117,7 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData, isDeleting, 
               placeholder="e.g., ZIRC-01"
             />
           </div>
-        </div>
-
-        <div className={styles.grid}>
-          {/* Price & Currency Group */}
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <div className="form-group" style={{ flex: 1 }}>
-              <label>Base Price ({currentSymbol})</label>
-              <input 
-                type="number" 
-                min="0"
-                step="0.01"
-                value={formData.defaultPrice} 
-                onChange={e => setFormData({...formData, defaultPrice: parseFloat(e.target.value)})}
-              />
-            </div>
-            <div className="form-group" style={{ width: '80px' }}>
-              <label>Currency</label>
-              <select
-                value={formData.currency}
-                onChange={e => setFormData({...formData, currency: e.target.value})}
-              >
-                {COUNTRIES.map(c => (
-                  <option key={c.code} value={c.currency}>{c.currency}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="form-group">
+          <div className="form-group" style={{ flex: 1 }}>
             <label>Turnaround (Days)</label>
             <input 
               type="number" 
@@ -149,6 +127,32 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData, isDeleting, 
             />
           </div>
         </div>
+
+        {/* Row 3: Financials */}
+        <div className={styles.priceGroup}>
+          <div className="form-group" style={{ flex: 1 }}>
+            <label>Default Price ({currentSymbol})</label>
+            <input 
+              type="number" 
+              min="0"
+              step="0.01"
+              value={formData.defaultPrice} 
+              onChange={e => setFormData({...formData, defaultPrice: parseFloat(e.target.value)})}
+            />
+          </div>
+          <div className="form-group" style={{ width: '100px' }}>
+            <label>Currency</label>
+            <select
+              value={formData.currency}
+              onChange={e => setFormData({...formData, currency: e.target.value})}
+            >
+              {COUNTRIES.map(c => (
+                <option key={c.code} value={c.currency}>{c.currency}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
       </form>
     </Modal>
   );

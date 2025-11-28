@@ -23,9 +23,20 @@ const MobileMenu = ({ isOpen, onClose }) => {
     { to: "/", label: "Dashboard", icon: <IconDashboard />, permission: null },
     { to: "/cases", label: "Case Management", icon: <IconCase />, permission: null },
     { to: "/production", label: "Production", icon: <IconMicroscope />, permission: null },
-    { to: "/finance", label: "Finance & Billing", icon: <IconInvoice />, permission: "FINANCE_VIEW" },
     
-    // Expandable Group: Lab Admin
+    // Finance Group
+    { 
+      id: "finance",
+      label: "Finance", 
+      icon: <IconInvoice />, 
+      permission: "FINANCE_VIEW",
+      children: [
+        { to: "/finance/invoices", label: "Invoices" },
+        { to: "/finance/payments", label: "Payments" }
+      ]
+    },
+    
+    // Lab Admin Group
     { 
       id: "lab-admin",
       label: "Lab Admin", 
@@ -40,10 +51,20 @@ const MobileMenu = ({ isOpen, onClose }) => {
       ]
     },
     
-    { to: "/settings", label: "My Profile", icon: <IconUser />, permission: null }
+    // User Settings Group
+    { 
+      id: "user-settings", 
+      label: "Account", 
+      icon: <IconUser />, 
+      permission: null,
+      children: [
+        { to: "/settings/profile", label: "My Profile" },
+        { to: "/settings/preferences", label: "Preferences" }
+      ]
+    }
   ];
 
-  // Auto-expand if currently on a sub-route when menu opens
+  // Auto-expand
   useEffect(() => {
     if (isOpen) {
       navItems.forEach(item => {
@@ -63,14 +84,12 @@ const MobileMenu = ({ isOpen, onClose }) => {
 
   return (
     <>
-      {/* Backdrop */}
       <div 
         className={`${styles.backdrop} ${isOpen ? styles.open : ''}`} 
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Drawer */}
       <aside className={`${styles.drawer} ${isOpen ? styles.open : ''}`}>
         <div className={styles.header}>
           <span className={styles.brand}>Menu</span>
@@ -84,7 +103,6 @@ const MobileMenu = ({ isOpen, onClose }) => {
             {navItems.map((item) => {
               if (item.permission && !hasPermission(item.permission)) return null;
 
-              // 1. RENDER EXPANDABLE GROUP
               if (item.children) {
                 const isGroupOpen = expanded[item.id];
                 const isGroupActive = item.children.some(child => location.pathname.startsWith(child.to));
@@ -94,6 +112,7 @@ const MobileMenu = ({ isOpen, onClose }) => {
                     <button 
                       className={`${styles.menuButton} ${isGroupActive ? styles.groupActive : ''}`} 
                       onClick={() => toggleGroup(item.id)}
+                      aria-expanded={isGroupOpen}
                     >
                       <div className={styles.labelGroup}>
                         <span className={styles.iconWrapper}>{item.icon}</span>
@@ -102,13 +121,14 @@ const MobileMenu = ({ isOpen, onClose }) => {
                       {isGroupOpen ? <IconChevronDown width="14" /> : <IconChevronRight width="14" />}
                     </button>
 
-                    {isGroupOpen && (
+                    {/* Wrapper for CSS animation if needed */}
+                    <div className={`${styles.subListWrapper} ${isGroupOpen ? styles.expanded : ''}`}>
                       <ul className={styles.subList}>
                         {item.children.map((child) => (
                           <li key={child.to}>
                             <NavLink
                               to={child.to}
-                              onClick={onClose} // Close drawer when navigating
+                              onClick={onClose}
                               className={({ isActive }) => 
                                 `${styles.subLink} ${isActive ? styles.subLinkActive : ''}`
                               }
@@ -118,19 +138,17 @@ const MobileMenu = ({ isOpen, onClose }) => {
                           </li>
                         ))}
                       </ul>
-                    )}
+                    </div>
                   </li>
                 );
               }
 
-              // 2. RENDER STANDARD LINK
               return (
                 <li key={item.to}>
                   <NavLink
                     to={item.to}
-                    onClick={onClose} // Close on click
+                    onClick={onClose}
                     className={({ isActive }) => 
-                      // Use startsWith logic only if it's not root, to prevent Dashboard sticking active
                       `${styles.navLink} ${isActive ? styles.active : ''}`
                     }
                     end={item.to === "/"}

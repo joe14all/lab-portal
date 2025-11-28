@@ -1,10 +1,12 @@
+/* src/pages/finance/Invoices.module.css */
+
 /* --- Page Layout --- */
-.pageContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+.pageContainer { display: flex; flex-direction: column; gap: 1.5rem; animation: fadeIn 0.3s ease-out; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .loading {
@@ -24,7 +26,9 @@
 }
 
 .pageHeader h1 {
-  margin-bottom: 0.25rem;
+  margin: 0 0 0.25rem 0;
+  font-size: 1.75rem;
+  color: var(--text-primary);
 }
 
 .pageHeader p {
@@ -36,6 +40,7 @@
 .headerActions {
   display: flex;
   justify-content: flex-start;
+  gap: 0.75rem;
 }
 
 /* Desktop Header */
@@ -73,11 +78,16 @@
   flex-direction: column;
   gap: 0.5rem;
   box-shadow: var(--shadow-sm);
+  transition: transform 0.2s;
+}
+
+.statCard:hover {
+  border-color: var(--primary-300);
 }
 
 .statLabel {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.8rem;
+  font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -129,6 +139,13 @@
   background-color: var(--bg-body);
   color: var(--text-primary);
   font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+
+.searchInput:focus {
+  border-color: var(--primary);
+  outline: none;
+  background-color: var(--bg-surface);
 }
 
 .filterGroup {
@@ -141,6 +158,7 @@
   font-size: 0.875rem;
   color: var(--text-secondary);
   white-space: nowrap;
+  font-weight: 500;
 }
 
 .filterSelect {
@@ -151,6 +169,7 @@
   color: var(--text-primary);
   font-size: 0.9rem;
   flex: 1;
+  cursor: pointer;
 }
 
 @media (min-width: 768px) {
@@ -177,17 +196,15 @@
   border: 1px solid var(--border-color);
   border-radius: 0.75rem;
   box-shadow: var(--shadow-sm);
-}
-
-/* Responsive Table Wrapper */
-.tableCard {
-  overflow-x: auto; /* Enable scroll on mobile */
+  display: flex;
+  flex-direction: column;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 800px; /* Force scroll on small screens */
+  min-width: 900px; /* Force horizontal scroll on small screens */
+  overflow-x: auto;
 }
 
 .table th {
@@ -210,17 +227,23 @@
   vertical-align: middle;
 }
 
+.tableRow {
+  transition: background-color 0.15s ease;
+}
+
 .tableRow:last-child td {
   border-bottom: none;
 }
 
-.tableRow:hover td {
+.tableRow:hover {
   background-color: var(--bg-surface-hover);
 }
 
 /* Table Columns */
 .fwBold {
   font-weight: 600;
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 0.85rem;
 }
 
 .cellClinic {
@@ -229,7 +252,8 @@
 }
 .cellClinic strong {
   color: var(--text-primary);
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 .cellClinic span {
   font-size: 0.75rem;
@@ -240,6 +264,7 @@
   text-align: center;
   padding: 3rem;
   color: var(--text-secondary);
+  font-style: italic;
 }
 
 /* --- Status Badges --- */
@@ -257,29 +282,45 @@
 
 .badgeDefault {
   background-color: var(--neutral-100);
-  color: var(--neutral-700);
+  color: var(--neutral-600);
+  border: 1px solid var(--neutral-200);
 }
 
 .badgeSuccess {
   background-color: var(--success-bg);
   color: var(--success-500);
+  border: 1px solid var(--success-100);
 }
 
 .badgeError {
   background-color: var(--error-bg);
   color: var(--error-500);
+  border: 1px solid var(--error-100);
 }
 
 .badgeWarning {
   background-color: var(--warning-bg);
   color: var(--warning-500);
+  border: 1px solid var(--warning-100);
 }
 
 /* --- Actions --- */
 .actionBtn {
   color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
 }
+
 .actionBtn:hover {
-  background-color: var(--bg-surface-hover);
+  background-color: var(--primary-50);
+  border-color: var(--primary);
   color: var(--primary);
 }

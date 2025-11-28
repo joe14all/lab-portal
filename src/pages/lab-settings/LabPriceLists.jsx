@@ -6,9 +6,7 @@ import {
   IconSettings, 
   IconCheck, 
   IconTrash, 
-  IconEdit,
-  IconChevronDown,
-  IconEye 
+  IconEdit
 } from '../../layouts/components/LabIcons';
 import PriceListModal from '../../components/lab-settings/financials/PriceListModal';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
@@ -23,13 +21,10 @@ const LabPriceLists = () => {
   const { activeLab } = useAuth();
   const { addToast } = useToast();
 
-  // --- 1. Local State for Data Manipulation ---
-  // We keep a local copy of "items" for each price list to allow fast editing
-  // Structure: { [priceListId]: { [itemId]: price } }
+  // --- Local State ---
   const [priceMatrix, setPriceMatrix] = useState({});
   const [changedListIds, setChangedListIds] = useState(new Set());
   
-  // View State
   const [search, setSearch] = useState('');
   const [visibleListIds, setVisibleListIds] = useState([]);
   const [selectedListId, setSelectedListId] = useState(null);
@@ -37,14 +32,14 @@ const LabPriceLists = () => {
 
   // Bulk Tools
   const [bulkValue, setBulkValue] = useState('');
-  const [bulkType, setBulkType] = useState('percent'); // 'percent' | 'fixed'
-  const [bulkOperation, setBulkOperation] = useState('increase'); // 'increase' | 'decrease'
+  const [bulkType, setBulkType] = useState('percent');
+  const [bulkOperation, setBulkOperation] = useState('increase');
 
   // Modals
   const [listModal, setListModal] = useState({ open: false, data: null });
   const [confirmModal, setConfirmModal] = useState({ open: false, item: null });
 
-  // --- 2. Initialization ---
+  // --- Initialization ---
   useEffect(() => {
     if (priceLists.length > 0) {
       const matrix = {};
@@ -54,7 +49,6 @@ const LabPriceLists = () => {
         ids.push(pl.id);
         const itemMap = {};
         pl.items?.forEach(item => {
-          // Key can be product or addon ID
           const key = item.productId || item.addonId;
           itemMap[key] = item.price;
         });
@@ -62,15 +56,14 @@ const LabPriceLists = () => {
       });
 
       setPriceMatrix(matrix);
-      // By default show all (or limit if too many)
-      setVisibleListIds(ids); 
+      setVisibleListIds(prev => prev.length > 0 ? prev : ids.slice(0, 5)); 
     }
   }, [priceLists]);
 
-  // --- 3. Derived Data ---
+  // --- Derived Data ---
   const allRows = useMemo(() => {
-    const prodRows = products.map(p => ({ ...p, type: 'Product' }));
-    const addonRows = addons.map(a => ({ ...a, type: 'Add-on' }));
+    const prodRows = products.map(p => ({ ...p, type: 'Product', isAddon: false }));
+    const addonRows = addons.map(a => ({ ...a, type: 'Add-on', isAddon: true }));
     return [...prodRows, ...addonRows].filter(item => 
       item.name.toLowerCase().includes(search.toLowerCase()) ||
       item.sku?.toLowerCase().includes(search.toLowerCase())
@@ -88,7 +81,7 @@ const LabPriceLists = () => {
     return COUNTRIES.find(c => c.currency === code)?.symbol || '$';
   };
 
-  // --- 4. Handlers ---
+  // --- Handlers ---
 
   const handlePriceChange = (listId, itemId, newVal) => {
     setPriceMatrix(prev => ({
@@ -106,7 +99,6 @@ const LabPriceLists = () => {
       const promises = Array.from(changedListIds).map(listId => {
         const priceMap = priceMatrix[listId];
         const newItems = Object.entries(priceMap).map(([key, price]) => {
-          // Determine if key is product or addon (naive check or check dataset)
           const isProduct = products.some(p => p.id === key);
           if (isProduct) return { productId: key, price };
           return { addonId: key, price };
@@ -123,38 +115,34 @@ const LabPriceLists = () => {
     }
   };
 
-  // --- Bulk Operations (Targeting Selected Column) ---
   const applyBulkToColumn = () => {
-    if (!selectedListId) return;
-    if (!bulkValue || isNaN(parseFloat(bulkValue))) return;
+    if (!selectedListId || !bulkValue || isNaN(parseFloat(bulkValue))) return;
 
     const val = parseFloat(bulkValue);
-    const listMap = { ...priceMatrix[selectedListId] }; // Copy current prices for this list
+    const listMap = { ...priceMatrix[selectedListId] };
     let count = 0;
 
     allRows.forEach(row => {
-      // Base for calculation: Default Price from Catalog
-      const base = row.defaultPrice || 0; 
+      // FIX: Use current override if exists, else default
+      const currentVal = listMap[row.id] !== undefined ? listMap[row.id] : (row.defaultPrice || 0);
       let calculated = 0;
 
       if (bulkType === 'percent') {
         const factor = val / 100;
-        calculated = bulkOperation === 'increase' ? base * (1 + factor) : base * (1 - factor);
+        calculated = bulkOperation === 'increase' ? currentVal * (1 + factor) : currentVal * (1 - factor);
       } else {
-        calculated = bulkOperation === 'increase' ? base + val : base - val;
+        calculated = bulkOperation === 'increase' ? currentVal + val : currentVal - val;
       }
       
-      // Round and ensure non-negative
       listMap[row.id] = Math.max(0, parseFloat(calculated.toFixed(2)));
       count++;
     });
 
     setPriceMatrix(prev => ({ ...prev, [selectedListId]: listMap }));
     setChangedListIds(prev => new Set(prev).add(selectedListId));
-    addToast(`Updated ${count} prices in selected list.`, "success");
+    addToast(`Updated ${count} prices.`, "success");
   };
 
-  // --- List Metadata & Create/Delete ---
   const handleListSave = async (data) => {
     try {
       if (listModal.data) {
@@ -174,8 +162,6 @@ const LabPriceLists = () => {
     if (!confirmModal.item) return;
     try {
       await deletePriceList(confirmModal.item.id);
-      
-      // Clean up local state
       setVisibleListIds(prev => prev.filter(id => id !== confirmModal.item.id));
       if (selectedListId === confirmModal.item.id) setSelectedListId(null);
       
@@ -193,14 +179,18 @@ const LabPriceLists = () => {
     });
   };
 
+  if (loading) {
+    return <div className={styles.loadingState}>Loading price matrix...</div>;
+  }
+
   return (
     <div className={styles.pageContainer}>
       
-      {/* --- HEADER --- */ }
+      {/* HEADER */}
       <div className={styles.header}>
         <div>
           <h1>Master Price Matrix</h1>
-          <p>Manage all price lists in a single view.</p>
+          <p>Manage standard, VIP, and contract pricing in one view.</p>
         </div>
         <div className={styles.headerActions}>
           <button className="button text" onClick={() => setListModal({ open: true, data: null })}>
@@ -216,10 +206,8 @@ const LabPriceLists = () => {
         </div>
       </div>
 
-      {/* --- TOOLBAR --- */}
+      {/* TOOLBAR */}
       <div className={styles.toolbar}>
-        
-        {/* 1. Filter / Search */}
         <div className={styles.searchGroup}>
           <div className={styles.searchWrapper}>
             <IconSearch className={styles.searchIcon} />
@@ -231,7 +219,6 @@ const LabPriceLists = () => {
             />
           </div>
           
-          {/* Column Visibility Dropdown */}
           <div className={styles.columnMenuWrapper}>
             <button 
               className={`button secondary ${styles.colBtn}`}
@@ -240,87 +227,89 @@ const LabPriceLists = () => {
               <IconSettings width="16" /> Columns
             </button>
             {showColumnMenu && (
-              <div className={styles.columnMenu}>
-                <div className={styles.menuHeader}>Show/Hide Lists</div>
-                {priceLists.map(pl => (
-                  <label key={pl.id} className={styles.colOption}>
-                    <input 
-                      type="checkbox" 
-                      checked={visibleListIds.includes(pl.id)}
-                      onChange={() => toggleVisibility(pl.id)}
-                    />
-                    {pl.name}
-                  </label>
-                ))}
-              </div>
+              <>
+                <div className={styles.backdrop} onClick={() => setShowColumnMenu(false)} />
+                <div className={styles.columnMenu}>
+                  <div className={styles.menuHeader}>Visible Lists</div>
+                  {priceLists.map(pl => (
+                    <label key={pl.id} className={styles.colOption}>
+                      <input 
+                        type="checkbox" 
+                        checked={visibleListIds.includes(pl.id)}
+                        onChange={() => toggleVisibility(pl.id)}
+                      />
+                      {pl.name}
+                    </label>
+                  ))}
+                </div>
+              </>
             )}
-            {/* Backdrop to close menu */}
-            {showColumnMenu && <div className={styles.backdrop} onClick={() => setShowColumnMenu(false)} />}
           </div>
         </div>
 
-        {/* 2. Bulk Actions (Contextual) */}
         <div className={`${styles.bulkGroup} ${selectedListId ? styles.bulkActive : ''}`}>
           {!selectedListId ? (
-            <span className={styles.bulkHint}>Click a column header to enable bulk tools</span>
+            <span className={styles.bulkHint}>Select a column header to edit efficiently</span>
           ) : (
             <>
-              <span className={styles.bulkLabel}>
-                Editing: <strong>{priceLists.find(l => l.id === selectedListId)?.name}</strong>
-              </span>
-              
-              <select 
-                className={styles.controlInput}
-                value={bulkOperation}
-                onChange={e => setBulkOperation(e.target.value)}
-              >
-                <option value="increase">Increase</option>
-                <option value="decrease">Decrease</option>
-              </select>
-              
-              <span style={{fontSize:'0.9rem', color:'var(--text-secondary)'}}>by</span>
-
-              <div className={styles.inputGroup}>
-                <input 
-                  type="number" 
-                  className={styles.valInput}
-                  placeholder="0"
-                  value={bulkValue}
-                  onChange={e => setBulkValue(e.target.value)}
-                />
-                <select 
-                  className={styles.unitInput}
-                  value={bulkType}
-                  onChange={e => setBulkType(e.target.value)}
-                >
-                  <option value="percent">%</option>
-                  <option value="fixed">$</option>
-                </select>
+              <div className={styles.bulkLabelGroup}>
+                <span className={styles.bulkLabel}>Editing:</span>
+                <strong>{priceLists.find(l => l.id === selectedListId)?.name}</strong>
               </div>
+              
+              <div className={styles.bulkControls}>
+                <select 
+                  className={styles.controlInput}
+                  value={bulkOperation}
+                  onChange={e => setBulkOperation(e.target.value)}
+                >
+                  <option value="increase">Increase</option>
+                  <option value="decrease">Decrease</option>
+                </select>
+                
+                <span className={styles.byText}>by</span>
 
-              <button className="button secondary small" onClick={applyBulkToColumn}>Apply</button>
-              <button className="icon-button small" onClick={() => setSelectedListId(null)} title="Deselect">
-                ✕
-              </button>
+                <div className={styles.inputGroup}>
+                  <input 
+                    type="number" 
+                    className={styles.valInput}
+                    placeholder="0"
+                    value={bulkValue}
+                    onChange={e => setBulkValue(e.target.value)}
+                  />
+                  <select 
+                    className={styles.unitInput}
+                    value={bulkType}
+                    onChange={e => setBulkType(e.target.value)}
+                  >
+                    <option value="percent">%</option>
+                    <option value="fixed">$</option>
+                  </select>
+                </div>
+
+                <button className="button secondary small" onClick={applyBulkToColumn}>Apply</button>
+                <button className="icon-button small" onClick={() => setSelectedListId(null)} title="Close Bulk Tools">
+                  ✕
+                </button>
+              </div>
             </>
           )}
         </div>
       </div>
 
-      {/* --- MATRIX TABLE --- */}
+      {/* MATRIX TABLE */}
       <div className={`card ${styles.tableCard}`}>
         <div className={styles.tableWrapper}>
           <table className={styles.table}>
             <thead>
               <tr>
-                <th className={styles.stickyCol} style={{minWidth:'250px', left:0, zIndex: 20}}>
+                <th className={`${styles.stickyCol} ${styles.colName}`}>
                   Product / Service
                 </th>
-                <th className={styles.stickyCol} style={{minWidth:'100px', left:'250px', zIndex: 20, borderRight:'2px solid var(--border-color)'}}>
+                <th className={`${styles.stickyCol} ${styles.colDefault}`}>
                   Default
                 </th>
                 
-                {/* Dynamic Price List Columns */}
                 {visibleListIds.map(listId => {
                   const pl = priceLists.find(l => l.id === listId);
                   if (!pl) return null;
@@ -338,11 +327,10 @@ const LabPriceLists = () => {
                           {isSelected && <IconCheck width="14" className={styles.checkIcon} />}
                         </div>
                         <div className={styles.headerSub}>
-                          {pl.currency} • {new Date(pl.effectiveDate).toLocaleDateString()}
+                          {pl.currency}
                         </div>
                       </div>
                       
-                      {/* Column Actions (Stop Propagation to avoid selecting) */}
                       <div className={styles.headerActionsCol}>
                         <button 
                           className={styles.colActionBtn} 
@@ -367,19 +355,19 @@ const LabPriceLists = () => {
             <tbody>
               {allRows.map(row => (
                 <tr key={row.id}>
-                  {/* Fixed Columns */}
-                  <td className={styles.stickyCol} style={{left:0, backgroundColor:'var(--bg-surface)'}}>
+                  <td className={`${styles.stickyCol} ${styles.colName}`}>
                     <div className={styles.rowTitle}>{row.name}</div>
-                    <div className={styles.rowSub}>{row.sku || row.type}</div>
+                    <div className={styles.rowSub}>
+                      {row.isAddon ? <span className={styles.addonTag}>Add-on</span> : row.sku}
+                    </div>
                   </td>
-                  <td className={`${styles.stickyCol} ${styles.defaultCell}`} style={{left:'250px', borderRight:'2px solid var(--border-color)'}}>
+                  <td className={`${styles.stickyCol} ${styles.colDefault}`}>
                     {defaultCurrencySymbol}{row.defaultPrice?.toFixed(2)}
                   </td>
 
-                  {/* Editable Columns */}
                   {visibleListIds.map(listId => {
                     const symbol = getListCurrency(listId);
-                    const currentVal = priceMatrix[listId]?.[row.id] ?? ''; // Allow 0
+                    const currentVal = priceMatrix[listId]?.[row.id] ?? ''; 
                     const isSelected = selectedListId === listId;
 
                     return (
@@ -395,6 +383,7 @@ const LabPriceLists = () => {
                             value={currentVal}
                             placeholder={row.defaultPrice?.toFixed(2)}
                             onChange={(e) => handlePriceChange(listId, row.id, e.target.value)}
+                            onFocus={() => setSelectedListId(listId)}
                           />
                         </div>
                       </td>
@@ -403,26 +392,25 @@ const LabPriceLists = () => {
                 </tr>
               ))}
               {allRows.length === 0 && (
-                <tr><td colSpan={visibleListIds.length + 2} className={styles.emptyState}>No products found.</td></tr>
+                <tr><td colSpan={visibleListIds.length + 2} className={styles.emptyState}>No items found matching search.</td></tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* --- MODALS --- */}
       <PriceListModal 
         isOpen={listModal.open}
         initialData={listModal.data}
         onClose={() => setListModal({ open: false, data: null })}
         onSubmit={handleListSave}
-        isDeleting={null} // Delete handled via column action now
+        isDeleting={null} 
       />
 
       <ConfirmationModal
         isOpen={confirmModal.open}
         title="Delete Price List"
-        message={`Are you sure you want to delete ${confirmModal.item?.name}? This cannot be undone.`}
+        message={`Are you sure you want to delete ${confirmModal.item?.name}? This action cannot be undone.`}
         onConfirm={handleDelete}
         onClose={() => setConfirmModal({ open: false, item: null })}
       />

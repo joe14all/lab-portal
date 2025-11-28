@@ -9,9 +9,7 @@ import {
   IconSettings,
   IconUser,
   IconChevronRight,
-  IconChevronDown,
-  IconDrill, // For Product Catalog if desired
-  IconLayers // For Workflows/Addons if desired
+  IconChevronDown
 } from './LabIcons';
 import styles from './Sidebar.module.css';
 
@@ -25,9 +23,20 @@ const Sidebar = () => {
     { to: "/", label: "Dashboard", icon: <IconDashboard />, permission: null },
     { to: "/cases", label: "Case Management", icon: <IconCase />, permission: null },
     { to: "/production", label: "Production", icon: <IconMicroscope />, permission: null },
-    { to: "/finance", label: "Finance", icon: <IconInvoice />, permission: "FINANCE_VIEW" },
     
-    // Expandable Group: Lab Admin
+    // Expandable: Finance
+    { 
+      id: "finance",
+      label: "Finance", 
+      icon: <IconInvoice />, 
+      permission: "FINANCE_VIEW",
+      children: [
+        { to: "/finance/invoices", label: "Invoices & Billing" },
+        { to: "/finance/payments", label: "Payment History" }
+      ]
+    },
+    
+    // Expandable: Lab Admin
     { 
       id: "lab-admin",
       label: "Lab Admin", 
@@ -42,10 +51,20 @@ const Sidebar = () => {
       ]
     },
     
-    { to: "/settings", label: "My Profile", icon: <IconUser />, permission: null } 
+    // Expandable: User Settings
+    { 
+      id: "user-settings", 
+      label: "Account", 
+      icon: <IconUser />, 
+      permission: null,
+      children: [
+        { to: "/settings/profile", label: "My Profile" },
+        { to: "/settings/preferences", label: "Preferences" }
+      ]
+    } 
   ];
 
-  // Auto-expand menu if we are currently on a sub-route (e.g., on page refresh)
+  // Auto-expand menu if we are currently on a sub-route
   useEffect(() => {
     navItems.forEach(item => {
       if (item.children) {
@@ -55,7 +74,7 @@ const Sidebar = () => {
         }
       }
     });
-  }, []); 
+  }, [location.pathname]); // Added dependency to re-check on route change
 
   const toggleGroup = (id) => {
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
@@ -78,6 +97,7 @@ const Sidebar = () => {
                   <button 
                     className={`${styles.menuButton} ${isGroupActive ? styles.groupActive : ''}`} 
                     onClick={() => toggleGroup(item.id)}
+                    aria-expanded={isOpen}
                   >
                     <div className={styles.labelGroup}>
                       <span className={styles.iconWrapper}>{item.icon}</span>

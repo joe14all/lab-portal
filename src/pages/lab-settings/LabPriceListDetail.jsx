@@ -1,7 +1,8 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCrm, useToast, useAuth } from '../../contexts';
-import { IconChevronRight, IconSearch, IconSettings } from '../../layouts/components/LabIcons';
+import { IconChevronRight, IconSearch, IconArrowDown } from '../../layouts/components/LabIcons';
 import styles from "./LabPriceListDetail.module.css";
 import { COUNTRIES } from '../../constants';
 
@@ -12,7 +13,7 @@ const LabPriceListDetail = () => {
   const { activeLab } = useAuth();
   const { 
     priceLists, updatePriceList, 
-    products, addons 
+    products, addons, loading 
   } = useCrm();
 
   const [search, setSearch] = useState('');
@@ -21,13 +22,12 @@ const LabPriceListDetail = () => {
 
   // --- Bulk State ---
   const [bulkValue, setBulkValue] = useState('');
-  const [bulkType, setBulkType] = useState('percent'); // 'percent' | 'fixed'
-  const [bulkOperation, setBulkOperation] = useState('increase'); // 'increase' | 'decrease'
+  const [bulkType, setBulkType] = useState('percent');
+  const [bulkOperation, setBulkOperation] = useState('increase');
 
   // --- Helpers ---
   const activeList = useMemo(() => priceLists.find(pl => pl.id === id), [priceLists, id]);
   
-  // Get Currency Symbol
   const currencyCode = activeList?.currency || activeLab?.settings?.currency || 'USD';
   const currencySymbol = useMemo(() => {
     const country = COUNTRIES.find(c => c.currency === currencyCode);
@@ -46,7 +46,12 @@ const LabPriceListDetail = () => {
     }
   }, [activeList]);
 
-  // --- 2. Bulk Handler ---
+  // --- 2. Handlers ---
+  const handlePriceChange = (itemId, newVal) => {
+    setLocalPrices(prev => ({ ...prev, [itemId]: parseFloat(newVal) }));
+    setHasChanges(true);
+  };
+
   const applyBulkAdjustment = () => {
     if (!bulkValue || isNaN(parseFloat(bulkValue))) {
       addToast("Please enter a valid adjustment value", "error");
@@ -58,8 +63,8 @@ const LabPriceListDetail = () => {
     let count = 0;
 
     // Helper to calculate new price
-    const calculate = (defaultPrice) => {
-      const base = defaultPrice || 0;
+    const calculate = (basePrice) => {
+      const base = basePrice || 0; // Use the passed base (current or default)
       let adjusted = 0;
 
       if (bulkType === 'percent') {
@@ -73,18 +78,22 @@ const LabPriceListDetail = () => {
           ? base + value 
           : base - value;
       }
-      return Math.max(0, parseFloat(adjusted.toFixed(2))); // Ensure no negative prices
+      return Math.max(0, parseFloat(adjusted.toFixed(2)));
     };
 
     // Apply to Products
     products.forEach(p => {
-      newPrices[p.id] = calculate(p.defaultPrice);
+      // FIX: Use existing list price if available, otherwise default
+      const currentVal = newPrices[p.id] !== undefined ? newPrices[p.id] : p.defaultPrice;
+      newPrices[p.id] = calculate(currentVal);
       count++;
     });
 
     // Apply to Add-ons
     addons.forEach(a => {
-      newPrices[a.id] = calculate(a.defaultPrice);
+      // FIX: Use existing list price if available, otherwise default
+      const currentVal = newPrices[a.id] !== undefined ? newPrices[a.id] : a.defaultPrice;
+      newPrices[a.id] = calculate(currentVal);
       count++;
     });
 
@@ -93,7 +102,6 @@ const LabPriceListDetail = () => {
     addToast(`Updated prices for ${count} items.`, "success");
   };
 
-  // --- 3. Save Handler ---
   const handleSave = async () => {
     if (!activeList) return;
     
@@ -112,19 +120,21 @@ const LabPriceListDetail = () => {
     }
   };
 
-  const handlePriceChange = (id, val) => {
-    setLocalPrices(prev => ({ ...prev, [id]: val }));
-    setHasChanges(true);
-  };
+  if (loading) return <div className={styles.loading}>Loading price list...</div>;
+  if (!activeList) return <div className={styles.emptyState}>Price list not found.</div>;
 
-  if (!activeList) return <div className="card">Loading...</div>;
-
-  const filteredProducts = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
-  const filteredAddons = addons.filter(a => a.name.toLowerCase().includes(search.toLowerCase()));
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(search.toLowerCase()) || 
+    p.sku?.toLowerCase().includes(search.toLowerCase())
+  );
+  
+  const filteredAddons = addons.filter(a => 
+    a.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className={styles.container}>
-      {/* Header */}
+      {/* HEADER */}
       <div className={styles.header}>
         <div className={styles.breadcrumbs}>
           <span onClick={() => navigate('/lab-settings/price-lists')} className={styles.crumbLink}>Price Lists</span>
@@ -143,30 +153,32 @@ const LabPriceListDetail = () => {
         </div>
       </div>
 
-      {/* Controls Bar */}
+      {/* CONTROLS BAR */}
       <div className={styles.controlsBar}>
         <div className={styles.searchWrapper}>
           <IconSearch className={styles.searchIcon} />
           <input 
-            type="text" 
+            className={styles.searchInput}
             placeholder="Search items..." 
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className={styles.searchInput}
           />
         </div>
 
         <div className={styles.bulkTools}>
           <span className={styles.bulkLabel}>Bulk Adjust:</span>
           
-          <select 
-            value={bulkOperation} 
-            onChange={(e) => setBulkOperation(e.target.value)}
-            className={styles.controlInput}
-          >
-            <option value="increase">Increase</option>
-            <option value="decrease">Decrease</option>
-          </select>
+          <div className={styles.selectWrapper}>
+            <select 
+              value={bulkOperation} 
+              onChange={(e) => setBulkOperation(e.target.value)}
+              className={styles.controlSelect}
+            >
+              <option value="increase">Increase All</option>
+              <option value="decrease">Decrease All</option>
+            </select>
+            <IconArrowDown className={styles.selectIcon} width="12" />
+          </div>
 
           <span className={styles.textBy}>by</span>
 
@@ -176,7 +188,7 @@ const LabPriceListDetail = () => {
               placeholder="0" 
               value={bulkValue}
               onChange={(e) => setBulkValue(e.target.value)}
-              className={styles.valueInput}
+              className={styles.valInput}
             />
             <select 
               value={bulkType} 
@@ -188,103 +200,108 @@ const LabPriceListDetail = () => {
             </select>
           </div>
 
-          <button className="button secondary" onClick={applyBulkAdjustment}>
-            Apply to All
+          <button className="button secondary small" onClick={applyBulkAdjustment}>
+            Apply
           </button>
         </div>
       </div>
 
+      {/* TWO-COLUMN GRID */}
       <div className={styles.gridContainer}>
         
-        {/* Products Table */}
-        <div className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        {/* LEFT: PRODUCTS */}
+        <div className={styles.panel}>
           <div className={styles.panelHeader}>
-            <span>Products</span>
+            <h3>Products</h3>
             <span className={styles.countBadge}>{filteredProducts.length}</span>
           </div>
-          <div className={styles.scrollArea}>
+          <div className={styles.tableWrapper}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Item</th>
-                  <th style={{width:'100px', textAlign:'right'}}>Default</th>
-                  <th style={{width:'130px', textAlign:'right'}}>List Price ({currencySymbol})</th>
+                  <th>Product Name</th>
+                  <th className={styles.alignRight}>Default</th>
+                  <th className={styles.alignRight}>List Price ({currencySymbol})</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredProducts.map(p => {
-                  const currentPrice = localPrices[p.id] !== undefined ? localPrices[p.id] : '';
-                  const isOverridden = localPrices[p.id] !== undefined;
+                  const currentPrice = localPrices[p.id];
+                  const val = currentPrice !== undefined ? currentPrice : '';
                   const defaultP = p.defaultPrice || 0;
-                  
+                  const isModified = currentPrice !== undefined && currentPrice !== defaultP;
+
                   return (
-                    <tr key={p.id} className={isOverridden ? styles.activeRow : ''}>
+                    <tr key={p.id} className={isModified ? styles.rowModified : ''}>
                       <td>
                         <div className={styles.itemName}>{p.name}</div>
-                        <div className={styles.itemSub}>{p.category}</div>
+                        <div className={styles.itemSub}>{p.category} • {p.sku}</div>
                       </td>
-                      <td className={styles.mutedCell}>{currencySymbol}{defaultP.toFixed(2)}</td>
-                      <td style={{textAlign:'right'}}>
+                      <td className={styles.mutedCell}>
+                        {currencySymbol}{defaultP.toFixed(2)}
+                      </td>
+                      <td className={styles.alignRight}>
                         <input 
                           type="number" 
                           step="0.01"
                           className={styles.priceInput}
                           placeholder={defaultP.toFixed(2)}
-                          value={currentPrice}
+                          value={val}
                           onChange={(e) => handlePriceChange(p.id, e.target.value)}
                         />
                       </td>
                     </tr>
                   );
                 })}
-                {filteredProducts.length === 0 && <tr><td colSpan="3" className={styles.empty}>No products found</td></tr>}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Add-ons Table */}
-        <div className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        {/* RIGHT: ADD-ONS */}
+        <div className={styles.panel}>
           <div className={styles.panelHeader}>
-            <span>Add-ons & Upgrades</span>
+            <h3>Add-ons & Upgrades</h3>
             <span className={styles.countBadge}>{filteredAddons.length}</span>
           </div>
-          <div className={styles.scrollArea}>
+          <div className={styles.tableWrapper}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Item</th>
-                  <th style={{width:'100px', textAlign:'right'}}>Default</th>
-                  <th style={{width:'130px', textAlign:'right'}}>List Price ({currencySymbol})</th>
+                  <th>Add-on Name</th>
+                  <th className={styles.alignRight}>Default</th>
+                  <th className={styles.alignRight}>Price ({currencySymbol})</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredAddons.map(a => {
-                  const currentPrice = localPrices[a.id] !== undefined ? localPrices[a.id] : '';
-                  const isOverridden = localPrices[a.id] !== undefined;
+                  const currentPrice = localPrices[a.id];
+                  const val = currentPrice !== undefined ? currentPrice : '';
                   const defaultP = a.defaultPrice || 0;
+                  const isModified = currentPrice !== undefined && currentPrice !== defaultP;
 
                   return (
-                    <tr key={a.id} className={isOverridden ? styles.activeRow : ''}>
+                    <tr key={a.id} className={isModified ? styles.rowModified : ''}>
                       <td>
                         <div className={styles.itemName}>{a.name}</div>
                         <div className={styles.itemSub}>Applies to {a.applicableProducts?.length || 'All'} items</div>
                       </td>
-                      <td className={styles.mutedCell}>{currencySymbol}{defaultP.toFixed(2)}</td>
-                      <td style={{textAlign:'right'}}>
+                      <td className={styles.mutedCell}>
+                        {currencySymbol}{defaultP.toFixed(2)}
+                      </td>
+                      <td className={styles.alignRight}>
                         <input 
                           type="number" 
                           step="0.01"
                           className={styles.priceInput}
                           placeholder={defaultP.toFixed(2)}
-                          value={currentPrice}
+                          value={val}
                           onChange={(e) => handlePriceChange(a.id, e.target.value)}
                         />
                       </td>
                     </tr>
                   );
                 })}
-                {filteredAddons.length === 0 && <tr><td colSpan="3" className={styles.empty}>No add-ons found</td></tr>}
               </tbody>
             </table>
           </div>

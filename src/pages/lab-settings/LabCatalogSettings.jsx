@@ -15,29 +15,23 @@ const LabCatalogSettings = () => {
   } = useCrm();
   const { addToast } = useToast();
 
-  // --- Currency Logic ---
-  // Default lab currency code (e.g. "USD")
   const defaultCurrencyCode = activeLab?.settings?.currency || 'USD';
 
-  // Helper to get symbol from code
   const getSymbol = (code) => {
     const country = COUNTRIES.find(c => c.currency === code);
     return country ? country.symbol : '$';
   };
 
-  // --- State for Modals ---
-  const [activeModal, setActiveModal] = useState(null); // 'product' | 'addon'
+  const [activeModal, setActiveModal] = useState(null); 
   const [editingItem, setEditingItem] = useState(null);
 
-  // --- State for Confirmation ---
   const [confirmState, setConfirmState] = useState({
     isOpen: false,
-    type: null, // 'product' | 'addon'
+    type: null, 
     item: null
   });
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // --- Product Handlers ---
   const handleProductSubmit = async (data) => {
     try {
       if (editingItem) {
@@ -55,14 +49,9 @@ const LabCatalogSettings = () => {
 
   const initProductDelete = () => {
     if (!editingItem) return;
-    setConfirmState({
-      isOpen: true,
-      type: 'product',
-      item: editingItem
-    });
+    setConfirmState({ isOpen: true, type: 'product', item: editingItem });
   };
 
-  // --- Addon Handlers ---
   const handleAddonSubmit = async (data) => {
     try {
       if (editingItem) {
@@ -80,14 +69,9 @@ const LabCatalogSettings = () => {
 
   const initAddonDelete = () => {
     if (!editingItem) return;
-    setConfirmState({
-      isOpen: true,
-      type: 'addon',
-      item: editingItem
-    });
+    setConfirmState({ isOpen: true, type: 'addon', item: editingItem });
   };
 
-  // --- Shared Confirmation Logic ---
   const executeDelete = async () => {
     const { type, item } = confirmState;
     if (!type || !item) return;
@@ -101,7 +85,6 @@ const LabCatalogSettings = () => {
         await deleteAddon(item.id);
         addToast("Add-on deleted", "success");
       }
-      
       setConfirmState({ isOpen: false, type: null, item: null });
       closeModal();
     } catch (err) {
@@ -116,7 +99,6 @@ const LabCatalogSettings = () => {
     setConfirmState({ isOpen: false, type: null, item: null });
   };
 
-  // --- Utils ---
   const openProductModal = (product = null) => {
     setEditingItem(product);
     setActiveModal('product');
@@ -133,105 +115,114 @@ const LabCatalogSettings = () => {
   };
 
   return (
-    <div>
+    <div className={styles.container}>
+      
       {/* --- PRODUCTS SECTION --- */ }
-      <div className={styles.header}>
-        <h2>Product Catalog</h2>
-        <button className="button primary" onClick={() => openProductModal()}>+ Add Product</button>
+      <div className={styles.sectionHeader}>
+        <div>
+          <h2>Product Catalog</h2>
+          <p>Define base products and services offered by your lab.</p>
+        </div>
+        <button className="button primary" onClick={() => openProductModal()}>
+          + Add Product
+        </button>
       </div>
 
       <div className={`card ${styles.tableCard}`}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Product Name</th>
-              <th>Category</th>
-              <th>Turnaround</th>
-              <th>Default Price</th>
-              <th className={styles.actionCell}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map(p => {
-              // Dynamic Symbol Lookup
-              const symbol = getSymbol(p.currency || defaultCurrencyCode);
-              
-              return (
-                <tr key={p.id}>
-                  <td>
-                    <strong>{p.name}</strong><br/>
-                    {p.sku && <small className={styles.skuText}>{p.sku}</small>}
-                  </td>
-                  <td>{p.category}</td>
-                  <td>{p.turnaroundDays} Days</td>
-                  <td>{symbol}{(p.defaultPrice || 0).toFixed(2)}</td>
-                  <td className={styles.actionCell}>
-                    <button 
-                      className="button secondary" 
-                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
-                      onClick={() => openProductModal(p)}
-                    >
-                      Edit
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-            {products.length === 0 && (
-              <tr><td colSpan="5" className={styles.emptyState}>No products found.</td></tr>
-            )}
-          </tbody>
-        </table>
+        <div className={styles.tableWrapper}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th style={{ width: '40%' }}>Product Name</th>
+                <th>Category</th>
+                <th>Turnaround</th>
+                <th style={{ textAlign: 'right' }}>Base Price</th>
+                <th className={styles.actionCell}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map(p => {
+                const symbol = getSymbol(p.currency || defaultCurrencyCode);
+                return (
+                  <tr key={p.id} onClick={() => openProductModal(p)} className={styles.clickableRow}>
+                    <td>
+                      <div className={styles.itemName}>{p.name}</div>
+                      {p.sku && <div className={styles.itemMeta}>{p.sku}</div>}
+                    </td>
+                    <td><span className={styles.categoryBadge}>{p.category}</span></td>
+                    <td className={styles.metaText}>{p.turnaroundDays} Days</td>
+                    <td className={styles.priceCell}>{symbol}{(p.defaultPrice || 0).toFixed(2)}</td>
+                    <td className={styles.actionCell}>
+                      <button 
+                        className="button secondary small" 
+                        onClick={(e) => { e.stopPropagation(); openProductModal(p); }}
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {products.length === 0 && (
+                <tr><td colSpan="5" className={styles.emptyState}>No products found.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* --- ADDONS SECTION --- */}
-      <div className={`${styles.header} ${styles.marginTop}`}>
-        <h3>Add-ons & Upgrades</h3>
-        <button className="button secondary" onClick={() => openAddonModal()}>+ Add Add-on</button>
+      <div className={`${styles.sectionHeader} ${styles.marginTop}`}>
+        <div>
+          <h3>Add-ons & Upgrades</h3>
+          <p>Optional extras that can be applied to products.</p>
+        </div>
+        <button className="button secondary" onClick={() => openAddonModal()}>
+          + Add Add-on
+        </button>
       </div>
 
       <div className={`card ${styles.tableCard}`}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Add-on Name</th>
-              <th>Price Impact</th>
-              <th>Applies To</th>
-              <th className={styles.actionCell}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {addons.map(a => {
-              // Dynamic Symbol Lookup
-              const symbol = getSymbol(a.currency || defaultCurrencyCode);
-
-              return (
-                <tr key={a.id}>
-                  <td><strong>{a.name}</strong></td>
-                  <td>+{symbol}{a.defaultPrice.toFixed(2)}</td>
-                  <td className={styles.skuText}>
-                    {a.applicableProducts?.length || 0} products
-                  </td>
-                  <td className={styles.actionCell}>
-                    <button 
-                      className="button secondary" 
-                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
-                      onClick={() => openAddonModal(a)}
-                    >
-                      Edit
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-            {addons.length === 0 && (
-              <tr><td colSpan="4" className={styles.emptyState}>No add-ons found.</td></tr>
-            )}
-          </tbody>
-        </table>
+        <div className={styles.tableWrapper}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th style={{ width: '40%' }}>Add-on Name</th>
+                <th style={{ textAlign: 'right' }}>Price Impact</th>
+                <th>Applies To</th>
+                <th className={styles.actionCell}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {addons.map(a => {
+                const symbol = getSymbol(a.currency || defaultCurrencyCode);
+                return (
+                  <tr key={a.id} onClick={() => openAddonModal(a)} className={styles.clickableRow}>
+                    <td><div className={styles.itemName}>{a.name}</div></td>
+                    <td className={styles.priceCell}>+{symbol}{a.defaultPrice.toFixed(2)}</td>
+                    <td className={styles.metaText}>
+                      {a.applicableProducts?.length || 0} products
+                    </td>
+                    <td className={styles.actionCell}>
+                      <button 
+                        className="button secondary small" 
+                        onClick={(e) => { e.stopPropagation(); openAddonModal(a); }}
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {addons.length === 0 && (
+                <tr><td colSpan="4" className={styles.emptyState}>No add-ons found.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* --- EDIT MODALS --- */}
+      {/* --- MODALS --- */}
       <ProductFormModal 
         isOpen={activeModal === 'product'} 
         onClose={closeModal}
@@ -251,7 +242,6 @@ const LabCatalogSettings = () => {
         defaultCurrency={defaultCurrencyCode}
       />
 
-      {/* --- CONFIRMATION MODAL --- */}
       <ConfirmationModal
         isOpen={confirmState.isOpen}
         onClose={closeConfirm}

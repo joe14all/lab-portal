@@ -1,0 +1,18 @@
+.formContainer { display: flex; flex-direction: column; gap: 1.5rem; padding: 1rem 0; }
+.row { display: flex; gap: 1rem; }
+.itemsSection { display: flex; flex-direction: column; gap: 0.5rem; }
+.itemsHeader {
+  display: flex; gap: 0.5rem; padding: 0 0.5rem;
+  font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;
+}
+.itemsList { display: flex; flex-direction: column; gap: 0.5rem; max-height: 300px; overflow-y: auto; }
+.itemRow { display: flex; gap: 0.5rem; align-items: center; }
+.removeBtn {
+  background: transparent; border: none; color: var(--text-secondary);
+  cursor: pointer; padding: 4px; border-radius: 4px;
+}
+.removeBtn:hover { background: var(--error-bg); color: var(--error-500); }
+.footer { display: flex; justify-content: space-between; width: 100%; align-items: center; }
+.totalsDisplay { display: flex; gap: 1.5rem; font-size: 0.9rem; color: var(--text-secondary); }
+.finalTotal { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
+.actions { display: flex; gap: 0.5rem; }

@@ -5,17 +5,23 @@ import SearchBar from '../../components/common/SearchBar';
 import { 
   IconMenu, 
   IconSettings,
-  IconLogout
+  IconLogout,
+  IconChevronDown
 } from './LabIcons';
 import styles from './Header.module.css';
 
 const Header = ({ onToggleSidebar }) => {
   const { user, logout } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
-  const getInitials = (firstName, lastName) => {
-    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
+  const getInitials = () => {
+    const first = user?.profile?.firstName?.[0] || '';
+    const last = user?.profile?.lastName?.[0] || '';
+    return (first + last).toUpperCase();
   };
+
+  const hasAvatar = user?.profile?.avatarUrl && !imgError;
 
   return (
     <header className={styles.header}>
@@ -29,10 +35,10 @@ const Header = ({ onToggleSidebar }) => {
           <IconMenu />
         </button>
         
-        <div className={styles.brand}>
+        <Link to="/" className={styles.brand}>
           <div className={styles.logoPlaceholder}>JS</div>
           <span className={styles.brandText}>Lab Portal</span>
-        </div>
+        </Link>
       </div>
 
       {/* Center: Search Component */}
@@ -44,11 +50,20 @@ const Header = ({ onToggleSidebar }) => {
 
       {/* Right: Profile */}
       <div className={styles.rightSection}>
-        <div className={styles.userMenuWrapper}>
+        <div 
+          className={styles.userMenuWrapper}
+          onBlur={(e) => {
+            // Check if the new focus target is still inside the wrapper
+            if (!e.currentTarget.contains(e.relatedTarget)) {
+              setIsUserMenuOpen(false);
+            }
+          }}
+        >
           <button 
             className={`${styles.userBtn} ${isUserMenuOpen ? styles.active : ''}`}
             onClick={() => setIsUserMenuOpen(prev => !prev)}
-            onBlur={() => setTimeout(() => setIsUserMenuOpen(false), 200)}
+            aria-expanded={isUserMenuOpen}
+            aria-haspopup="true"
           >
             <div className={styles.userInfo}>
               <span className={styles.userName}>
@@ -58,12 +73,21 @@ const Header = ({ onToggleSidebar }) => {
             </div>
             
             <div className={styles.avatar}>
-              {user?.profile?.avatarUrl ? (
-                <img src={user.profile.avatarUrl} alt="Profile" />
+              {hasAvatar ? (
+                <img 
+                  src={user.profile.avatarUrl} 
+                  alt="Profile" 
+                  onError={() => setImgError(true)}
+                />
               ) : (
-                <span>{getInitials(user?.profile?.firstName, user?.profile?.lastName)}</span>
+                <span className={styles.initials}>{getInitials()}</span>
               )}
             </div>
+
+            <IconChevronDown 
+              width="16" 
+              className={`${styles.chevron} ${isUserMenuOpen ? styles.chevronRotate : ''}`} 
+            />
           </button>
 
           {/* Dropdown */}
@@ -72,14 +96,22 @@ const Header = ({ onToggleSidebar }) => {
               <strong>Signed in as</strong>
               <span className={styles.emailText}>{user?.email}</span>
             </div>
+            
             <ul className={styles.dropdownList}>
               <li>
-                <Link to="/settings"><IconSettings /> Account Settings</Link>
+                <Link 
+                  to="/settings/profile" 
+                  className={styles.menuLink}
+                  onClick={() => setIsUserMenuOpen(false)}
+                >
+                  <IconSettings width="16" /> Account Settings
+                </Link>
               </li>
             </ul>
+            
             <div className={styles.dropdownFooter}>
               <button className={styles.logoutBtn} onClick={logout}>
-                <IconLogout /> Sign Out
+                <IconLogout width="16" /> Sign Out
               </button>
             </div>
           </div>

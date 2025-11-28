@@ -1,21 +1,32 @@
+/* src/pages/finance/Invoices.jsx */
 import React, { useState, useMemo } from 'react';
-import { useFinance, useCrm } from '../../contexts';
+import { useFinance, useCrm, useToast } from '../../contexts';
+import InvoiceFormModal from '../../components/finance/InvoiceFormModal';
+import PaymentModal from '../../components/finance/PaymentModal';
+import InvoiceDetailModal from '../../components/finance/InvoiceDetailModal';
 import { 
   IconSearch, 
   IconCheck, 
   IconAlert, 
   IconClock,
-  IconChevronRight
+  IconChevronRight,
+  IconInvoice
 } from '../../layouts/components/LabIcons';
 import styles from './Invoices.module.css';
 
 const Invoices = () => {
   // --- 1. Consume Context Data ---
-  const { invoices, loading: financeLoading } = useFinance();
+  const { invoices, createInvoice, loading: financeLoading } = useFinance();
   const { clinics, loading: crmLoading } = useCrm();
+  const { addToast } = useToast();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+
+  // --- Modal State ---
+  const [showCreate, setShowCreate] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   const loading = financeLoading || crmLoading;
 
@@ -46,15 +57,34 @@ const Invoices = () => {
   // Filter Logic
   const filteredInvoices = useMemo(() => {
     return enrichedInvoices.filter(inv => {
+      const searchLower = searchQuery.toLowerCase();
       const matchesSearch = 
-        inv.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        inv.clinicName.toLowerCase().includes(searchQuery.toLowerCase());
+        inv.invoiceNumber.toLowerCase().includes(searchLower) ||
+        inv.clinicName.toLowerCase().includes(searchLower);
       
       const matchesStatus = statusFilter === 'All' || inv.status === statusFilter;
 
       return matchesSearch && matchesStatus;
     });
   }, [enrichedInvoices, searchQuery, statusFilter]);
+
+  // --- 3. Handlers ---
+
+  const handleCreateSubmit = async (data) => {
+    try {
+      await createInvoice(data);
+      addToast('Invoice created successfully', 'success');
+      setShowCreate(false);
+    } catch (error) {
+      console.error(error);
+      addToast('Failed to create invoice', 'error');
+    }
+  };
+
+  const handlePaymentSuccess = () => {
+    addToast('Payment recorded and allocated successfully.', 'success');
+    setShowPayment(false);
+  };
 
   // --- Helper: Format Currency ---
   const formatMoney = (amount, currency = 'USD') => {
@@ -70,7 +100,7 @@ const Invoices = () => {
     let icon = null;
 
     switch (status) {
-      case 'PaidInFull':
+      case 'Paid': // Updated from PaidInFull
         styleClass = styles.badgeSuccess;
         icon = <IconCheck width="14" height="14" />;
         break;
@@ -79,6 +109,7 @@ const Invoices = () => {
         icon = <IconAlert width="14" height="14" />;
         break;
       case 'Sent':
+      case 'Partial':
         styleClass = styles.badgeWarning;
         icon = <IconClock width="14" height="14" />;
         break;
@@ -112,7 +143,17 @@ const Invoices = () => {
           <p>Manage invoices, payments, and clinic balances.</p>
         </div>
         <div className={styles.headerActions}>
-          <button className="button primary">
+          <button 
+            className="button secondary" 
+            onClick={() => setShowPayment(true)}
+            style={{ marginRight: '0.75rem' }}
+          >
+            <IconInvoice width="16" style={{marginRight: '0.5rem'}}/> Record Payment
+          </button>
+          <button 
+            className="button primary"
+            onClick={() => setShowCreate(true)}
+          >
             + Create Invoice
           </button>
         </div>
@@ -155,8 +196,9 @@ const Invoices = () => {
           >
             <option value="All">All Statuses</option>
             <option value="Sent">Sent</option>
+            <option value="Partial">Partial</option>
             <option value="Overdue">Overdue</option>
-            <option value="PaidInFull">Paid In Full</option>
+            <option value="Paid">Paid</option>
             <option value="Draft">Draft</option>
           </select>
         </div>
@@ -180,7 +222,12 @@ const Invoices = () => {
           <tbody>
             {filteredInvoices.length > 0 ? (
               filteredInvoices.map((inv) => (
-                <tr key={inv.id} className={styles.tableRow}>
+                <tr 
+                  key={inv.id} 
+                  className={styles.tableRow}
+                  onClick={() => setSelectedInvoice(inv)} // Row Click opens Detail
+                  style={{ cursor: 'pointer' }}
+                >
                   <td className={styles.fwBold}>{inv.invoiceNumber}</td>
                   <td>
                     <div className={styles.cellClinic}>
@@ -188,10 +235,10 @@ const Invoices = () => {
                       <span>{inv.accountNumber}</span>
                     </div>
                   </td>
-                  <td>{new Date(inv.issueDate).toLocaleDateString()}</td>
+                  <td>{inv.issueDate ? new Date(inv.issueDate).toLocaleDateString() : '-'}</td>
                   <td>
                     <span className={inv.status === 'Overdue' ? styles.textError : ''}>
-                      {new Date(inv.dueDate).toLocaleDateString()}
+                      {inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '-'}
                     </span>
                   </td>
                   <td>{formatMoney(inv.totalAmount, inv.currency)}</td>
@@ -200,7 +247,10 @@ const Invoices = () => {
                   </td>
                   <td>{renderStatusBadge(inv.status)}</td>
                   <td style={{textAlign: 'right'}}>
-                    <button className={`icon-button ${styles.actionBtn}`}>
+                    <button 
+                      className={`icon-button ${styles.actionBtn}`}
+                      onClick={(e) => { e.stopPropagation(); setSelectedInvoice(inv); }}
+                    >
                       <IconChevronRight />
                     </button>
                   </td>
@@ -216,6 +266,25 @@ const Invoices = () => {
           </tbody>
         </table>
       </div>
+
+      {/* --- MODALS --- */}
+      <InvoiceFormModal 
+        isOpen={showCreate}
+        onClose={() => setShowCreate(false)}
+        onSubmit={handleCreateSubmit}
+      />
+
+      <PaymentModal 
+        isOpen={showPayment}
+        onClose={() => setShowPayment(false)}
+        onSuccess={handlePaymentSuccess}
+      />
+
+      <InvoiceDetailModal 
+        invoice={selectedInvoice}
+        isOpen={!!selectedInvoice}
+        onClose={() => setSelectedInvoice(null)}
+      />
 
     </div>
   );

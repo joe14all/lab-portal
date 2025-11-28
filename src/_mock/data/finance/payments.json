@@ -4,55 +4,73 @@
     "labId": "lab-001",
     "paymentNumber": "RCT-1001",
     "clinicId": "clinic-001",
-    "invoiceIds": ["inv-2025-001"],
-    "amount": 99.00,
+    "totalAmount": 99.00,
     "currency": "USD",
-    "date": "2025-12-05T10:30:00Z",
+    "transactionDate": "2025-12-05T10:30:00Z",
     "method": "CreditCard",
-    "referenceNumber": "ch_stripe_12345",
+    "referenceCode": "ch_stripe_12345",
     "status": "Completed",
-    "notes": "Partial payment for Invoice #1001"
+    "notes": "Partial payment for Invoice #1001",
+    "allocations": [
+      {
+        "id": "alloc-8801-a",
+        "invoiceId": "inv-2025-001",
+        "amountApplied": 99.00
+      }
+    ]
   },
   {
     "id": "pay-8802",
     "labId": "lab-002",
     "paymentNumber": "RCT-1002",
     "clinicId": "clinic-005",
-    "invoiceIds": [], 
-    "amount": 500.00,
+    "totalAmount": 500.00,
     "currency": "USD",
-    "date": "2025-11-21T11:00:00Z",
+    "transactionDate": "2025-11-21T11:00:00Z",
     "method": "Check",
-    "referenceNumber": "CHK-9090",
+    "referenceCode": "CHK-9090",
     "status": "Pending_Clearance",
-    "notes": "Lump sum account credit, not applied to invoice yet."
+    "notes": "Lump sum account credit, not applied to invoice yet.",
+    "allocations": []
   },
   {
     "id": "pay-8803",
     "labId": "lab-001",
     "paymentNumber": "RCT-1003",
     "clinicId": "clinic-001",
-    "invoiceIds": ["inv-2025-008"],
-    "amount": 387.00,
+    "totalAmount": 387.00,
     "currency": "USD",
-    "date": "2025-11-18T14:00:00Z",
+    "transactionDate": "2025-11-18T14:00:00Z",
     "method": "BankTransfer",
-    "referenceNumber": "WIRE-223344",
+    "referenceCode": "WIRE-223344",
     "status": "Completed",
-    "notes": "Full payment for PFM Bridge case."
+    "notes": "Full payment for PFM Bridge case.",
+    "allocations": [
+      {
+        "id": "alloc-8803-a",
+        "invoiceId": "inv-2025-008",
+        "amountApplied": 387.00
+      }
+    ]
   },
   {
     "id": "pay-8804",
     "labId": "lab-002",
     "paymentNumber": "RCT-1004",
     "clinicId": "clinic-005",
-    "invoiceIds": ["inv-2025-005"],
-    "amount": 100.00,
+    "totalAmount": 100.00,
     "currency": "USD",
-    "date": "2025-11-22T09:00:00Z",
+    "transactionDate": "2025-11-22T09:00:00Z",
     "method": "CreditCard",
-    "referenceNumber": "ch_stripe_98765",
+    "referenceCode": "ch_stripe_98765",
     "status": "Completed",
-    "notes": "Partial payment towards overdue balance."
+    "notes": "Partial payment towards overdue balance.",
+    "allocations": [
+      {
+        "id": "alloc-8804-a",
+        "invoiceId": "inv-2025-005",
+        "amountApplied": 100.00
+      }
+    ]
   }
 ]

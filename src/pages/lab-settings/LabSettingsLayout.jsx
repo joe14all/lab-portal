@@ -5,14 +5,13 @@ import styles from './LabSettingsLayout.module.css';
 const LabSettingsLayout = () => {
   return (
     <div className={styles.layoutContainer}>
-      {/* Header */}
-      <div className={styles.header}>
+      {/* Header Section */}
+      <header className={styles.header}>
         <h1>Lab Administration</h1>
-        <p>Manage organization details, catalog, and financial configurations.</p>
-      </div>
+        <p>Manage organization details, product catalog, workflows, and financial configurations.</p>
+      </header>
 
-      {/* Removed the internal <aside className={styles.sidebar}> ... </aside> */}
-      
+      {/* Main Content Area */}
       <div className={styles.contentWrapper}>
         <main className={styles.mainContent}>
           <Outlet />

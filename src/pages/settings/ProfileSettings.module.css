@@ -1,3 +1,5 @@
+/* src/pages/settings/ProfileSettings.module.css */
+
 .container {
   animation: fadeIn 0.3s ease-out;
 }
@@ -23,10 +25,11 @@
 
 @media (min-width: 768px) {
   .profileGrid {
-    grid-template-columns: 120px 1fr;
+    grid-template-columns: 140px 1fr;
   }
 }
 
+/* Avatar Section */
 .avatarSection {
   display: flex;
   flex-direction: column;
@@ -35,19 +38,18 @@
 }
 
 .avatarLarge {
-  width: 100px;
-  height: 100px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   background-color: var(--primary-100);
   color: var(--primary-700);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.5rem;
-  font-weight: 600;
   border: 4px solid var(--bg-surface);
   box-shadow: 0 0 0 1px var(--border-color);
   overflow: hidden;
+  position: relative;
 }
 
 .avatarLarge img {
@@ -56,26 +58,79 @@
   object-fit: cover;
 }
 
-.changePhotoBtn {
+.initials {
+  font-size: 3rem;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  user-select: none;
+}
+
+/* Hover Overlay for Avatar */
+.avatarOverlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6); /* Darker for better contrast */
+  backdrop-filter: blur(2px); /* Subtle blur for modern feel */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+
+.avatarLarge:hover .avatarOverlay {
+  opacity: 1;
+}
+
+/* Button Group below Avatar */
+.photoActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.85rem;
-  color: var(--primary);
+}
+
+.textBtn {
   background: none;
   border: none;
   cursor: pointer;
+  color: var(--primary);
+  padding: 0.25rem 0.5rem;
+  font-weight: 500;
+  font-size: 0.85rem;
+  transition: color 0.2s;
+}
+.textBtn:hover {
   text-decoration: underline;
+  color: var(--primary-hover);
+}
+
+.dangerBtn {
+  color: var(--error-500);
+}
+.dangerBtn:hover {
+  color: #b91c1c; 
+}
+
+.divider {
+  color: var(--border-color);
+  font-size: 0.8rem;
 }
 
 /* Form Layout */
 .formGrid {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .halfGrid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 @media (min-width: 640px) {
@@ -84,23 +139,9 @@
   }
 }
 
-/* Messages */
-.message {
-  padding: 1rem;
-  border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-}
-
-.success {
-  background-color: var(--success-bg);
-  color: var(--success-500);
-}
-
-.error {
-  background-color: var(--error-bg);
-  color: var(--error-500);
+.form-helper-text {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+  display: block;
 }

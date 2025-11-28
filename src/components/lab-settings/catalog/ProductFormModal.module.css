@@ -3,7 +3,22 @@
 .form {
   display: flex;
   flex-direction: column;
+  gap: 1.25rem;
+  padding: 0.5rem 0;
+}
+
+.row {
+  display: flex;
   gap: 1rem;
+}
+
+.priceGroup {
+  display: flex;
+  gap: 1rem;
+  background-color: var(--bg-body);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px dashed var(--border-color);
 }
 
 .footer {
@@ -15,10 +30,4 @@
 .actions {
   display: flex;
   gap: 0.5rem;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
 }

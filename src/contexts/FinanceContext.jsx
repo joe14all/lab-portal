@@ -27,8 +27,9 @@ export const FinanceProvider = ({ children }) => {
           MockService.finance.payments.getAll({ labId: activeLab.id })
         ]);
         
-        setInvoices(fetchedInvoices);
-        setPayments(fetchedPayments);
+        // Sort by newest first
+        setInvoices(fetchedInvoices.sort((a, b) => new Date(b.issueDate || b.createdAt) - new Date(a.issueDate || a.createdAt)));
+        setPayments(fetchedPayments.sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate)));
         setError(null);
       } catch (err) {
         console.error("Failed to load Finance data", err);
@@ -59,20 +60,28 @@ export const FinanceProvider = ({ children }) => {
   }, [invoices]);
 
   /**
-   * (CREATE) Generate a new invoice from cases
+   * (CREATE) Generate a new invoice from selected cases
    */
   const createInvoice = useCallback(async (invoiceData) => {
     if (!activeLab) return;
     
     try {
+      // Calculate totals if not provided (Safety net)
+      const calculatedSubtotal = invoiceData.items.reduce((sum, item) => sum + (item.total || 0), 0);
+      const calculatedTax = invoiceData.items.reduce((sum, item) => sum + (item.taxAmount || 0), 0);
+      const calculatedTotal = calculatedSubtotal + calculatedTax;
+
       // Create payload with business logic defaults
       const payload = {
         ...invoiceData,
         labId: activeLab.id,
         invoiceNumber: `INV-2025-${Math.floor(1000 + Math.random() * 9000)}`,
-        status: 'Sent',
-        issueDate: new Date().toISOString(),
-        balanceDue: invoiceData.totalAmount, 
+        status: invoiceData.status || 'Draft',
+        issueDate: invoiceData.status === 'Sent' ? new Date().toISOString() : null,
+        subtotal: calculatedSubtotal,
+        taxTotal: calculatedTax,
+        totalAmount: calculatedTotal,
+        balanceDue: calculatedTotal, 
         currency: invoiceData.currency || 'USD'
       };
 
@@ -87,48 +96,92 @@ export const FinanceProvider = ({ children }) => {
     }
   }, [activeLab]);
 
+  /**
+   * (UPDATE) Update invoice details or status (e.g., Void, WriteOff, Move to Sent)
+   */
+  const updateInvoice = useCallback(async (invoiceId, updates) => {
+    try {
+      // If moving to 'Sent', ensure issueDate is set
+      if (updates.status === 'Sent' && !updates.issueDate) {
+        updates.issueDate = new Date().toISOString();
+      }
+
+      // If Voiding, clear balance
+      if (updates.status === 'Void') {
+        updates.balanceDue = 0;
+      }
+
+      const updatedInvoice = await MockService.finance.invoices.update(invoiceId, updates);
+      
+      setInvoices(prev => prev.map(inv => inv.id === invoiceId ? updatedInvoice : inv));
+      return updatedInvoice;
+    } catch (err) {
+      console.error("Failed to update invoice", err);
+      throw err;
+    }
+  }, []);
+
+  /**
+   * (DELETE) Remove a Draft invoice
+   */
+  const deleteInvoice = useCallback(async (invoiceId) => {
+    try {
+      await MockService.finance.invoices.delete(invoiceId);
+      setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
+    } catch (err) {
+      console.error("Failed to delete invoice", err);
+      throw err;
+    }
+  }, []);
+
   // ============================================================
   // 2. PAYMENT HANDLERS
   // ============================================================
 
   /**
-   * (CREATE) Process a payment and update invoice balances
+   * (CREATE) Process a payment and update allocated invoice balances
+   * Now supports the 'allocations' array structure.
    */
   const recordPayment = useCallback(async (paymentData) => {
     if (!activeLab) return;
 
     try {
-      // 1. Persist Payment
+      // 1. Create Payment Record
       const newPayment = await MockService.finance.payments.create({
         ...paymentData,
         labId: activeLab.id,
-        date: new Date().toISOString(),
-        status: 'Completed'
+        transactionDate: new Date().toISOString(),
+        status: 'Completed' // Assuming direct entry implies success for this mock
       });
 
       setPayments(prev => [newPayment, ...prev]);
 
-      // 2. Update Linked Invoices (Persist & State)
-      if (newPayment.invoiceIds && newPayment.invoiceIds.length > 0) {
-        // Calculate updates
-        const updatedInvoices = invoices.map(inv => {
-          if (newPayment.invoiceIds.includes(inv.id)) {
-            // Simplistic allocation logic from original requirement
-            const newBalance = Math.max(0, inv.balanceDue - newPayment.amount);
-            const newStatus = newBalance <= 0 ? 'PaidInFull' : 'Partial';
+      // 2. Update Linked Invoices based on Allocations
+      if (newPayment.allocations && newPayment.allocations.length > 0) {
+        
+        // We need to update local state AND backend for each affected invoice
+        const updatedInvoicesMap = {};
+
+        // Perform updates sequentially or parallel (Parallel preferred for mock)
+        await Promise.all(newPayment.allocations.map(async (alloc) => {
+          const invoice = invoices.find(inv => inv.id === alloc.invoiceId);
+          if (invoice) {
+            const newBalance = Math.max(0, invoice.balanceDue - alloc.amountApplied);
+            const newStatus = newBalance <= 0 ? 'Paid' : 'Partial';
             
-            // Persist change to backend (Fire & Forget for mock speed)
-            MockService.finance.invoices.update(inv.id, {
+            // Persist
+            const updatedInv = await MockService.finance.invoices.update(invoice.id, {
               balanceDue: newBalance,
               status: newStatus
             });
-
-            return { ...inv, balanceDue: newBalance, status: newStatus };
+            
+            // Store for local state update
+            updatedInvoicesMap[invoice.id] = updatedInv;
           }
-          return inv;
-        });
+        }));
 
-        setInvoices(updatedInvoices);
+        // Batch update local state
+        setInvoices(prev => prev.map(inv => updatedInvoicesMap[inv.id] || inv));
       }
 
       return newPayment;
@@ -153,13 +206,15 @@ export const FinanceProvider = ({ children }) => {
     getInvoiceById,
     getInvoicesByClinic,
     createInvoice,
+    updateInvoice,
+    deleteInvoice,
 
     // Payment Actions
     recordPayment,
     
   }), [
     invoices, payments, loading, error,
-    getInvoiceById, getInvoicesByClinic, createInvoice,
+    getInvoiceById, getInvoicesByClinic, createInvoice, updateInvoice, deleteInvoice,
     recordPayment
   ]);
 

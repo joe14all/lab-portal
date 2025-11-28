@@ -1,39 +1,74 @@
+/* src/pages/lab-settings/LabSettingsLayout.module.css */
+
 .layoutContainer {
-  max-width: 1200px; 
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  animation: fadeIn 0.3s ease-out;
+  gap: 2rem;
+  width: 100%;
+  padding-bottom: 3rem; /* Add breathing room at bottom */
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); /* Smoother easing */
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* --- HEADER --- */
 .header {
-  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .header h1 {
   margin: 0;
-  font-size: 1.75rem;
+  font-size: 1.875rem; /* 30px */
+  font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.02em; /* Tighter heading tracking */
+  line-height: 1.2;
 }
 
 .header p {
-  margin: 0.5rem 0 0 0;
+  margin: 0;
+  font-size: 1rem;
   color: var(--text-secondary);
+  max-width: 65ch; /* Optimal reading length */
+  line-height: 1.5;
 }
 
+/* --- CONTENT WRAPPERS --- */
 .contentWrapper {
-  /* Now just a wrapper for the main content */
-  display: block;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .mainContent {
   width: 100%;
+  min-width: 0; /* Prevents flex child overflow issues */
+}
+
+/* --- RESPONSIVE ADJUSTMENTS --- */
+@media (max-width: 768px) {
+  .layoutContainer {
+    gap: 1.5rem;
+  }
+
+  .header {
+    padding-bottom: 1.25rem;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .header p {
+    font-size: 0.9rem;
+  }
 }
