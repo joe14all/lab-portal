@@ -6,7 +6,7 @@ import { useAuth } from './AuthContext';
 const CrmContext = createContext(null);
 
 export const CrmProvider = ({ children }) => {
-  const { activeLab } = useAuth(); // Get context for Multi-Tenancy
+  const { activeLab } = useAuth(); 
 
   // --- State ---
   const [clinics, setClinics] = useState([]);
@@ -176,29 +176,93 @@ export const CrmProvider = ({ children }) => {
   }, []);
 
   // ============================================================
-  // 4. CATALOG HANDLERS
+  // 4. CATALOG HANDLERS (NEW)
   // ============================================================
-  
+
+  // --- Products ---
+  const createProduct = useCallback(async (productData) => {
+    if (!activeLab) return;
+    try {
+      const newProduct = await MockService.catalog.products.create({
+        ...productData,
+        labId: activeLab.id
+      });
+      setProducts(prev => [newProduct, ...prev]);
+      return newProduct;
+    } catch (err) {
+      console.error("Failed to create product", err);
+      throw err;
+    }
+  }, [activeLab]);
+
+  const updateProduct = useCallback(async (id, updates) => {
+    try {
+      const updated = await MockService.catalog.products.update(id, updates);
+      setProducts(prev => prev.map(p => p.id === id ? updated : p));
+      return updated;
+    } catch (err) {
+      console.error("Failed to update product", err);
+      throw err;
+    }
+  }, []);
+
+  const deleteProduct = useCallback(async (id) => {
+    try {
+      await MockService.catalog.products.delete(id);
+      setProducts(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      console.error("Failed to delete product", err);
+      throw err;
+    }
+  }, []);
+
+  // --- Addons ---
+  const createAddon = useCallback(async (addonData) => {
+    if (!activeLab) return;
+    try {
+      const newAddon = await MockService.catalog.addons.create({
+        ...addonData,
+        labId: activeLab.id,
+        currency: activeLab.settings?.currency || 'USD'
+      });
+      setAddons(prev => [newAddon, ...prev]);
+      return newAddon;
+    } catch (err) {
+      console.error("Failed to create addon", err);
+      throw err;
+    }
+  }, [activeLab]);
+
+  const updateAddon = useCallback(async (id, updates) => {
+    try {
+      const updated = await MockService.catalog.addons.update(id, updates);
+      setAddons(prev => prev.map(a => a.id === id ? updated : a));
+      return updated;
+    } catch (err) {
+      console.error("Failed to update addon", err);
+      throw err;
+    }
+  }, []);
+
+  const deleteAddon = useCallback(async (id) => {
+    try {
+      await MockService.catalog.addons.delete(id);
+      setAddons(prev => prev.filter(a => a.id !== id));
+    } catch (err) {
+      console.error("Failed to delete addon", err);
+      throw err;
+    }
+  }, []);
+
+  // Helper for pricing logic
   const calculateProductPrice = useCallback((productId, clinicId) => {
-    // 1. Find Clinic
     const clinic = clinics.find(c => c.id === clinicId);
     if (!clinic) return null;
-
-    // 2. Find Assigned Price List (or default if configured)
     const priceList = priceLists.find(pl => pl.id === clinic.priceListId);
-    
-    // 3. Fallback to Base Product Price
-    const baseProduct = products.find(p => p.id === productId);
-    if (!priceList) return baseProduct?.defaultPrice || null; // Note: products json doesn't have defaultPrice yet, usually in Price List logic
-
-    // 4. Find Item in Price List
+    if (!priceList) return 0;
     const priceItem = priceList.items.find(item => item.productId === productId);
-    
-    if (priceItem) return priceItem.price;
-    
-    // If product not in specific list, maybe return 0 or handle differently
-    return 0; 
-  }, [clinics, priceLists, products]);
+    return priceItem ? priceItem.price : 0; 
+  }, [clinics, priceLists]);
 
 
   // ============================================================
@@ -229,12 +293,16 @@ export const CrmProvider = ({ children }) => {
     createPriceList,
     updatePriceList,
     
+    createProduct, updateProduct, deleteProduct,
+    createAddon, updateAddon, deleteAddon,
     calculateProductPrice
   }), [
     clinics, doctors, priceLists, products, addons, loading, error,
     getClinicById, addClinic, updateClinic,
     getDoctorsByClinic, addDoctor, updateDoctor, removeDoctor,
     getPriceListById, createPriceList, updatePriceList,
+     createProduct, updateProduct, deleteProduct,
+    createAddon, updateAddon, deleteAddon,
     calculateProductPrice
   ]);
 

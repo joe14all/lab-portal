@@ -1,0 +1,70 @@
+/* src/pages/lab-settings/LabCatalogSettings.module.css */
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.header h2, 
+.header h3 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.marginTop {
+  margin-top: 3rem;
+  margin-bottom: 1rem; /* Adjusted specific spacing for sub-sections */
+}
+
+.tableCard {
+  padding: 0;
+  overflow: hidden; /* Ensures rounded corners clip the table */
+}
+
+/* Table Styles */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  padding: 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  background-color: var(--bg-surface-hover);
+}
+
+.table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Specific Columns */
+.actionCell {
+  text-align: right;
+}
+
+.skuText {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}

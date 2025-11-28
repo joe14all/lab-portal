@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts';
 import { 
   IconDashboard, 
@@ -7,25 +7,59 @@ import {
   IconMicroscope, 
   IconInvoice, 
   IconSettings,
-  IconUser // Import User Icon
+  IconUser,
+  IconChevronRight,
+  IconChevronDown,
+  IconDrill, // For Product Catalog if desired
+  IconLayers // For Workflows/Addons if desired
 } from './LabIcons';
 import styles from './Sidebar.module.css';
 
 const Sidebar = () => {
   const { hasPermission } = useAuth();
+  const location = useLocation();
+  const [expanded, setExpanded] = useState({});
 
+  // Navigation Structure
   const navItems = [
     { to: "/", label: "Dashboard", icon: <IconDashboard />, permission: null },
     { to: "/cases", label: "Case Management", icon: <IconCase />, permission: null },
     { to: "/production", label: "Production", icon: <IconMicroscope />, permission: null },
     { to: "/finance", label: "Finance", icon: <IconInvoice />, permission: "FINANCE_VIEW" },
     
-    // NEW: Lab Admin Link
-    { to: "/lab-settings", label: "Lab Admin", icon: <IconSettings />, permission: "CASE_MANAGE" },
+    // Expandable Group: Lab Admin
+    { 
+      id: "lab-admin",
+      label: "Lab Admin", 
+      icon: <IconSettings />, 
+      permission: "CASE_MANAGE",
+      children: [
+        { to: "/lab-settings/general", label: "General Info" },
+        { to: "/lab-settings/catalog", label: "Product Catalog" },
+        { to: "/lab-settings/financials", label: "Financial Config" },
+        { to: "/lab-settings/price-lists", label: "Price Lists" },
+        { to: "/lab-settings/workflows", label: "Workflows" },
+      ]
+    },
     
-    // NEW: User Profile Link
     { to: "/settings", label: "My Profile", icon: <IconUser />, permission: null } 
   ];
+
+  // Auto-expand menu if we are currently on a sub-route (e.g., on page refresh)
+  useEffect(() => {
+    navItems.forEach(item => {
+      if (item.children) {
+        const isChildActive = item.children.some(child => location.pathname.startsWith(child.to));
+        if (isChildActive) {
+          setExpanded(prev => ({ ...prev, [item.id]: true }));
+        }
+      }
+    });
+  }, []); 
+
+  const toggleGroup = (id) => {
+    setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   return (
     <aside className={styles.sidebar}>
@@ -33,13 +67,52 @@ const Sidebar = () => {
         <ul className={styles.navList}>
           {navItems.map((item) => {
             if (item.permission && !hasPermission(item.permission)) return null;
+
+            // 1. RENDER EXPANDABLE GROUP
+            if (item.children) {
+              const isOpen = expanded[item.id];
+              const isGroupActive = item.children.some(child => location.pathname.startsWith(child.to));
+
+              return (
+                <li key={item.id}>
+                  <button 
+                    className={`${styles.menuButton} ${isGroupActive ? styles.groupActive : ''}`} 
+                    onClick={() => toggleGroup(item.id)}
+                  >
+                    <div className={styles.labelGroup}>
+                      <span className={styles.iconWrapper}>{item.icon}</span>
+                      <span className={styles.labelText}>{item.label}</span>
+                    </div>
+                    {isOpen ? <IconChevronDown width="14" /> : <IconChevronRight width="14" />}
+                  </button>
+
+                  {isOpen && (
+                    <ul className={styles.subList}>
+                      {item.children.map((child) => (
+                        <li key={child.to}>
+                          <NavLink
+                            to={child.to}
+                            className={({ isActive }) => 
+                              `${styles.subLink} ${isActive ? styles.subLinkActive : ''}`
+                            }
+                          >
+                            {child.label}
+                          </NavLink>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              );
+            }
+
+            // 2. RENDER STANDARD ITEM
             return (
               <li key={item.to}>
                 <NavLink
                   to={item.to}
                   className={({ isActive }) => 
-                    // Use "startsWith" check for lab settings to keep active state on sub-pages
-                    `${styles.navLink} ${isActive || (item.to !== '/' && window.location.pathname.startsWith(item.to)) ? styles.active : ''}`
+                    `${styles.navLink} ${isActive ? styles.active : ''}`
                   }
                   end={item.to === "/"}
                 >

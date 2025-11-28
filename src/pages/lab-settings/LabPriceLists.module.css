@@ -1,0 +1,285 @@
+.pageContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: calc(100vh - 100px); /* Full height minus shell headers */
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.header h1 { margin: 0; font-size: 1.5rem; color: var(--text-primary); }
+.header p { margin: 0; color: var(--text-secondary); font-size: 0.9rem; }
+.headerActions { display: flex; gap: 0.5rem; }
+
+/* TOOLBAR */
+.toolbar {
+  display: flex;
+  gap: 1rem;
+  background-color: var(--bg-surface);
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.searchGroup {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 300px;
+}
+
+.searchWrapper {
+  position: relative;
+  flex: 1;
+}
+.searchIcon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  width: 16px;
+}
+.searchInput {
+  width: 100%;
+  padding: 0.5rem 0.5rem 0.5rem 2.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: var(--bg-body);
+  color: var(--text-primary);
+}
+
+/* Column Menu */
+.columnMenuWrapper {
+  position: relative;
+}
+.colBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 100%;
+}
+.columnMenu {
+  position: absolute;
+  top: 110%;
+  right: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  min-width: 200px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.menuHeader {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  padding: 0.25rem 0.5rem;
+  text-transform: uppercase;
+}
+.colOption {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.colOption:hover { background: var(--bg-body); }
+.backdrop {
+  position: fixed; inset: 0; z-index: 40;
+}
+
+/* Bulk Group */
+.bulkGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--neutral-50);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s;
+}
+.bulkActive {
+  background: var(--primary-50);
+  border-color: var(--primary-200);
+}
+:global(body.dark) .bulkActive { background: rgba(59, 130, 246, 0.15); }
+
+.bulkHint { font-size: 0.85rem; color: var(--text-secondary); font-style: italic; }
+.bulkLabel { font-size: 0.85rem; color: var(--text-primary); }
+
+.controlInput, .valInput, .unitInput {
+  padding: 0.35rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+.inputGroup { display: flex; }
+.valInput { border-right: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; width: 60px; }
+.unitInput { border-left: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; background: var(--neutral-100); }
+
+/* TABLE */
+.tableCard {
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.tableWrapper {
+  flex: 1;
+  overflow: auto; /* Enables generic scrolling for the matrix */
+}
+.table {
+  border-collapse: separate; /* Required for sticky headers */
+  border-spacing: 0;
+  width: 100%;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-surface);
+  z-index: 10;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0; /* Padding handled inside for layout */
+}
+
+/* List Column Header */
+.listHeader {
+  cursor: pointer;
+  min-width: 180px;
+  border-right: 1px solid var(--border-color);
+  transition: background 0.2s;
+  padding: 0.75rem;
+  position: relative;
+}
+.listHeader:hover { background: var(--bg-surface-hover); }
+.headerSelected { background: var(--primary-50) !important; border-bottom: 2px solid var(--primary); }
+:global(body.dark) .headerSelected { background: rgba(59, 130, 246, 0.15) !important; }
+
+.headerContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+}
+.headerTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary);
+}
+.checkIcon { color: var(--primary); }
+.headerSub {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Header Actions (Hover only) */
+.headerActionsCol {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.listHeader:hover .headerActionsCol { opacity: 1; }
+
+.colActionBtn {
+  background: rgba(255,255,255,0.8);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 2px 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+.colActionBtn:hover { color: var(--primary); background: white; }
+.dangerBtn:hover { color: var(--error-500); }
+
+/* Table Body */
+.table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color); /* Grid lines */
+  vertical-align: middle;
+}
+
+/* Sticky Columns */
+.stickyCol {
+  position: sticky;
+  background-color: var(--bg-surface);
+  z-index: 5; /* Higher than normal cells, lower than headers */
+}
+.defaultCell {
+  text-align: right;
+  font-family: monospace;
+  color: var(--text-secondary);
+  background-color: var(--neutral-50) !important;
+}
+
+.rowTitle { font-size: 0.9rem; font-weight: 500; color: var(--text-primary); }
+.rowSub { font-size: 0.75rem; color: var(--text-secondary); }
+
+/* Input Cell */
+.cellSelected { background-color: var(--primary-50); }
+:global(body.dark) .cellSelected { background-color: rgba(59, 130, 246, 0.1); }
+
+.inputWrapper {
+  display: flex;
+  align-items: center;
+}
+.currencyPrefix {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-right: 2px;
+}
+.priceInput {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  text-align: right;
+  font-size: 0.9rem;
+  padding: 0.25rem;
+  border-radius: 4px;
+  color: var(--text-primary);
+}
+.priceInput:hover { border-color: var(--border-color); }
+.priceInput:focus { 
+  border-color: var(--primary); 
+  background: var(--bg-surface); 
+  outline: none; 
+  box-shadow: 0 0 0 2px var(--primary-50);
+}
+
+.emptyState {
+  padding: 3rem; text-align: center; color: var(--text-secondary); font-style: italic;
+}

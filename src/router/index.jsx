@@ -21,11 +21,13 @@ import SettingsLayout from '../pages/settings/SettingsLayout';
 import ProfileSettings from '../pages/settings/ProfileSettings';
 import PreferencesSettings from '../pages/settings/PreferencesSettings';
 
-// --- NEW: Lab Admin Pages ---
+// --- Lab Admin Pages ---
 import LabSettingsLayout from '../pages/lab-settings/LabSettingsLayout';
 import LabGeneralSettings from '../pages/lab-settings/LabGeneralSettings';
 import LabCatalogSettings from '../pages/lab-settings/LabCatalogSettings';
 import LabFinancialSettings from '../pages/lab-settings/LabFinancialSettings';
+import LabPriceLists from '../pages/lab-settings/LabPriceLists';
+import LabPriceListDetail from '../pages/lab-settings/LabPriceListDetail';
 
 export const AppRouter = () => {
   return (
@@ -66,14 +68,15 @@ export const AppRouter = () => {
               <Route path="preferences" element={<PreferencesSettings />} />
             </Route>
 
-            {/* --- NEW: LAB SETTINGS (Admin Area) --- */}
+            {/* --- LAB SETTINGS (Admin Area) --- */}
             <Route element={<ProtectedRoute requiredPermissions={['ALL_ACCESS', 'CASE_MANAGE']} />}>
               <Route path="lab-settings" element={<LabSettingsLayout />}>
                 <Route index element={<Navigate to="general" replace />} />
                 <Route path="general" element={<LabGeneralSettings />} />
                 <Route path="catalog" element={<LabCatalogSettings />} />
+                <Route path="price-lists" element={<LabPriceLists />} />
+  <Route path="price-lists/:id" element={<LabPriceListDetail />} />
                 <Route path="financials" element={<LabFinancialSettings />} />
-                {/* Placeholder for Workflows */}
                 <Route path="workflows" element={<div className="card">Workflows Configuration (Coming Soon)</div>} />
               </Route>
             </Route>

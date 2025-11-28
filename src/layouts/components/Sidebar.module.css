@@ -9,6 +9,7 @@
   background-color: var(--bg-surface);
   border-right: 1px solid var(--border-color);
   padding: 1.5rem;
+  overflow-y: auto; /* Allow scroll if menu is tall */
 }
 
 .nav {
@@ -24,6 +25,7 @@
   gap: 0.5rem;
 }
 
+/* Standard Link */
 .navLink {
   display: flex;
   align-items: center;
@@ -46,7 +48,75 @@
   color: var(--primary-700);
 }
 
-:global(body.dark) .navLink.active {
+/* --- NEW: GROUP / SUBMENU STYLES --- */
+
+.menuButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.menuButton:hover {
+  background-color: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.menuButton.groupActive {
+  color: var(--primary-700);
+  background-color: var(--bg-surface-hover); /* Subtle indication parent is active */
+}
+
+.labelGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.subList {
+  list-style: none;
+  padding: 0;
+  margin: 0.25rem 0 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.subLink {
+  display: block;
+  /* Increased left padding for indentation */
+  padding: 0.5rem 1rem 0.5rem 3.25rem; 
+  border-radius: 0.5rem;
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.subLink:hover {
+  background-color: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.subLinkActive {
+  background-color: var(--primary-50);
+  color: var(--primary-700);
+  font-weight: 600;
+}
+
+/* Dark mode overrides */
+:global(body.dark) .navLink.active,
+:global(body.dark) .subLinkActive {
   background-color: rgba(59, 130, 246, 0.15);
   color: var(--primary-300);
 }

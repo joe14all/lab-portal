@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts';
 import { 
   IconDashboard, 
@@ -8,12 +8,16 @@ import {
   IconInvoice, 
   IconSettings,
   IconClose,
-  IconUser // Import User Icon
+  IconUser,
+  IconChevronRight,
+  IconChevronDown
 } from './LabIcons';
 import styles from './MobileMenu.module.css';
 
 const MobileMenu = ({ isOpen, onClose }) => {
   const { hasPermission } = useAuth();
+  const location = useLocation();
+  const [expanded, setExpanded] = useState({});
 
   const navItems = [
     { to: "/", label: "Dashboard", icon: <IconDashboard />, permission: null },
@@ -21,12 +25,41 @@ const MobileMenu = ({ isOpen, onClose }) => {
     { to: "/production", label: "Production", icon: <IconMicroscope />, permission: null },
     { to: "/finance", label: "Finance & Billing", icon: <IconInvoice />, permission: "FINANCE_VIEW" },
     
-    // NEW: Lab Admin Link (Restricted to Managers/Admins)
-    { to: "/lab-settings", label: "Lab Admin", icon: <IconSettings />, permission: "CASE_MANAGE" },
+    // Expandable Group: Lab Admin
+    { 
+      id: "lab-admin",
+      label: "Lab Admin", 
+      icon: <IconSettings />, 
+      permission: "CASE_MANAGE",
+      children: [
+        { to: "/lab-settings/general", label: "General Info" },
+        { to: "/lab-settings/catalog", label: "Product Catalog" },
+        { to: "/lab-settings/financials", label: "Financial Config" },
+        { to: "/lab-settings/price-lists", label: "Price Lists" },
+        { to: "/lab-settings/workflows", label: "Workflows" },
+      ]
+    },
     
-    // NEW: User Profile Link (Accessible to everyone)
     { to: "/settings", label: "My Profile", icon: <IconUser />, permission: null }
   ];
+
+  // Auto-expand if currently on a sub-route when menu opens
+  useEffect(() => {
+    if (isOpen) {
+      navItems.forEach(item => {
+        if (item.children) {
+          const isChildActive = item.children.some(child => location.pathname.startsWith(child.to));
+          if (isChildActive) {
+            setExpanded(prev => ({ ...prev, [item.id]: true }));
+          }
+        }
+      });
+    }
+  }, [isOpen, location.pathname]);
+
+  const toggleGroup = (id) => {
+    setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   return (
     <>
@@ -50,14 +83,55 @@ const MobileMenu = ({ isOpen, onClose }) => {
           <ul className={styles.navList}>
             {navItems.map((item) => {
               if (item.permission && !hasPermission(item.permission)) return null;
+
+              // 1. RENDER EXPANDABLE GROUP
+              if (item.children) {
+                const isGroupOpen = expanded[item.id];
+                const isGroupActive = item.children.some(child => location.pathname.startsWith(child.to));
+
+                return (
+                  <li key={item.id}>
+                    <button 
+                      className={`${styles.menuButton} ${isGroupActive ? styles.groupActive : ''}`} 
+                      onClick={() => toggleGroup(item.id)}
+                    >
+                      <div className={styles.labelGroup}>
+                        <span className={styles.iconWrapper}>{item.icon}</span>
+                        <span className={styles.labelText}>{item.label}</span>
+                      </div>
+                      {isGroupOpen ? <IconChevronDown width="14" /> : <IconChevronRight width="14" />}
+                    </button>
+
+                    {isGroupOpen && (
+                      <ul className={styles.subList}>
+                        {item.children.map((child) => (
+                          <li key={child.to}>
+                            <NavLink
+                              to={child.to}
+                              onClick={onClose} // Close drawer when navigating
+                              className={({ isActive }) => 
+                                `${styles.subLink} ${isActive ? styles.subLinkActive : ''}`
+                              }
+                            >
+                              {child.label}
+                            </NavLink>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                );
+              }
+
+              // 2. RENDER STANDARD LINK
               return (
                 <li key={item.to}>
                   <NavLink
                     to={item.to}
                     onClick={onClose} // Close on click
                     className={({ isActive }) => 
-                      // Logic: Keep active even if in sub-routes (e.g. /lab-settings/general)
-                      `${styles.navLink} ${isActive || (item.to !== '/' && window.location.pathname.startsWith(item.to)) ? styles.active : ''}`
+                      // Use startsWith logic only if it's not root, to prevent Dashboard sticking active
+                      `${styles.navLink} ${isActive ? styles.active : ''}`
                     }
                     end={item.to === "/"}
                   >
