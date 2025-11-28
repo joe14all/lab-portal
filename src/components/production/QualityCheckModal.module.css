@@ -1,0 +1,111 @@
+/* src/components/production/QualityCheckModal.module.css */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0.5rem;
+}
+
+.summary {
+  display: flex;
+  justify-content: space-between;
+  background-color: var(--bg-body);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+}
+.summaryLabel {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.summaryValue {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.unitList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.unitCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  transition: border-color 0.2s;
+}
+
+.unitCard.pass {
+  border-left: 4px solid var(--success-500);
+}
+.unitCard.fail {
+  border-left: 4px solid var(--error-500);
+}
+
+.unitInfo strong {
+  display: block;
+  font-size: 0.95rem;
+}
+.unitInfo span {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.qcActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.qcBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-body);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.qcBtn:hover {
+  background-color: var(--bg-surface-hover);
+}
+
+.btnPass.active {
+  background-color: var(--success-100);
+  color: var(--success-600);
+  border-color: var(--success-500);
+}
+
+.btnFail.active {
+  background-color: var(--error-100);
+  color: var(--error-600);
+  border-color: var(--error-500);
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}

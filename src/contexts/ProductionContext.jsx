@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import { MockService } from '../_mock/service';
@@ -95,8 +96,8 @@ export const ProductionProvider = ({ children }) => {
       const newBatch = await MockService.production.batches.create({
         ...batchData,
         labId: activeLab.id,
-        status: 'InProgress',
-        startTime: new Date().toISOString(),
+        status: 'Scheduled', // Batches start as Scheduled
+        startTime: null,
         operatorId: user?.id || 'system'
       });
       setBatches(prev => [newBatch, ...prev]);
@@ -106,6 +107,82 @@ export const ProductionProvider = ({ children }) => {
       throw err;
     }
   }, [activeLab]);
+
+  // --- NEW: Operational Actions ---
+
+  const startBatch = useCallback(async (batchId) => {
+    try {
+      // 1. Update Batch
+      const updatedBatch = await MockService.production.batches.update(batchId, {
+        status: 'InProgress',
+        startTime: new Date().toISOString()
+      });
+
+      // 2. Update Machine Status automatically
+      if (updatedBatch.machineId) {
+        const updatedMachine = await MockService.production.equipment.update(updatedBatch.machineId, {
+          status: 'Running',
+          currentJobId: batchId
+        });
+        setEquipment(prev => prev.map(e => e.id === updatedBatch.machineId ? updatedMachine : e));
+      }
+
+      setBatches(prev => prev.map(b => b.id === batchId ? updatedBatch : b));
+      return updatedBatch;
+    } catch (err) {
+      console.error("Failed to start batch", err);
+      throw err;
+    }
+  }, []);
+
+  const completeBatch = useCallback(async (batchId, qualityMetrics) => {
+    try {
+      // 1. Close Batch
+      const updatedBatch = await MockService.production.batches.update(batchId, {
+        status: 'Completed',
+        endTime: new Date().toISOString(),
+        qualityMetrics // Save pass/fail counts
+      });
+
+      // 2. Free up Machine
+      if (updatedBatch.machineId) {
+        const updatedMachine = await MockService.production.equipment.update(updatedBatch.machineId, {
+          status: 'Idle',
+          currentJobId: null
+        });
+        setEquipment(prev => prev.map(e => e.id === updatedBatch.machineId ? updatedMachine : e));
+      }
+
+      setBatches(prev => prev.map(b => b.id === batchId ? updatedBatch : b));
+      return updatedBatch;
+    } catch (err) {
+      console.error("Failed to complete batch", err);
+      throw err;
+    }
+  }, []);
+
+  // Updated to separate maintenance logic from generic updates
+  const logMaintenance = useCallback(async (equipmentId, logData) => {
+    try {
+      const eq = equipment.find(e => e.id === equipmentId);
+      
+      // Update machine to Idle if it was in Maintenance
+      const updatedEq = await MockService.production.equipment.update(equipmentId, {
+        status: 'Idle',
+        maintenance: {
+          lastServiceDate: new Date().toISOString(),
+          nextServiceDue: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(), // +90 days
+          notes: logData.notes
+        }
+      });
+      
+      setEquipment(prev => prev.map(e => e.id === equipmentId ? updatedEq : e));
+      return updatedEq;
+    } catch (err) {
+      console.error("Maintenance log failed", err);
+      throw err;
+    }
+  }, [equipment]);
 
   const updateEquipmentStatus = useCallback(async (equipmentId, status, notes) => {
     try {
@@ -141,11 +218,14 @@ export const ProductionProvider = ({ children }) => {
     // Actions
     consumeMaterial,
     createBatch,
+    startBatch,
+    completeBatch,
+    logMaintenance,
     updateEquipmentStatus,
   }), [
     materials, batches, equipment, loading, error,
     activeBatches, lowStockMaterials, equipmentStats,
-    consumeMaterial, createBatch, updateEquipmentStatus
+    consumeMaterial, createBatch, startBatch, completeBatch, logMaintenance, updateEquipmentStatus
   ]);
 
   return (

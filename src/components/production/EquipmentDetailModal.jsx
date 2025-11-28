@@ -3,10 +3,16 @@ import Modal from '../common/Modal';
 import { IconDrill, IconCheck, IconAlert, IconClock } from '../../layouts/components/LabIcons';
 import styles from './EquipmentDetailModal.module.css';
 
-const EquipmentDetailModal = ({ machine, isOpen, onClose }) => {
+const EquipmentDetailModal = ({ machine, isOpen, onClose, onReportIssue }) => {
   const [activeTab, setActiveTab] = useState('overview');
 
   if (!machine) return null;
+
+  const handleReportClick = () => {
+    // Trigger the breakdown workflow
+    onReportIssue(machine.id);
+    onClose();
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -15,7 +21,7 @@ const EquipmentDetailModal = ({ machine, isOpen, onClose }) => {
           <div className={styles.grid2}>
             <div className={styles.infoBlock}>
               <span className={styles.label}>Manufacturer</span>
-              <span className={styles.value}>{machine.name.split(' ')[0]}</span> {/* Naive parse */}
+              <span className={styles.value}>{machine.name.split(' ')[0]}</span>
             </div>
             <div className={styles.infoBlock}>
               <span className={styles.label}>Type</span>
@@ -55,7 +61,14 @@ const EquipmentDetailModal = ({ machine, isOpen, onClose }) => {
                   {new Date(machine.maintenance?.nextServiceDue).toLocaleDateString()}
                 </div>
               </div>
-              <button className="button secondary small">Schedule Service</button>
+              {machine.status !== 'Maintenance' && (
+                <button 
+                  className="button secondary danger small"
+                  onClick={handleReportClick}
+                >
+                  Report Issue
+                </button>
+              )}
             </div>
             
             <div className={styles.infoBlock}>
@@ -135,7 +148,18 @@ const EquipmentDetailModal = ({ machine, isOpen, onClose }) => {
       title="Machine Details"
       icon={<IconDrill width="20" />}
       width="600px"
-      footer={<button className="button primary" onClick={onClose}>Done</button>}
+      footer={
+        <div style={{display:'flex', justifyContent:'space-between', width:'100%'}}>
+          {/* Header Action for convenience */}
+          {machine.status !== 'Maintenance' ? (
+             <button className="button text danger" onClick={handleReportClick}>
+               <IconAlert width="14" style={{marginRight:'4px'}}/> Report Breakdown
+             </button>
+          ) : <div />}
+          
+          <button className="button primary" onClick={onClose}>Done</button>
+        </div>
+      }
     >
       <div className={styles.container}>
         {/* Header */}
