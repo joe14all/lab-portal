@@ -11,26 +11,59 @@ export const LogisticsProvider = ({ children }) => {
   // --- State ---
   const [routes, setRoutes] = useState([]);
   const [pickups, setPickups] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [providers, setProviders] = useState([]);
   // In a real app, "Deliveries" would be queried from Cases where status="Ready to Ship"
   // We will mock this aggregation in the "Unassigned" pool logic below
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [lastFetch, setLastFetch] = useState(null);
+
+  // --- Filters & UI State (Section 4.2.2) ---
+  const [filters, setFilters] = useState({
+    date: null,           // YYYY-MM-DD or null for all
+    status: [],           // Array of RouteStatus to filter by
+    driverId: null,       // Filter by specific driver
+  });
+
+  const [sorting, setSorting] = useState({
+    field: 'date',        // 'date' | 'status' | 'driverId'
+    order: 'desc',        // 'asc' | 'desc'
+  });
+
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 20,
+    totalCount: 0,
+  });
 
   // --- Initialize Data ---
   useEffect(() => {
     const initData = async () => {
       if (!activeLab?.id) return;
 
+      // Cache check: don't re-fetch if data was loaded recently (within 30 seconds)
+      const now = Date.now();
+      if (lastFetch && (now - lastFetch) < 30000) {
+        return;
+      }
+
       setLoading(true);
       try {
-        const [fetchedRoutes, fetchedPickups] = await Promise.all([
+        const [fetchedRoutes, fetchedPickups, fetchedVehicles, fetchedProviders] = await Promise.all([
           MockService.logistics.routes.getAll({ labId: activeLab.id }),
-          MockService.logistics.pickups.getAll({ labId: activeLab.id })
+          MockService.logistics.pickups.getAll({ labId: activeLab.id }),
+          MockService.logistics.vehicles.getAll({ labId: activeLab.id }),
+          MockService.logistics.providers.getAll({ status: 'Active' })
         ]);
         
         setRoutes(fetchedRoutes);
         setPickups(fetchedPickups);
+        setVehicles(fetchedVehicles);
+        setProviders(fetchedProviders);
+        setPagination(prev => ({ ...prev, totalCount: fetchedRoutes.length }));
+        setLastFetch(now);
         setError(null);
       } catch (err) {
         console.error("Failed to load Logistics data", err);
@@ -40,7 +73,7 @@ export const LogisticsProvider = ({ children }) => {
       }
     };
     initData();
-  }, [activeLab]);
+  }, [activeLab, lastFetch]);
 
   // ============================================================
   // ACTIONS
@@ -148,7 +181,7 @@ export const LogisticsProvider = ({ children }) => {
   }, [routes]);
 
   // ============================================================
-  // SELECTORS
+  // SELECTORS (Section 4.2.2 - Memoized selectors)
   // ============================================================
   
   // Filter routes for the current user (if driver)
@@ -159,17 +192,209 @@ export const LogisticsProvider = ({ children }) => {
     return isDriver ? routes.filter(r => r.driverId === user.id) : routes;
   }, [routes, user]);
 
+  // Filtered routes based on active filters
+  const filteredRoutes = useMemo(() => {
+    let filtered = [...routes];
+
+    // Apply date filter
+    if (filters.date) {
+      filtered = filtered.filter(r => r.date === filters.date);
+    }
+
+    // Apply status filter
+    if (filters.status && filters.status.length > 0) {
+      filtered = filtered.filter(r => filters.status.includes(r.status));
+    }
+
+    // Apply driver filter
+    if (filters.driverId) {
+      filtered = filtered.filter(r => r.driverId === filters.driverId);
+    }
+
+    return filtered;
+  }, [routes, filters]);
+
+  // Sorted routes
+  const sortedRoutes = useMemo(() => {
+    const sorted = [...filteredRoutes];
+
+    sorted.sort((a, b) => {
+      let aVal, bVal;
+
+      switch (sorting.field) {
+        case 'date':
+          aVal = a.date || '';
+          bVal = b.date || '';
+          break;
+        case 'status':
+          aVal = a.status || '';
+          bVal = b.status || '';
+          break;
+        case 'driverId':
+          aVal = a.driverId || '';
+          bVal = b.driverId || '';
+          break;
+        default:
+          return 0;
+      }
+
+      if (aVal < bVal) return sorting.order === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sorting.order === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [filteredRoutes, sorting]);
+
+  // Paginated routes
+  const paginatedRoutes = useMemo(() => {
+    const startIndex = (pagination.page - 1) * pagination.pageSize;
+    const endIndex = startIndex + pagination.pageSize;
+    return sortedRoutes.slice(startIndex, endIndex);
+  }, [sortedRoutes, pagination]);
+
+  // Update total count when filtered routes change
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, totalCount: filteredRoutes.length }));
+  }, [filteredRoutes]);
+
+  // ============================================================
+  // FILTER & SORT ACTIONS
+  // ============================================================
+
+  const setDateFilter = useCallback((date) => {
+    setFilters(prev => ({ ...prev, date }));
+    setPagination(prev => ({ ...prev, page: 1 })); // Reset to first page
+  }, []);
+
+  const setStatusFilter = useCallback((status) => {
+    setFilters(prev => ({ ...prev, status }));
+    setPagination(prev => ({ ...prev, page: 1 }));
+  }, []);
+
+  const setDriverFilter = useCallback((driverId) => {
+    setFilters(prev => ({ ...prev, driverId }));
+    setPagination(prev => ({ ...prev, page: 1 }));
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setFilters({ date: null, status: [], driverId: null });
+    setPagination(prev => ({ ...prev, page: 1 }));
+  }, []);
+
+  const setSortBy = useCallback((field, order = 'asc') => {
+    setSorting({ field, order });
+  }, []);
+
+  const setPage = useCallback((page) => {
+    setPagination(prev => ({ ...prev, page }));
+  }, []);
+
+  const setPageSize = useCallback((pageSize) => {
+    setPagination(prev => ({ ...prev, pageSize, page: 1 }));
+  }, []);
+
+  // ============================================================
+  // DATA REFRESH
+  // ============================================================
+
+  const refreshData = useCallback(async () => {
+    if (!activeLab?.id) return;
+
+    setLoading(true);
+    try {
+      const [fetchedRoutes, fetchedPickups, fetchedVehicles, fetchedProviders] = await Promise.all([
+        MockService.logistics.routes.getAll({ labId: activeLab.id }),
+        MockService.logistics.pickups.getAll({ labId: activeLab.id }),
+        MockService.logistics.vehicles.getAll({ labId: activeLab.id }),
+        MockService.logistics.providers.getAll({ status: 'Active' })
+      ]);
+      
+      setRoutes(fetchedRoutes);
+      setPickups(fetchedPickups);
+      setVehicles(fetchedVehicles);
+      setProviders(fetchedProviders);
+      setLastFetch(Date.now());
+      setError(null);
+    } catch (err) {
+      console.error("Failed to refresh Logistics data", err);
+      setError("Failed to refresh Logistics data");
+    } finally {
+      setLoading(false);
+    }
+  }, [activeLab]);
+
+  // ============================================================
+  // SELECTORS (LEGACY - kept for backwards compatibility)
+  // ============================================================
+
   const value = useMemo(() => ({
+    // Data
     routes,
     pickups,
+    vehicles,
+    providers,
+    
+    // UI State
     loading,
     error,
+    lastFetch,
+    filters,
+    sorting,
+    pagination,
+    
+    // Selectors (Section 4.2.2)
     myRoutes,
+    filteredRoutes,
+    sortedRoutes,
+    paginatedRoutes,
+    
+    // Actions
     createRoute,
     updateRouteStopStatus,
     createPickupRequest,
-    assignToRoute
-  }), [routes, pickups, loading, error, myRoutes, createRoute, updateRouteStopStatus, createPickupRequest, assignToRoute]);
+    assignToRoute,
+    
+    // Filter & Sort Actions
+    setDateFilter,
+    setStatusFilter,
+    setDriverFilter,
+    clearFilters,
+    setSortBy,
+    setPage,
+    setPageSize,
+    
+    // Utility
+    refreshData,
+    selectProvider: MockService.logistics.selectProvider
+  }), [
+    routes, 
+    pickups, 
+    vehicles, 
+    providers, 
+    loading, 
+    error, 
+    lastFetch,
+    filters,
+    sorting,
+    pagination,
+    myRoutes, 
+    filteredRoutes,
+    sortedRoutes,
+    paginatedRoutes,
+    createRoute, 
+    updateRouteStopStatus, 
+    createPickupRequest, 
+    assignToRoute,
+    setDateFilter,
+    setStatusFilter,
+    setDriverFilter,
+    clearFilters,
+    setSortBy,
+    setPage,
+    setPageSize,
+    refreshData
+  ]);
 
   return (
     <LogisticsContext.Provider value={value}>

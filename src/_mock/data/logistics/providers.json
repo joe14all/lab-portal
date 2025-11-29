@@ -1,0 +1,264 @@
+[
+  {
+    "id": "provider-uber",
+    "name": "Uber Direct",
+    "type": "THIRD_PARTY",
+    "status": "Active",
+    "regions": ["US", "CA", "MX"],
+    "capabilities": {
+      "sameDay": true,
+      "scheduled": true,
+      "realTimeTracking": true,
+      "proofOfDelivery": true,
+      "signatureCapture": true,
+      "photoCapture": true,
+      "temperatureControl": false,
+      "fragileHandling": false,
+      "maxWeightKg": 15,
+      "maxDimensionsCm": "60x40x40"
+    },
+    "apiConfig": {
+      "baseUrl": "https://api.uber.com/v1/deliveries",
+      "authType": "OAUTH2",
+      "webhookUrl": "https://lab-portal.com/api/webhooks/uber",
+      "credentials": {
+        "clientId": "UBER_CLIENT_ID",
+        "organizationId": "ORG_12345"
+      }
+    },
+    "pricing": {
+      "model": "DISTANCE_BASED",
+      "baseFee": 8.00,
+      "perKmRate": 1.50,
+      "rushSurcharge": 5.00,
+      "currency": "USD"
+    },
+    "serviceAreas": [
+      {
+        "city": "New York",
+        "state": "NY",
+        "coverage": "FULL",
+        "avgDeliveryTimeMin": 45
+      },
+      {
+        "city": "Los Angeles",
+        "state": "CA",
+        "coverage": "FULL",
+        "avgDeliveryTimeMin": 60
+      }
+    ],
+    "integration": {
+      "enabled": true,
+      "autoAssign": false,
+      "requiresApproval": true,
+      "fallbackPriority": 2
+    }
+  },
+  {
+    "id": "provider-doordash",
+    "name": "DoorDash Drive",
+    "type": "THIRD_PARTY",
+    "status": "Active",
+    "regions": ["US", "CA", "AU"],
+    "capabilities": {
+      "sameDay": true,
+      "scheduled": true,
+      "realTimeTracking": true,
+      "proofOfDelivery": true,
+      "signatureCapture": true,
+      "photoCapture": true,
+      "temperatureControl": true,
+      "fragileHandling": true,
+      "maxWeightKg": 20,
+      "maxDimensionsCm": "70x50x50"
+    },
+    "apiConfig": {
+      "baseUrl": "https://openapi.doordash.com/drive/v2",
+      "authType": "JWT",
+      "webhookUrl": "https://lab-portal.com/api/webhooks/doordash",
+      "credentials": {
+        "developerId": "DD_DEV_12345",
+        "keyId": "DD_KEY_67890"
+      }
+    },
+    "pricing": {
+      "model": "DYNAMIC",
+      "baseFee": 10.00,
+      "perKmRate": 2.00,
+      "rushSurcharge": 7.00,
+      "temperatureControlFee": 3.00,
+      "currency": "USD"
+    },
+    "serviceAreas": [
+      {
+        "city": "New York",
+        "state": "NY",
+        "coverage": "FULL",
+        "avgDeliveryTimeMin": 40
+      },
+      {
+        "city": "Chicago",
+        "state": "IL",
+        "coverage": "PARTIAL",
+        "avgDeliveryTimeMin": 55
+      }
+    ],
+    "integration": {
+      "enabled": true,
+      "autoAssign": true,
+      "requiresApproval": false,
+      "fallbackPriority": 1
+    }
+  },
+  {
+    "id": "provider-stuart",
+    "name": "Stuart Delivery",
+    "type": "THIRD_PARTY",
+    "status": "Active",
+    "regions": ["UK", "FR", "ES", "IT"],
+    "capabilities": {
+      "sameDay": true,
+      "scheduled": true,
+      "realTimeTracking": true,
+      "proofOfDelivery": true,
+      "signatureCapture": true,
+      "photoCapture": true,
+      "temperatureControl": false,
+      "fragileHandling": true,
+      "maxWeightKg": 30,
+      "maxDimensionsCm": "80x60x60"
+    },
+    "apiConfig": {
+      "baseUrl": "https://api.stuart.com/v2",
+      "authType": "API_KEY",
+      "webhookUrl": "https://lab-portal.com/api/webhooks/stuart",
+      "credentials": {
+        "apiKey": "STUART_API_KEY",
+        "clientId": "STUART_CLIENT_123"
+      }
+    },
+    "pricing": {
+      "model": "ZONE_BASED",
+      "baseFee": 6.50,
+      "perKmRate": 1.20,
+      "rushSurcharge": 4.00,
+      "currency": "EUR"
+    },
+    "serviceAreas": [
+      {
+        "city": "London",
+        "state": "England",
+        "coverage": "FULL",
+        "avgDeliveryTimeMin": 50
+      },
+      {
+        "city": "Paris",
+        "state": "Île-de-France",
+        "coverage": "FULL",
+        "avgDeliveryTimeMin": 45
+      }
+    ],
+    "integration": {
+      "enabled": true,
+      "autoAssign": false,
+      "requiresApproval": true,
+      "fallbackPriority": 3
+    }
+  },
+  {
+    "id": "provider-lalamove",
+    "name": "Lalamove",
+    "type": "THIRD_PARTY",
+    "status": "Active",
+    "regions": ["HK", "SG", "TH", "PH", "MY", "VN"],
+    "capabilities": {
+      "sameDay": true,
+      "scheduled": true,
+      "realTimeTracking": true,
+      "proofOfDelivery": true,
+      "signatureCapture": true,
+      "photoCapture": true,
+      "temperatureControl": false,
+      "fragileHandling": true,
+      "maxWeightKg": 50,
+      "maxDimensionsCm": "100x80x80"
+    },
+    "apiConfig": {
+      "baseUrl": "https://rest.lalamove.com/v3",
+      "authType": "HMAC",
+      "webhookUrl": "https://lab-portal.com/api/webhooks/lalamove",
+      "credentials": {
+        "apiKey": "LALAMOVE_KEY",
+        "apiSecret": "LALAMOVE_SECRET"
+      }
+    },
+    "pricing": {
+      "model": "VEHICLE_TYPE",
+      "baseFee": 5.00,
+      "perKmRate": 0.80,
+      "rushSurcharge": 3.00,
+      "currency": "USD"
+    },
+    "serviceAreas": [
+      {
+        "city": "Hong Kong",
+        "state": "Hong Kong",
+        "coverage": "FULL",
+        "avgDeliveryTimeMin": 35
+      },
+      {
+        "city": "Singapore",
+        "state": "Singapore",
+        "coverage": "FULL",
+        "avgDeliveryTimeMin": 40
+      }
+    ],
+    "integration": {
+      "enabled": true,
+      "autoAssign": true,
+      "requiresApproval": false,
+      "fallbackPriority": 1
+    }
+  },
+  {
+    "id": "provider-inhouse",
+    "name": "In-House Fleet",
+    "type": "IN_HOUSE",
+    "status": "Active",
+    "regions": ["ALL"],
+    "capabilities": {
+      "sameDay": true,
+      "scheduled": true,
+      "realTimeTracking": true,
+      "proofOfDelivery": true,
+      "signatureCapture": true,
+      "photoCapture": true,
+      "temperatureControl": true,
+      "fragileHandling": true,
+      "maxWeightKg": 1000,
+      "maxDimensionsCm": "200x150x150"
+    },
+    "apiConfig": null,
+    "pricing": {
+      "model": "INTERNAL",
+      "baseFee": 0,
+      "perKmRate": 0.50,
+      "rushSurcharge": 0,
+      "currency": "USD"
+    },
+    "serviceAreas": [
+      {
+        "city": "All",
+        "state": "All",
+        "coverage": "FULL",
+        "avgDeliveryTimeMin": 60
+      }
+    ],
+    "integration": {
+      "enabled": true,
+      "autoAssign": false,
+      "requiresApproval": false,
+      "fallbackPriority": 10
+    }
+  }
+]

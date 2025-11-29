@@ -9,42 +9,84 @@
     "status": "InProgress",
     "startTime": "2025-11-20T08:00:00Z",
     "endTime": null,
+    "metrics": {
+      "totalDistanceKm": 15.3,
+      "estimatedDurationMin": 125,
+      "stopsCompleted": 1,
+      "stopsTotal": 3
+    },
+    "vehicleSnapshot": {
+      "id": "van-01",
+      "type": "Cargo Van",
+      "capacity": 500,
+      "features": ["SECURE_LOCKBOX", "CLIMATE_CONTROL"]
+    },
+    "fulfillmentMethod": "IN_HOUSE",
+    "providerId": "provider-inhouse",
     "stops": [
       {
         "id": "stop-001",
         "sequence": 1,
         "clinicId": "clinic-001",
         "type": "Delivery",
+        "coordinates": {
+          "lat": 40.7128,
+          "lng": -74.0060
+        },
+        "clinicSnapshot": {
+          "name": "Downtown Dental Center",
+          "address": {
+            "line1": "123 Main St",
+            "city": "Metropolis",
+            "state": "NY",
+            "zip": "10012"
+          },
+          "contactPhone": "+15550101"
+        },
         "deliveryManifest": [
           {
             "caseId": "case-5003",
             "unitIds": ["unit-5003-30"],
-            "packageId": "pkg-ups-889900",
-            "description": "Implant Crown Box",
             "requiresSignature": true
           }
         ],
         "status": "Completed",
         "completedAt": "2025-11-20T08:45:00Z",
+        "actualArrival": "2025-11-20T08:40:00Z",
         "signatureUrl": "/assets/signatures/sig-001.png",
-        "signedBy": "Front Desk - Mary"
+        "signedBy": "Front Desk - Mary",
+        "geoHashAtCompletion": "dr5ru7"
       },
       {
         "id": "stop-002",
         "sequence": 2,
         "clinicId": "clinic-002",
         "type": "Pickup",
+        "coordinates": {
+          "lat": 40.7589,
+          "lng": -73.9851
+        },
+        "clinicSnapshot": {
+          "name": "Beverly Hills Dental Group",
+          "address": {
+            "line1": "456 Park Ave",
+            "city": "Beverly Hills",
+            "state": "CA",
+            "zip": "90210"
+          },
+          "contactPhone": "+15550202"
+        },
         "pickupTasks": [
           {
             "requestId": "pickup-903",
-            "itemType": "Physical Impression",
-            "notes": "3 Boxes - Fragile PVS. Handle with care.",
+            "associatedCaseIds": ["case-5023", "case-5024"],
             "packageCount": 3,
-            "validatedReady": true
+            "verificationCode": "PKP903"
           }
         ],
         "status": "InProgress",
         "estimatedArrival": "2025-11-20T10:30:00Z",
+        "actualArrival": null,
         "driverInstructions": "Go to suite 500. Ask for Jessica."
       },
       {
@@ -52,25 +94,177 @@
         "sequence": 3,
         "clinicId": "clinic-001",
         "type": "Pickup",
+        "coordinates": {
+          "lat": 40.7128,
+          "lng": -74.0060
+        },
+        "clinicSnapshot": {
+          "name": "Downtown Dental Center",
+          "address": {
+            "line1": "123 Main St",
+            "city": "Metropolis",
+            "state": "NY",
+            "zip": "10012"
+          },
+          "contactPhone": "+15550101"
+        },
         "pickupTasks": [
           {
             "requestId": "pickup-904",
-            "itemType": "Wet Alginate",
-            "notes": "RUSH - Immediate Denture Impression. Keep moist.",
+            "associatedCaseIds": ["case-5025"],
             "packageCount": 1,
-            "validatedReady": true
+            "verificationCode": "PKP904"
           },
           {
             "requestId": "pickup-901",
-            "itemType": "Physical Impression",
-            "notes": "Standard Crown Impression",
-            "packageCount": 1,
-            "validatedReady": true
+            "associatedCaseIds": ["case-5020", "case-5021"],
+            "packageCount": 2,
+            "verificationCode": "PKP901"
           }
         ],
         "status": "Pending",
         "estimatedArrival": "2025-11-20T11:15:00Z",
+        "actualArrival": null,
         "driverInstructions": "Park in rear loading zone B. Pick up both Rush and Standard cases."
+      }
+    ]
+  },
+  {
+    "id": "route-uber-001",
+    "labId": "lab-002",
+    "name": "Uber Direct - Rush Pickup",
+    "driverId": null,
+    "vehicleId": null,
+    "date": "2025-11-20",
+    "status": "Scheduled",
+    "startTime": "2025-11-20T10:00:00Z",
+    "endTime": null,
+    "metrics": {
+      "totalDistanceKm": 8.2,
+      "estimatedDurationMin": 35,
+      "stopsCompleted": 0,
+      "stopsTotal": 1
+    },
+    "vehicleSnapshot": null,
+    "fulfillmentMethod": "THIRD_PARTY",
+    "providerId": "provider-uber",
+    "externalProvider": {
+      "name": "Uber Direct",
+      "deliveryId": "uber-delivery-78901",
+      "trackingUrl": "https://m.uber.com/ul?action=track&delivery_id=78901",
+      "estimatedCost": 15.50,
+      "currency": "USD",
+      "status": "PENDING",
+      "courierInfo": null,
+      "webhookStatus": "REGISTERED",
+      "lastWebhookAt": null
+    },
+    "stops": [
+      {
+        "id": "stop-uber-001",
+        "sequence": 1,
+        "clinicId": "clinic-005",
+        "type": "Pickup",
+        "coordinates": {
+          "lat": 34.0522,
+          "lng": -118.2437
+        },
+        "clinicSnapshot": {
+          "name": "Westside Dental Practice",
+          "address": {
+            "line1": "789 Sunset Blvd",
+            "city": "Los Angeles",
+            "state": "CA",
+            "zip": "90028"
+          },
+          "contactPhone": "+15550505"
+        },
+        "pickupTasks": [
+          {
+            "requestId": "pickup-902",
+            "associatedCaseIds": ["case-5022"],
+            "packageCount": 1,
+            "verificationCode": "PKP902"
+          }
+        ],
+        "status": "Pending",
+        "estimatedArrival": "2025-11-20T11:00:00Z",
+        "actualArrival": null,
+        "driverInstructions": "Main entrance, ask for receptionist"
+      }
+    ]
+  },
+  {
+    "id": "route-doordash-001",
+    "labId": "lab-001",
+    "name": "DoorDash - Temperature Controlled",
+    "driverId": null,
+    "vehicleId": null,
+    "date": "2025-11-20",
+    "status": "InProgress",
+    "startTime": "2025-11-20T12:00:00Z",
+    "endTime": null,
+    "metrics": {
+      "totalDistanceKm": 5.8,
+      "estimatedDurationMin": 28,
+      "stopsCompleted": 0,
+      "stopsTotal": 1
+    },
+    "vehicleSnapshot": null,
+    "fulfillmentMethod": "THIRD_PARTY",
+    "providerId": "provider-doordash",
+    "externalProvider": {
+      "name": "DoorDash Drive",
+      "deliveryId": "dd-delivery-abc123",
+      "trackingUrl": "https://doordash.com/track/abc123",
+      "estimatedCost": 20.00,
+      "currency": "USD",
+      "status": "ASSIGNED",
+      "courierInfo": {
+        "name": "John D.",
+        "phone": "+15551234567",
+        "vehicleType": "Car",
+        "currentLocation": {
+          "lat": 40.7200,
+          "lng": -74.0100,
+          "lastUpdated": "2025-11-20T12:15:00Z"
+        }
+      },
+      "webhookStatus": "ACTIVE",
+      "lastWebhookAt": "2025-11-20T12:10:00Z"
+    },
+    "stops": [
+      {
+        "id": "stop-dd-001",
+        "sequence": 1,
+        "clinicId": "clinic-001",
+        "type": "Pickup",
+        "coordinates": {
+          "lat": 40.7128,
+          "lng": -74.0060
+        },
+        "clinicSnapshot": {
+          "name": "Downtown Dental Center",
+          "address": {
+            "line1": "123 Main St",
+            "city": "Metropolis",
+            "state": "NY",
+            "zip": "10012"
+          },
+          "contactPhone": "+15550101"
+        },
+        "pickupTasks": [
+          {
+            "requestId": "pickup-904",
+            "associatedCaseIds": ["case-5025"],
+            "packageCount": 1,
+            "verificationCode": "PKP904"
+          }
+        ],
+        "status": "InProgress",
+        "estimatedArrival": "2025-11-20T13:00:00Z",
+        "actualArrival": null,
+        "driverInstructions": "Rear loading zone B - Temperature sensitive alginate"
       }
     ]
   }

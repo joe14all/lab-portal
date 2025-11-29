@@ -20,6 +20,8 @@ import {
   payments,
   routes,
   pickups,
+  vehicles,
+  providers,
   workflows,
 } from "./index";
 
@@ -142,6 +144,8 @@ const PaymentEntity = new MockEntity(payments, "payment");
 // Logistics
 const RouteEntity = new MockEntity(routes, "route");
 const PickupEntity = new MockEntity(pickups, "pickup");
+const VehicleEntity = new MockEntity(vehicles, "vehicle");
+const ProviderEntity = new MockEntity(providers, "provider");
 
 // --- 4. EXPORT SERVICE (GROUPED BY DOMAIN) ---
 export const MockService = {
@@ -238,5 +242,50 @@ export const MockService = {
   logistics: {
     routes: RouteEntity,
     pickups: PickupEntity,
+    vehicles: VehicleEntity,
+    providers: ProviderEntity,
+
+    // Smart Provider Selection
+    selectProvider: async ({ packageSpecs, isRush, clinicLocation, labId }) => {
+      await delay(200);
+
+      const activeProviders = ProviderEntity.data.filter(
+        (p) => p.status === "Active"
+      );
+
+      // Filter by capabilities
+      const capable = activeProviders.filter((provider) => {
+        const caps = provider.capabilities;
+
+        // Check weight
+        if (packageSpecs.weight > caps.maxWeightKg) return false;
+
+        // Check temperature control if needed
+        if (packageSpecs.temperatureControlled && !caps.temperatureControl)
+          return false;
+
+        // Check fragile handling if needed
+        if (packageSpecs.fragile && !caps.fragileHandling) return false;
+
+        return true;
+      });
+
+      // Sort by priority (rush = third-party preferred, standard = in-house)
+      const sorted = capable.sort((a, b) => {
+        if (isRush) {
+          // For rush, prefer third-party with lower fallback priority
+          return (
+            a.integration.fallbackPriority - b.integration.fallbackPriority
+          );
+        } else {
+          // For standard, prefer in-house (higher priority number)
+          return (
+            b.integration.fallbackPriority - a.integration.fallbackPriority
+          );
+        }
+      });
+
+      return sorted[0] || activeProviders.find((p) => p.type === "IN_HOUSE");
+    },
   },
 };

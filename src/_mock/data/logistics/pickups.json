@@ -11,7 +11,28 @@
     "driverId": "user-driver-01",
     "notes": "Package is at the front desk, ask for Sarah.",
     "packageCount": 2,
-    "isRush": false
+    "isRush": false,
+    "associatedCaseIds": ["case-5020", "case-5021"],
+    "packageSpecs": {
+      "weight": 0.5,
+      "dimensions": "20x15x10cm",
+      "fragile": false,
+      "packageType": "Physical Impression"
+    },
+    "accessInstructions": {
+      "entrance": "Front desk",
+      "contactPerson": "Sarah"
+    },
+    "specialHandling": [],
+    "verificationCode": "PKP901",
+    "slaMetrics": {
+      "expectedArrival": "2025-11-20T14:00:00Z",
+      "actualArrival": null,
+      "variance": null
+    },
+    "fulfillmentMethod": "IN_HOUSE",
+    "providerId": "provider-inhouse",
+    "externalProvider": null
   },
   {
     "id": "pickup-902",
@@ -25,7 +46,35 @@
     "driverId": null,
     "notes": "Rush case for patient Brown.",
     "packageCount": 1,
-    "isRush": true
+    "isRush": true,
+    "associatedCaseIds": ["case-5022"],
+    "packageSpecs": {
+      "weight": 0.3,
+      "dimensions": "15x15x8cm",
+      "fragile": true,
+      "packageType": "Implant Crown"
+    },
+    "accessInstructions": {
+      "entrance": "Main entrance"
+    },
+    "specialHandling": ["RUSH"],
+    "verificationCode": "PKP902",
+    "slaMetrics": {
+      "expectedArrival": "2025-11-20T11:00:00Z",
+      "actualArrival": null,
+      "variance": null
+    },
+    "fulfillmentMethod": "THIRD_PARTY",
+    "providerId": "provider-uber",
+    "externalProvider": {
+      "name": "Uber Direct",
+      "deliveryId": "uber-delivery-78901",
+      "trackingUrl": "https://m.uber.com/ul?action=track&delivery_id=78901",
+      "estimatedCost": 15.50,
+      "currency": "USD",
+      "status": "PENDING",
+      "courierInfo": null
+    }
   },
   {
     "id": "pickup-903",
@@ -37,9 +86,31 @@
     "windowEnd": "2025-11-20T16:00:00Z",
     "status": "Pending",
     "driverId": null,
-    "notes": "Fragile PVS impressions for Gold Crowns. Please handle with care. Security Code: #9988.",
+    "notes": "Fragile PVS impressions for Gold Crowns. Please handle with care.",
     "packageCount": 3,
-    "isRush": false
+    "isRush": false,
+    "associatedCaseIds": ["case-5023", "case-5024"],
+    "packageSpecs": {
+      "weight": 1.2,
+      "dimensions": "25x20x15cm",
+      "fragile": true,
+      "packageType": "PVS Impression"
+    },
+    "accessInstructions": {
+      "entrance": "Suite 500",
+      "contactPerson": "Jessica",
+      "securityCode": "#9988"
+    },
+    "specialHandling": ["KEEP_LEVEL", "FRAGILE"],
+    "verificationCode": "PKP903",
+    "slaMetrics": {
+      "expectedArrival": "2025-11-20T15:00:00Z",
+      "actualArrival": null,
+      "variance": null
+    },
+    "fulfillmentMethod": "IN_HOUSE",
+    "providerId": "provider-inhouse",
+    "externalProvider": null
   },
   {
     "id": "pickup-904",
@@ -53,6 +124,49 @@
     "driverId": "user-driver-01",
     "notes": "Wet Alginate impressions for Immediate Denture case. Needs to be poured ASAP.",
     "packageCount": 1,
-    "isRush": true
+    "isRush": true,
+    "associatedCaseIds": ["case-5025"],
+    "packageSpecs": {
+      "weight": 0.4,
+      "dimensions": "18x15x10cm",
+      "fragile": true,
+      "packageType": "Wet Alginate",
+      "temperatureControlled": true
+    },
+    "accessInstructions": {
+      "entrance": "Rear loading zone B",
+      "contactPerson": "Sarah"
+    },
+    "specialHandling": ["RUSH", "TEMPERATURE_SENSITIVE", "KEEP_MOIST"],
+    "verificationCode": "PKP904",
+    "slaMetrics": {
+      "expectedArrival": "2025-11-20T13:00:00Z",
+      "actualArrival": null,
+      "variance": null
+    },
+    "recurrenceRule": {
+      "frequency": "WEEKLY",
+      "interval": 1,
+      "daysOfWeek": [2, 4],
+      "timeWindow": {
+        "start": "12:00",
+        "end": "14:00"
+      }
+    },
+    "fulfillmentMethod": "THIRD_PARTY",
+    "providerId": "provider-doordash",
+    "externalProvider": {
+      "name": "DoorDash Drive",
+      "deliveryId": "dd-delivery-abc123",
+      "trackingUrl": "https://doordash.com/track/abc123",
+      "estimatedCost": 20.00,
+      "currency": "USD",
+      "status": "ASSIGNED",
+      "courierInfo": {
+        "name": "John D.",
+        "phone": "+15551234567",
+        "vehicleType": "Car"
+      }
+    }
   }
 ]

@@ -33,6 +33,8 @@ import payments from "./data/finance/payments.json";
 // Logistics
 import routes from "./data/logistics/routes.json";
 import pickups from "./data/logistics/pickups.json";
+import vehicles from "./data/logistics/vehicles.json";
+import providers from "./data/logistics/providers.json";
 
 import workflows from "./data/settings/workflows.json"; // Import new file
 
@@ -73,6 +75,8 @@ export {
   // Logistics
   routes,
   pickups,
+  vehicles,
+  providers,
 
   // Settings
   workflows,
@@ -87,6 +91,6 @@ export default {
   cases: { activeCases, caseStages, caseFiles, caseMessages },
   production: { materials, batches, equipment },
   finance: { invoices, payments },
-  logistics: { routes, pickups },
+  logistics: { routes, pickups, vehicles, providers },
   settings: { workflows },
 };

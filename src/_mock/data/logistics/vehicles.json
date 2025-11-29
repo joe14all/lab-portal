@@ -1,0 +1,156 @@
+[
+  {
+    "id": "van-01",
+    "labId": "lab-001",
+    "type": "Cargo Van",
+    "make": "Ford",
+    "model": "Transit Connect",
+    "year": 2023,
+    "licensePlate": "LAB-001-V",
+    "vin": "1FTBR1CM8PKA12345",
+    "status": "Active",
+    "specs": {
+      "capacityKg": 500,
+      "volumeCubicMeters": 3.6,
+      "features": [
+        "SECURE_LOCKBOX",
+        "CLIMATE_CONTROL",
+        "GPS_TRACKING",
+        "REFRIGERATION"
+      ],
+      "fuelType": "Gasoline",
+      "fuelEfficiencyKmPerLiter": 12.5
+    },
+    "currentLocation": {
+      "lat": 40.7128,
+      "lng": -74.0060,
+      "lastUpdated": "2025-11-20T11:00:00Z"
+    },
+    "assignedDriverId": "user-driver-01",
+    "maintenanceSchedule": {
+      "lastServiceDate": "2025-10-15",
+      "nextServiceDate": "2026-01-15",
+      "odometerKm": 45230
+    },
+    "insurance": {
+      "provider": "Commercial Fleet Insurance Co.",
+      "policyNumber": "CFL-2025-0012",
+      "expirationDate": "2026-06-30"
+    }
+  },
+  {
+    "id": "bike-01",
+    "labId": "lab-001",
+    "type": "Motorcycle",
+    "make": "Vespa",
+    "model": "GTS 300",
+    "year": 2022,
+    "licensePlate": "LAB-001-M",
+    "vin": "ZAPM453001234567",
+    "status": "Active",
+    "specs": {
+      "capacityKg": 50,
+      "volumeCubicMeters": 0.2,
+      "features": [
+        "WEATHERPROOF_STORAGE",
+        "GPS_TRACKING"
+      ],
+      "fuelType": "Gasoline",
+      "fuelEfficiencyKmPerLiter": 28.0
+    },
+    "currentLocation": {
+      "lat": 40.7589,
+      "lng": -73.9851,
+      "lastUpdated": "2025-11-20T10:45:00Z"
+    },
+    "assignedDriverId": null,
+    "maintenanceSchedule": {
+      "lastServiceDate": "2025-11-01",
+      "nextServiceDate": "2026-02-01",
+      "odometerKm": 12450
+    },
+    "insurance": {
+      "provider": "Commercial Fleet Insurance Co.",
+      "policyNumber": "CFL-2025-0013",
+      "expirationDate": "2026-06-30"
+    }
+  },
+  {
+    "id": "van-02",
+    "labId": "lab-002",
+    "type": "Cargo Van",
+    "make": "Mercedes-Benz",
+    "model": "Sprinter",
+    "year": 2024,
+    "licensePlate": "LAB-002-V",
+    "vin": "WD3PE8CD0L5123456",
+    "status": "Active",
+    "specs": {
+      "capacityKg": 1000,
+      "volumeCubicMeters": 7.5,
+      "features": [
+        "SECURE_LOCKBOX",
+        "CLIMATE_CONTROL",
+        "GPS_TRACKING",
+        "REFRIGERATION",
+        "LIFT_GATE"
+      ],
+      "fuelType": "Diesel",
+      "fuelEfficiencyKmPerLiter": 14.0
+    },
+    "currentLocation": {
+      "lat": 34.0522,
+      "lng": -118.2437,
+      "lastUpdated": "2025-11-20T11:15:00Z"
+    },
+    "assignedDriverId": "user-driver-02",
+    "maintenanceSchedule": {
+      "lastServiceDate": "2025-11-10",
+      "nextServiceDate": "2026-02-10",
+      "odometerKm": 8920
+    },
+    "insurance": {
+      "provider": "Commercial Fleet Insurance Co.",
+      "policyNumber": "CFL-2025-0014",
+      "expirationDate": "2026-06-30"
+    }
+  },
+  {
+    "id": "van-03",
+    "labId": "lab-001",
+    "type": "Cargo Van",
+    "make": "Ford",
+    "model": "Transit Connect",
+    "year": 2021,
+    "licensePlate": "LAB-001-V2",
+    "vin": "1FTBR1CM9MKB67890",
+    "status": "Maintenance",
+    "specs": {
+      "capacityKg": 500,
+      "volumeCubicMeters": 3.6,
+      "features": [
+        "SECURE_LOCKBOX",
+        "GPS_TRACKING"
+      ],
+      "fuelType": "Gasoline",
+      "fuelEfficiencyKmPerLiter": 11.8
+    },
+    "currentLocation": {
+      "lat": 40.7128,
+      "lng": -74.0060,
+      "lastUpdated": "2025-11-19T17:00:00Z"
+    },
+    "assignedDriverId": null,
+    "maintenanceSchedule": {
+      "lastServiceDate": "2025-11-18",
+      "nextServiceDate": "2025-11-25",
+      "odometerKm": 78340,
+      "currentIssue": "Brake pad replacement"
+    },
+    "insurance": {
+      "provider": "Commercial Fleet Insurance Co.",
+      "policyNumber": "CFL-2025-0015",
+      "expirationDate": "2026-06-30"
+    }
+  }
+]
