@@ -7,7 +7,8 @@ import { useToast } from './ToastContext';
 const ProcurementContext = createContext(null);
 
 export const ProcurementProvider = ({ children }) => {
-  const { materials, restockMaterial } = useProduction();
+  // Removed 'materials' as it was unused.
+  const { restockMaterial } = useProduction();
   const { addToast } = useToast();
 
   const [purchaseOrders, setPurchaseOrders] = useState([]); // Local state for POs
@@ -15,9 +16,11 @@ export const ProcurementProvider = ({ children }) => {
 
   // --- ACTIONS ---
 
-  const addToCart = (material) => {
+  const addToCart = useCallback((material) => {
     setCart(prev => {
+      // Prevent duplicates
       if (prev.find(item => item.materialId === material.id)) return prev;
+      
       return [...prev, {
         materialId: material.id,
         name: material.name,
@@ -27,20 +30,22 @@ export const ProcurementProvider = ({ children }) => {
         currentPrice: material.unitCost
       }];
     });
-  };
+  }, []);
 
-  const removeFromCart = (materialId) => {
+  const removeFromCart = useCallback((materialId) => {
     setCart(prev => prev.filter(item => item.materialId !== materialId));
-  };
+  }, []);
 
-  const updateCartItem = (materialId, updates) => {
+  const updateCartItem = useCallback((materialId, updates) => {
     setCart(prev => prev.map(item => item.materialId === materialId ? { ...item, ...updates } : item));
-  };
+  }, []);
 
   /**
    * Check Live Pricing for all items in cart
    */
   const refreshPricing = useCallback(async () => {
+    if (cart.length === 0) return;
+
     const updates = await Promise.all(cart.map(async (item) => {
       try {
         const quote = await VendorConnector.checkAvailability(item.sku, item.vendorId);
@@ -49,7 +54,8 @@ export const ProcurementProvider = ({ children }) => {
           currentPrice: quote.currentPrice,
           available: quote.available
         };
-      } catch (err) {
+      } catch (error) {
+        console.warn(`Pricing check failed for ${item.sku}:`, error);
         return null;
       }
     }));
@@ -66,6 +72,8 @@ export const ProcurementProvider = ({ children }) => {
    * Submit POs grouped by Vendor
    */
   const checkout = useCallback(async () => {
+    if (cart.length === 0) return;
+
     // Group by Vendor
     const ordersByVendor = cart.reduce((acc, item) => {
       const vid = item.vendorId || 'unknown';
@@ -105,9 +113,11 @@ export const ProcurementProvider = ({ children }) => {
       }
     }
 
-    setPurchaseOrders(prev => [...newOrders, ...prev]);
-    setCart([]); // Clear cart
-    addToast("Orders placed successfully", "success");
+    if (newOrders.length > 0) {
+      setPurchaseOrders(prev => [...newOrders, ...prev]);
+      setCart([]); // Clear cart
+      addToast("Orders placed successfully", "success");
+    }
   }, [cart, addToast]);
 
   /**
@@ -116,6 +126,12 @@ export const ProcurementProvider = ({ children }) => {
   const receiveOrder = useCallback(async (poId) => {
     const order = purchaseOrders.find(po => po.id === poId);
     if (!order) return;
+
+    // Logic: Prevent receiving the same order twice
+    if (order.status === 'Received') {
+      addToast("This order has already been received.", "info");
+      return;
+    }
 
     // Update inventory for each item
     for (const item of order.items) {
@@ -139,7 +155,16 @@ export const ProcurementProvider = ({ children }) => {
     refreshPricing,
     checkout,
     receiveOrder
-  }), [purchaseOrders, cart, addToCart, removeFromCart, updateCartItem, refreshPricing, checkout, receiveOrder]);
+  }), [
+    purchaseOrders, 
+    cart, 
+    addToCart, 
+    removeFromCart, 
+    updateCartItem, 
+    refreshPricing, 
+    checkout, 
+    receiveOrder
+  ]);
 
   return (
     <ProcurementContext.Provider value={value}>
