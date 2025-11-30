@@ -2,11 +2,13 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import { MockService } from '../_mock/service';
 import { useAuth } from './AuthContext';
+import { useLab } from './LabContext';
 
 const LogisticsContext = createContext(null);
 
 export const LogisticsProvider = ({ children }) => {
   const { activeLab, user } = useAuth();
+  const { cases } = useLab();
 
   // --- State ---
   const [routes, setRoutes] = useState([]);
@@ -180,10 +182,105 @@ export const LogisticsProvider = ({ children }) => {
     }
   }, [routes]);
 
+  // Optimize route stops using nearest-neighbor algorithm
+  const optimizeRouteStops = useCallback(async (routeId) => {
+    try {
+      const route = routes.find(r => r.id === routeId);
+      if (!route || route.stops.length <= 1) {
+        return null; // Nothing to optimize
+      }
+
+      // Import optimization utilities
+      const { nearestNeighborOptimization, calculateRouteMetrics } = await import('../../utils/logistics/index.ts');
+
+      // Get first stop's coordinates as starting location (or use depot/lab location)
+      const startLocation = route.stops[0].coordinates || { lat: 40.7128, lng: -74.0060 };
+
+      // Calculate current metrics
+      const currentMetrics = calculateRouteMetrics(route.stops.map((stop, idx) => ({
+        ...stop,
+        sequence: idx + 1,
+        legDistanceKm: 0 // Will be calculated
+      })));
+
+      // Optimize stops
+      const optimizedStops = nearestNeighborOptimization(route.stops, startLocation);
+
+      // Calculate optimized metrics
+      const optimizedMetrics = calculateRouteMetrics(optimizedStops);
+
+      // Map optimized stops back to route stop format
+      const reorderedStops = optimizedStops.map(stop => {
+        const originalStop = route.stops.find(s => s.id === stop.id);
+        return {
+          ...originalStop,
+          sequence: stop.sequence
+        };
+      });
+
+      // Update route with optimized stops and new metrics
+      const updatedRoute = await MockService.logistics.routes.update(routeId, {
+        stops: reorderedStops,
+        metrics: {
+          ...route.metrics,
+          totalDistanceKm: optimizedMetrics.totalDistanceKm,
+          estimatedDurationMin: optimizedMetrics.estimatedDurationMin
+        }
+      });
+
+      setRoutes(prev => prev.map(r => r.id === routeId ? updatedRoute : r));
+
+      // Return optimization results for UI feedback
+      return {
+        before: currentMetrics,
+        after: optimizedMetrics,
+        improvement: {
+          distanceSaved: currentMetrics.totalDistanceKm - optimizedMetrics.totalDistanceKm,
+          timeSaved: currentMetrics.estimatedDurationMin - optimizedMetrics.estimatedDurationMin
+        }
+      };
+
+    } catch (err) {
+      console.error("Failed to optimize route", err);
+      throw err;
+    }
+  }, [routes]);
+
   // ============================================================
   // SELECTORS (Section 4.2.2 - Memoized selectors)
   // ============================================================
   
+  // Deliveries selector - cases that are ready to ship (completed QC, not yet shipped)
+  // In a real app, this would query cases with status between QC and Shipped
+  const deliveries = useMemo(() => {
+    if (!cases || cases.length === 0) return [];
+    
+    // Find cases that are ready for delivery:
+    // - Status is "stage-qc" (Quality Control completed, ready to ship)
+    // - Not yet assigned to any route
+    const readyToShipCases = cases.filter(c => 
+      c.status === 'stage-qc' && 
+      !routes.some(r => r.stops.some(s => 
+        s.type === 'Delivery' && 
+        s.deliveryManifest?.some(d => d.caseId === c.id)
+      ))
+    );
+
+    // Transform cases into delivery tasks
+    return readyToShipCases.map(c => ({
+      id: `delivery-${c.id}`,
+      caseId: c.id,
+      caseNumber: c.caseNumber,
+      type: 'Delivery',
+      clinicId: c.clinicId,
+      notes: `Ready to Ship (Case #${c.caseNumber})`,
+      isRush: c.tags?.includes('Rush') || false,
+      requestedTime: c.dates?.due || c.dates?.created,
+      units: c.units || [],
+      patient: c.patient
+    }));
+  }, [cases, routes]);
+
   // Filter routes for the current user (if driver)
   const myRoutes = useMemo(() => {
     if (!user) return [];
@@ -332,6 +429,7 @@ export const LogisticsProvider = ({ children }) => {
     // Data
     routes,
     pickups,
+    deliveries,
     vehicles,
     providers,
     
@@ -354,6 +452,7 @@ export const LogisticsProvider = ({ children }) => {
     updateRouteStopStatus,
     createPickupRequest,
     assignToRoute,
+    optimizeRouteStops,
     
     // Filter & Sort Actions
     setDateFilter,
@@ -370,6 +469,7 @@ export const LogisticsProvider = ({ children }) => {
   }), [
     routes, 
     pickups, 
+    deliveries,
     vehicles, 
     providers, 
     loading, 
@@ -386,6 +486,7 @@ export const LogisticsProvider = ({ children }) => {
     updateRouteStopStatus, 
     createPickupRequest, 
     assignToRoute,
+    optimizeRouteStops,
     setDateFilter,
     setStatusFilter,
     setDriverFilter,

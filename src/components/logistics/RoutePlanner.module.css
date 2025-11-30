@@ -1,14 +1,48 @@
 /* src/components/logistics/RoutePlanner.module.css */
 
+/* Skip Link for Accessibility */
+.skipLink {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 9999;
+  padding: 0.75rem 1rem;
+  background-color: var(--primary);
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  border-radius: 0 0 0.375rem 0;
+}
+
+.skipLink:focus {
+  left: 0;
+  outline: 2px solid var(--primary-700);
+  outline-offset: 2px;
+}
+
 .container {
   display: flex;
   gap: 1.5rem;
   height: calc(100vh - 140px); /* Fill remaining height */
   overflow: hidden;
-
 }
 
-/* --- LEFT: TASK POOL --- */
+/* --- MAP SECTION (LEFT) --- */
+.mapSection {
+  flex: 1.2;
+  min-width: 400px;
+  height: 100%;
+}
+
+/* --- PLANNING SECTION (RIGHT) --- */
+.planningSection {
+  flex: 1;
+  display: flex;
+  gap: 1.5rem;
+  overflow: hidden;
+}
+
+/* --- TASK POOL --- */
 .poolSection {
   flex: 1;
   display: flex;
@@ -25,8 +59,42 @@
   border-bottom: 1px solid var(--border-color);
   font-weight: 600;
   display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.poolHeaderTop {
+  display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.sortControls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.sortControls label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.sortSelect {
+  flex: 1;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;
+  font-size: 0.85rem;
+  background-color: var(--bg-surface);
+  cursor: pointer;
+}
+
+.sortSelect:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .poolList {
@@ -68,6 +136,31 @@
 .taskPickup { border-left-color: var(--warning-500); }
 .taskDelivery { border-left-color: var(--success-500); }
 
+.taskRush {
+  border-color: #EF4444;
+  background-color: #FEF2F2;
+}
+
+.taskRush:hover {
+  border-color: #DC2626;
+  background-color: #FEE2E2;
+}
+
+.rushBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  background-color: #EF4444;
+  color: white;
+  border-radius: 0.25rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  margin-right: 0.5rem;
+}
+
 .taskSelected {
   border-color: var(--primary);
   box-shadow: 0 0 0 2px var(--primary-100);
@@ -103,7 +196,7 @@
   color: var(--text-secondary);
 }
 
-/* --- RIGHT: ACTIVE ROUTES --- */
+/* --- ACTIVE ROUTES --- */
 .routesSection {
   flex: 2;
   display: flex;
@@ -111,7 +204,7 @@
   gap: 1rem;
   overflow-y: auto;
   padding-right: 0.5rem;
-    padding-top: 0.5rem;
+  padding-top: 0.5rem;
 }
 
 .routeColumn {
@@ -207,4 +300,309 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+}
+
+/* Keyboard Help Modal */
+.keyboardHelpModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.keyboardHelpContent {
+  background-color: var(--bg-surface);
+  border-radius: 0.75rem;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  position: relative;
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.keyboardHelpContent h2 {
+  margin: 0 0 1.5rem 0;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.closeButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
+}
+
+.closeButton:hover {
+  background-color: var(--bg-body);
+  color: var(--text-primary);
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.shortcutList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.shortcutItem {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: var(--bg-body);
+  border-radius: 0.375rem;
+  border: 1px solid var(--border-color);
+}
+
+.shortcutItem dt {
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.shortcutItem dd {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.shortcutItem kbd {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Enhanced Focus States */
+.poolSection:focus-within {
+  box-shadow: 0 0 0 2px var(--primary-100);
+}
+
+.routeColumn:focus-within {
+  border-color: var(--primary-300);
+}
+
+.sortSelect:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-color: var(--primary);
+}
+
+/* Button Focus States */
+button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+/* Optimization Modal Styles */
+.optimizationComparison {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  justify-content: center;
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background-color: var(--bg-surface);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.metricsColumn {
+  flex: 1;
+  text-align: center;
+}
+
+.metricsColumn h3 {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.metricItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.metricItem:last-child {
+  border-bottom: none;
+}
+
+.metricLabel {
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.metricValue {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.improvementArrow {
+  font-size: 2rem;
+  color: var(--success-color);
+  display: flex;
+  align-items: center;
+}
+
+.improvementSummary {
+  margin: 1rem 0;
+  padding: 1rem;
+  background-color: var(--success-light, #e6f7e6);
+  border-radius: 0.375rem;
+  text-align: center;
+}
+
+.improvementSummary p {
+  margin: 0;
+  color: var(--success-dark, #1b5e20);
+  font-size: 0.95rem;
+}
+
+.improvementSummary strong {
+  color: var(--success-color);
+}
+
+.modalActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+/* Optimization Modal Styles */
+.optimizationComparison {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  justify-content: center;
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background-color: var(--bg-surface);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.metricsColumn {
+  flex: 1;
+  text-align: center;
+}
+
+.metricsColumn h3 {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.metricItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.metricItem:last-child {
+  border-bottom: none;
+}
+
+.metricLabel {
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.metricValue {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.improvementArrow {
+  font-size: 2rem;
+  color: var(--success-color);
+  display: flex;
+  align-items: center;
+}
+
+.improvementSummary {
+  margin: 1rem 0;
+  padding: 1rem;
+  background-color: var(--success-light, #e6f7e6);
+  border-radius: 0.375rem;
+  text-align: center;
+}
+
+.improvementSummary p {
+  margin: 0;
+  color: var(--success-dark, #1b5e20);
+  font-size: 0.95rem;
+}
+
+.improvementSummary strong {
+  color: var(--success-color);
+}
+
+.modalActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
 }
