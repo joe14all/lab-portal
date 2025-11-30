@@ -24,8 +24,18 @@ const MobileMenu = ({ isOpen, onClose }) => {
     { to: "/", label: "Dashboard", icon: <IconDashboard />, permission: null },
     { to: "/cases", label: "Case Management", icon: <IconCase />, permission: null },
     { to: "/production", label: "Production", icon: <IconMill />, permission: null },
-    // NEW: Logistics Item
-    { to: "/logistics", label: "Logistics", icon: <IconTruck />, permission: "LOGISTICS_VIEW" },
+    
+    // Logistics Group
+    { 
+      id: "logistics",
+      label: "Logistics", 
+      icon: <IconTruck />, 
+      permission: "LOGISTICS_VIEW",
+      children: [
+        { to: "/logistics/planner", label: "Route Planning" },
+        { to: "/logistics/driver", label: "Driver View" }
+      ]
+    },
     
     // Finance Group
     { 

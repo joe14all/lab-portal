@@ -4,6 +4,7 @@ import { MockService } from '../_mock/service';
 import { useAuth } from './AuthContext';
 import { useLab } from './LabContext';
 import { LabEventBus, EVENTS } from '../utils/eventBus';
+import { routeCache, deduplicator } from '../utils/performance/cache';
 
 const LogisticsContext = createContext(null);
 
@@ -52,20 +53,46 @@ export const LogisticsProvider = ({ children }) => {
         return;
       }
 
+      // Try to load from cache first
+      const cacheKey = `logistics-data-${activeLab.id}`;
+      const cachedData = routeCache.get(cacheKey);
+      
+      if (cachedData) {
+        console.log('[LogisticsContext] Loading from cache');
+        setRoutes(cachedData.routes || []);
+        setPickups(cachedData.pickups || []);
+        setVehicles(cachedData.vehicles || []);
+        setProviders(cachedData.providers || []);
+        setPagination(prev => ({ ...prev, totalCount: cachedData.routes?.length || 0 }));
+        // Continue to background fetch for fresh data
+      }
+
       setLoading(true);
       try {
-        const [fetchedRoutes, fetchedPickups, fetchedVehicles, fetchedProviders] = await Promise.all([
-          MockService.logistics.routes.getAll({ labId: activeLab.id }),
-          MockService.logistics.pickups.getAll({ labId: activeLab.id }),
-          MockService.logistics.vehicles.getAll({ labId: activeLab.id }),
-          MockService.logistics.providers.getAll({ status: 'Active' })
-        ]);
+        // Use deduplicator to prevent duplicate initial loads
+        const data = await deduplicator.dedupe(`init-logistics-${activeLab.id}`, async () => {
+          const [fetchedRoutes, fetchedPickups, fetchedVehicles, fetchedProviders] = await Promise.all([
+            MockService.logistics.routes.getAll({ labId: activeLab.id }),
+            MockService.logistics.pickups.getAll({ labId: activeLab.id }),
+            MockService.logistics.vehicles.getAll({ labId: activeLab.id }),
+            MockService.logistics.providers.getAll({ status: 'Active' })
+          ]);
+          return { routes: fetchedRoutes, pickups: fetchedPickups, vehicles: fetchedVehicles, providers: fetchedProviders };
+        });
         
-        setRoutes(fetchedRoutes);
-        setPickups(fetchedPickups);
-        setVehicles(fetchedVehicles);
-        setProviders(fetchedProviders);
-        setPagination(prev => ({ ...prev, totalCount: fetchedRoutes.length }));
+        // Cache the fetched data (5 minute TTL)
+        routeCache.set(cacheKey, data, 300000);
+        
+        // Cache individual routes
+        data.routes.forEach(route => {
+          routeCache.set(route.id, route, 300000);
+        });
+        
+        setRoutes(data.routes);
+        setPickups(data.pickups);
+        setVehicles(data.vehicles);
+        setProviders(data.providers);
+        setPagination(prev => ({ ...prev, totalCount: data.routes.length }));
         setLastFetch(now);
         setError(null);
       } catch (err) {
@@ -84,12 +111,20 @@ export const LogisticsProvider = ({ children }) => {
 
   const createRoute = useCallback(async (routeData) => {
     try {
-      const newRoute = await MockService.logistics.routes.create({
-        ...routeData,
-        labId: activeLab.id,
-        status: 'Scheduled',
-        stops: []
+      // Use deduplicator to prevent duplicate create requests
+      const cacheKey = `create-route-${routeData.name}-${routeData.driverId}`;
+      const newRoute = await deduplicator.dedupe(cacheKey, async () => {
+        return await MockService.logistics.routes.create({
+          ...routeData,
+          labId: activeLab.id,
+          status: 'Scheduled',
+          stops: []
+        });
       });
+      
+      // Cache the new route
+      routeCache.set(newRoute.id, newRoute);
+      
       setRoutes(prev => [...prev, newRoute]);
       
       // Publish event for real-time updates
@@ -128,10 +163,17 @@ export const LogisticsProvider = ({ children }) => {
       const allDone = updatedStops.every(s => s.status === 'Completed' || s.status === 'Skipped');
       const routeStatus = allDone ? 'Completed' : 'InProgress';
 
-      const updatedRoute = await MockService.logistics.routes.update(routeId, {
-        stops: updatedStops,
-        status: routeStatus
+      // Use deduplicator to prevent duplicate update requests
+      const cacheKey = `update-stop-${routeId}-${stopId}-${newStatus}`;
+      const updatedRoute = await deduplicator.dedupe(cacheKey, async () => {
+        return await MockService.logistics.routes.update(routeId, {
+          stops: updatedStops,
+          status: routeStatus
+        });
       });
+
+      // Update route cache
+      routeCache.set(routeId, updatedRoute);
 
       setRoutes(prev => prev.map(r => r.id === routeId ? updatedRoute : r));
       
@@ -253,9 +295,21 @@ export const LogisticsProvider = ({ children }) => {
         deliveryManifest: task.type === 'Delivery' ? [task] : []
       };
 
-      const updatedRoute = await MockService.logistics.routes.update(routeId, {
-        stops: [...route.stops, newStop]
+      // Use deduplicator to prevent duplicate assignments
+      const cacheKey = `assign-${routeId}-${task.id}`;
+      const updatedRoute = await deduplicator.dedupe(cacheKey, async () => {
+        return await MockService.logistics.routes.update(routeId, {
+          stops: [...route.stops, newStop]
+        });
       });
+
+      // Update route cache
+      routeCache.set(routeId, updatedRoute);
+      
+      // Invalidate logistics data cache since routes changed
+      if (activeLab?.id) {
+        routeCache.delete(`logistics-data-${activeLab.id}`);
+      }
 
       setRoutes(prev => prev.map(r => r.id === routeId ? updatedRoute : r));
       
@@ -279,7 +333,7 @@ export const LogisticsProvider = ({ children }) => {
       console.error("Failed to assign task", err);
       throw err;
     }
-  }, [routes]);
+  }, [routes, activeLab]);
 
   // Assign multiple tasks to a route in a single operation (bulk assignment)
   const assignMultipleTasks = useCallback(async (routeId, tasks) => {

@@ -37,7 +37,17 @@ const Sidebar = () => {
       ]
     },
 
-    { to: "/logistics", label: "Logistics", icon: <IconTruck />, permission: "LOGISTICS_VIEW" },
+    // Expandable: Logistics
+    { 
+      id: "logistics",
+      label: "Logistics", 
+      icon: <IconTruck />, 
+      permission: "LOGISTICS_VIEW",
+      children: [
+        { to: "/logistics/planner", label: "Route Planning" },
+        { to: "/logistics/driver", label: "Driver View" }
+      ]
+    },
     
     // Expandable: Finance
     { 

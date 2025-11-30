@@ -1,46 +1,20 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../contexts';
+import React from 'react';
 import RoutePlanner from '../../components/logistics/RoutePlanner';
 import DriverManifest from '../../components/logistics/DriverManifest';
 import styles from './LogisticsRoutes.module.css';
 
-const LogisticsRoutes = () => {
-  const { user } = useAuth();
-  
-  // Determine default view based on role
-  // Drivers see Manifest by default, Admins/Managers see Planner
-  const isDriver = user?.roleId === 'role-driver';
-  const [view, setView] = useState(isDriver ? 'manifest' : 'planner');
-
+const LogisticsRoutes = ({ view = 'planner' }) => {
   return (
     <div className={styles.container}>
       
-      {/* Header / Toggle */}
+      {/* Header */}
       <header className={styles.header}>
         <div className={styles.titleGroup}>
-          <h1>Logistics</h1>
+          <h1>{view === 'planner' ? 'Route Planning' : 'Driver View'}</h1>
           <p>
             {view === 'planner' ? 'Route Management & Dispatch' : 'Driver Daily Manifest'}
           </p>
         </div>
-
-        {/* View Switcher (Only visible to non-drivers) */}
-        {!isDriver && (
-          <div className={styles.toggleWrapper}>
-            <button 
-              className={`${styles.toggleBtn} ${view === 'planner' ? styles.toggleBtnActive : ''}`}
-              onClick={() => setView('planner')}
-            >
-              Route Planner
-            </button>
-            <button 
-              className={`${styles.toggleBtn} ${view === 'manifest' ? styles.toggleBtnActive : ''}`}
-              onClick={() => setView('manifest')}
-            >
-              Driver View (Preview)
-            </button>
-          </div>
-        )}
       </header>
 
       {/* Main Content */}

@@ -47,20 +47,26 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: 0.75rem;
+  background: linear-gradient(to bottom, var(--bg-surface) 0%, var(--bg-body) 100%);
+  border: none;
+  border-radius: 1rem;
   min-width: 300px;
   max-width: 400px;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.06),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
 }
 
 .poolHeader {
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-color);
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   font-weight: 600;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(59, 130, 246, 0.02) 100%);
 }
 
 .poolHeaderTop {
@@ -105,22 +111,35 @@
   flex-direction: column;
   gap: 0.75rem;
   background-color: var(--bg-body);
+  
+  /* Hide scrollbar while maintaining scroll functionality */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.poolList::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 /* Task Card */
 .taskCard {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  padding: 0.75rem;
+  background: white;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
   cursor: grab;
-  transition: all 0.2s;
-  border-left: 4px solid transparent;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .taskCard:hover {
-  box-shadow: var(--shadow-sm);
-  border-color: var(--primary-300);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
 }
 
 .taskCard:active {
@@ -240,60 +259,89 @@
   flex: 2;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
   overflow-y: auto;
   padding-right: 0.5rem;
   padding-top: 0.5rem;
+  
+  /* Hide scrollbar while maintaining scroll functionality */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.routesSection::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .routeColumn {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: 0.75rem;
+  background: linear-gradient(to bottom, var(--bg-surface) 0%, var(--bg-body) 100%);
+  border: none;
+  border-radius: 1rem;
   display: flex;
   flex-direction: column;
-  min-height: 200px;
-  transition: all 0.2s;
+  min-height: 250px;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.06),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.routeColumn:hover {
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.1),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
 }
 
 /* Drop zone states */
 .routeDropReady {
-  border-color: var(--primary-300);
-  background-color: var(--primary-50);
+  box-shadow: 
+    0 4px 12px rgba(59, 130, 246, 0.15),
+    0 8px 24px rgba(59, 130, 246, 0.12),
+    inset 0 0 0 2px var(--primary-300);
+  background: linear-gradient(to bottom, rgba(59, 130, 246, 0.04) 0%, rgba(59, 130, 246, 0.02) 100%);
+  transform: scale(1.01);
 }
 
 .routeDropActive {
-  border-color: var(--primary);
-  border-width: 2px;
-  background-color: var(--primary-100);
-  box-shadow: 0 0 0 3px var(--primary-100);
+  box-shadow: 
+    0 6px 16px rgba(59, 130, 246, 0.2),
+    0 12px 32px rgba(59, 130, 246, 0.15),
+    inset 0 0 0 2px var(--primary);
+  background: linear-gradient(to bottom, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.04) 100%);
+  transform: scale(1.02);
 }
 
 .routeHeader {
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-color);
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: var(--bg-surface-hover);
-  border-radius: 0.75rem 0.75rem 0 0;
+  background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(59, 130, 246, 0.02) 100%);
+  border-radius: 1rem 1rem 0 0;
 }
 
 .driverInfo {
   font-weight: 600;
+  font-size: 1rem;
   color: var(--text-primary);
 }
 
 .routeStats {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: var(--text-secondary);
+  margin-top: 0.25rem;
 }
 
 .stopsList {
-  padding: 1rem;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 /* Stop Item */
@@ -301,23 +349,38 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.75rem;
-  background-color: var(--bg-body);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  background: white;
+  border: none;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.stopItem:hover {
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
 }
 
 .seqBadge {
-  width: 24px;
-  height: 24px;
-  background-color: var(--neutral-200);
-  color: var(--text-secondary);
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+  color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 
+    0 2px 4px rgba(59, 130, 246, 0.2),
+    0 1px 2px rgba(59, 130, 246, 0.1);
 }
 
 .stopContent {
@@ -331,14 +394,17 @@
 
 .emptyRoute {
   text-align: center;
-  padding: 2rem;
+  padding: 3rem 2rem;
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, transparent 100%);
+  border-radius: 0.75rem;
+  margin: 1rem;
 }
 
 /* Keyboard Help Modal */
@@ -376,6 +442,14 @@
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   position: relative;
   animation: slideUp 0.2s ease-out;
+  
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.keyboardHelpContent::-webkit-scrollbar {
+  display: none;
 }
 
 @keyframes slideUp {
@@ -647,6 +721,144 @@ button:focus-visible {
 }
 
 /* ===================================
+   CREATE ROUTE MODAL
+   =================================== */
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modalContent {
+  background-color: var(--bg-surface);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease-out;
+  
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.modalContent::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modalTitle {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.modalSubtitle {
+  margin: 0 0 1.5rem 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.formGroup {
+  margin-bottom: 1.25rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.formInput {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  transition: all 0.2s;
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.formInput::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.formSelect {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.formSelect:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modalActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.modalActions button {
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+}
+
+/* ===================================
    RESPONSIVE BREAKPOINTS
    =================================== */
 
@@ -681,7 +893,8 @@ button:focus-visible {
     flex-direction: column;
     gap: 1rem;
     height: auto;
-    min-height: calc(100vh - 140px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Hide map on mobile to save screen space */
@@ -693,6 +906,7 @@ button:focus-visible {
     flex-direction: column;
     gap: 1rem;
     overflow: visible;
+    height: auto;
   }
 
   .poolSection,
@@ -700,15 +914,24 @@ button:focus-visible {
     min-width: unset;
     max-width: unset;
     width: 100%;
+    height: auto;
+    overflow-y: visible;
   }
 
   .poolSection {
+    max-height: none;
+  }
+
+  .poolList {
     max-height: 400px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .routesSection {
     flex-direction: column;
-    overflow-x: visible;
+    overflow: visible;
+    padding-right: 0;
   }
 
   .routeColumn {

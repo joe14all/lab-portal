@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { List } from 'react-window';
 import { useLogistics, useCrm, useToast } from '../../contexts';
 import { IconTruck, IconBox, IconChevronRight } from '../../layouts/components/LabIcons';
 import StatusBadge from '../cases/StatusBadge';
@@ -151,6 +152,10 @@ const RoutePlanner = () => {
   const [optimizationData, setOptimizationData] = useState(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
+  const [showCreateRouteModal, setShowCreateRouteModal] = useState(false);
+  const [newRouteName, setNewRouteName] = useState('');
+  const [newRouteDriver, setNewRouteDriver] = useState('');
+  const [newRouteVehicle, setNewRouteVehicle] = useState('van-01');
   const searchInputRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -253,15 +258,40 @@ const RoutePlanner = () => {
   }, [selectedTasks, assignToRoute, assignMultipleTasks, addToast]);
 
   const handleCreateRoute = useCallback(() => {
-    const driverName = prompt("Enter Driver Name (or ID):");
-    if (driverName) {
-      createRoute({
-        name: `Route ${routes.length + 1}`,
-        driverId: driverName, // In real app, this would be a user select
-        vehicleId: 'van-01'
-      });
+    setNewRouteName(`Route ${routes.length + 1}`);
+    setNewRouteDriver('');
+    setNewRouteVehicle('van-01');
+    setShowCreateRouteModal(true);
+  }, [routes.length]);
+
+  const handleConfirmCreateRoute = async () => {
+    if (!newRouteDriver.trim()) {
+      addToast('Please enter a driver name', 'error');
+      return;
     }
-  }, [createRoute, routes.length]);
+    
+    try {
+      await createRoute({
+        name: newRouteName.trim() || `Route ${routes.length + 1}`,
+        driverId: newRouteDriver.trim(),
+        vehicleId: newRouteVehicle
+      });
+      
+      setShowCreateRouteModal(false);
+      setNewRouteName('');
+      setNewRouteDriver('');
+      addToast(`Route "${newRouteName}" created successfully`, 'success');
+    } catch (err) {
+      console.error('Failed to create route:', err);
+      addToast('Failed to create route', 'error');
+    }
+  };
+
+  const handleCancelCreateRoute = () => {
+    setShowCreateRouteModal(false);
+    setNewRouteName('');
+    setNewRouteDriver('');
+  };
 
   const handleMarkerClick = (clinicId) => {
     // Find the first unassigned task for this clinic
@@ -285,21 +315,21 @@ const RoutePlanner = () => {
         setShowOptimizationModal(true);
       } else {
         // Route has 0 or 1 stops, nothing to optimize
-        alert('This route has too few stops to optimize (minimum 2 required).');
+        addToast('This route has too few stops to optimize (minimum 2 required).', 'warning');
       }
     } catch (error) {
       console.error('Optimization failed:', error);
-      alert('Failed to optimize route. Please try again.');
+      addToast('Failed to optimize route. Please try again.', 'error');
     } finally {
       setIsOptimizing(false);
     }
-  }, [optimizeRouteStops]);
+  }, [optimizeRouteStops, addToast]);
 
   const handleConfirmOptimization = () => {
     setShowOptimizationModal(false);
     setOptimizationData(null);
     // Route is already updated, just show success message
-    alert('Route optimized successfully!');
+    addToast('Route optimized successfully!', 'success');
   };
 
   const handleCancelOptimization = async () => {
@@ -633,18 +663,38 @@ const RoutePlanner = () => {
             </div>
             
             <div className={styles.poolList} role="list" aria-label="Task cards">
-              {pool.map(task => (
-                <DraggableTaskCard
-                  key={task.id}
-                  task={task}
-                  isSelected={selectedTasks.some(t => t.id === task.id)}
-                  onSelect={handleTaskSelect}
-                />
-              ))}
-              {pool.length === 0 && (
+              {pool.length === 0 ? (
                 <div style={{textAlign:'center', color:'var(--text-secondary)', padding:'2rem'}}>
                   {searchQuery ? 'No tasks match your search.' : 'No pending tasks.'}
                 </div>
+              ) : pool.length > 20 ? (
+                /* Virtual scrolling for performance with 20+ tasks */
+                <List
+                  height={600}
+                  itemCount={pool.length}
+                  itemSize={100}
+                  width="100%"
+                >
+                  {({ index, style }) => (
+                    <div style={style}>
+                      <DraggableTaskCard
+                        task={pool[index]}
+                        isSelected={selectedTasks.some(t => t.id === pool[index].id)}
+                        onSelect={handleTaskSelect}
+                      />
+                    </div>
+                  )}
+                </List>
+              ) : (
+                /* Regular rendering for small lists */
+                pool.map(task => (
+                  <DraggableTaskCard
+                    key={task.id}
+                    task={task}
+                    isSelected={selectedTasks.some(t => t.id === task.id)}
+                    onSelect={handleTaskSelect}
+                  />
+                ))
               )}
             </div>
           </div>
@@ -721,6 +771,69 @@ const RoutePlanner = () => {
         </div>
 
       </div>
+
+      {/* Create Route Modal */}
+      {showCreateRouteModal && (
+        <div className={styles.modalOverlay} onClick={handleCancelCreateRoute}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <h2 className={styles.modalTitle}>Create New Route</h2>
+            <p className={styles.modalSubtitle}>Set up a new delivery route with assigned driver</p>
+            
+            <div className={styles.formGroup}>
+              <label htmlFor="route-name">Route Name</label>
+              <input
+                id="route-name"
+                type="text"
+                className={styles.formInput}
+                value={newRouteName}
+                onChange={(e) => setNewRouteName(e.target.value)}
+                placeholder="e.g., Morning Downtown Route"
+                autoFocus
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label htmlFor="route-driver">
+                Driver Name/ID <span style={{color: 'var(--error-color)'}}>*</span>
+              </label>
+              <input
+                id="route-driver"
+                type="text"
+                className={styles.formInput}
+                value={newRouteDriver}
+                onChange={(e) => setNewRouteDriver(e.target.value)}
+                placeholder="Enter driver name or ID"
+                required
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label htmlFor="route-vehicle">Vehicle</label>
+              <select
+                id="route-vehicle"
+                className={styles.formSelect}
+                value={newRouteVehicle}
+                onChange={(e) => setNewRouteVehicle(e.target.value)}
+              >
+                <option value="van-01">Van 01</option>
+                <option value="van-02">Van 02</option>
+                <option value="truck-01">Truck 01</option>
+                <option value="sedan-01">Sedan 01</option>
+              </select>
+            </div>
+
+            <div className={styles.modalActions}>
+              <button className="button secondary" onClick={handleCancelCreateRoute}>
+                Cancel
+              </button>
+              <button className="button primary" onClick={handleConfirmCreateRoute}>
+                Create Route
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </DndProvider>
   );
 };

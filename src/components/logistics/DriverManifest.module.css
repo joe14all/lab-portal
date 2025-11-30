@@ -6,6 +6,16 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  position: relative;
+  overflow-y: auto;
+  
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.manifestContainer::-webkit-scrollbar {
+  display: none;
 }
 
 .routeCard {
@@ -25,6 +35,52 @@
 .progress {
   font-size: 0.85rem;
   color: var(--text-secondary);
+}
+
+/* Route Stats Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+.statValue {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.routeCompleteAlert {
+  background: linear-gradient(135deg, var(--success-50, #f0fdf4) 0%, var(--success-100, #dcfce7) 100%);
+  border: 1px solid var(--success-300, #86efac);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-top: 1rem;
+  text-align: center;
+  color: var(--success-800, #166534);
+}
+
+.routeCompleteAlert strong {
+  display: block;
+  font-size: 1rem;
 }
 
 /* Stops Timeline */
@@ -188,6 +244,14 @@
   box-shadow: var(--shadow-lg);
   max-height: 90vh;
   overflow-y: auto;
+  
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.modalContent::-webkit-scrollbar {
+  display: none;
 }
 
 .modalTitle {
@@ -395,6 +459,55 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Route Selector Styles */
+.routeSelector {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.routeSelectorLabel {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.routeSelectorDropdown {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.routeSelectorDropdown:hover {
+  border-color: var(--primary-color);
+}
+
+.routeSelectorDropdown:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+  border-color: var(--primary-color);
+}
+
+.routeSelectorHint {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: center;
+  font-style: italic;
 }
 
 /* Mobile responsiveness */

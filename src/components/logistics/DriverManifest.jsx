@@ -18,8 +18,20 @@ const DriverManifest = () => {
   const { myRoutes, updateRouteStopStatus, skipRouteStop } = useLogistics();
   const { addToast } = useToast();
   
-  // For demo, assume active route is the first "InProgress" one
-  const activeRoute = myRoutes.find(r => r.status === 'InProgress') || myRoutes[0];
+  // Multi-route support: Allow driver to select which route to view
+  const [selectedRouteId, setSelectedRouteId] = useState(null);
+  
+  // Find active/selected route
+  const activeRoute = selectedRouteId 
+    ? myRoutes.find(r => r.id === selectedRouteId)
+    : myRoutes.find(r => r.status === 'InProgress') || myRoutes[0];
+  
+  // Update selected route when it becomes available
+  React.useEffect(() => {
+    if (!selectedRouteId && activeRoute) {
+      setSelectedRouteId(activeRoute.id);
+    }
+  }, [selectedRouteId, activeRoute]);
 
   // Local state for active stop interaction
   // eslint-disable-next-line no-unused-vars
@@ -380,10 +392,6 @@ const DriverManifest = () => {
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      style={{
-        position: 'relative',
-        overflowY: 'auto'
-      }}
     >
       
       {/* Pull-to-refresh indicator */}
@@ -428,13 +436,47 @@ const DriverManifest = () => {
         </div>
       )}
       
-      {/* Route Header */}
+      {/* Route Selector - Show if driver has multiple routes */}
+      {myRoutes.length > 1 && (
+        <div className={styles.routeSelector}>
+          <label htmlFor="route-select" className={styles.routeSelectorLabel}>
+            📋 Select Route:
+          </label>
+          <select
+            id="route-select"
+            className={styles.routeSelectorDropdown}
+            value={selectedRouteId || ''}
+            onChange={(e) => setSelectedRouteId(e.target.value)}
+          >
+            {myRoutes.map((route) => {
+              const routeCompleted = route.stops.filter(s => s.status === 'Completed').length;
+              const routeTotal = route.stops.length;
+              const routeProgress = routeTotal > 0 ? Math.round((routeCompleted / routeTotal) * 100) : 0;
+              
+              return (
+                <option key={route.id} value={route.id}>
+                  {route.name} ({routeProgress}% complete - {routeCompleted}/{routeTotal} stops)
+                </option>
+              );
+            })}
+          </select>
+          <div className={styles.routeSelectorHint}>
+            You have {myRoutes.length} routes assigned today
+          </div>
+        </div>
+      )}
+      
+      {/* Route Header with Enhanced Stats */}
       <div className={styles.routeCard}>
         <div className={styles.header}>{activeRoute.name}</div>
+        
+        {/* Progress Summary */}
         <div className={styles.progress}>
           {completedCount} of {activeRoute.stops.length} Stops Completed
           {skippedCount > 0 && <span style={{color: 'var(--warning-600)', marginLeft: '0.5rem'}}>({skippedCount} skipped)</span>}
         </div>
+        
+        {/* Progress Bar */}
         <div style={{height:'6px', background:'var(--neutral-200)', borderRadius:'3px', marginTop:'0.5rem'}}>
           <div style={{
             height:'100%', 
@@ -444,6 +486,53 @@ const DriverManifest = () => {
             transition: 'width 0.3s'
           }} />
         </div>
+        
+        {/* Additional Stats Grid */}
+        <div className={styles.statsGrid}>
+          <div className={styles.statItem}>
+            <div className={styles.statLabel}>Status</div>
+            <div className={styles.statValue}>
+              {activeRoute.status === 'InProgress' && '🚛 In Progress'}
+              {activeRoute.status === 'Scheduled' && '📅 Scheduled'}
+              {activeRoute.status === 'Completed' && '✅ Completed'}
+            </div>
+          </div>
+          
+          <div className={styles.statItem}>
+            <div className={styles.statLabel}>Remaining</div>
+            <div className={styles.statValue}>
+              {activeRoute.stops.length - processedCount} stops
+            </div>
+          </div>
+          
+          {activeRoute.estimatedDuration && (
+            <div className={styles.statItem}>
+              <div className={styles.statLabel}>Est. Time</div>
+              <div className={styles.statValue}>
+                {Math.round(activeRoute.estimatedDuration / 60)} min
+              </div>
+            </div>
+          )}
+          
+          {activeRoute.totalDistance && (
+            <div className={styles.statItem}>
+              <div className={styles.statLabel}>Distance</div>
+              <div className={styles.statValue}>
+                {(activeRoute.totalDistance / 1000).toFixed(1)} km
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Quick Actions */}
+        {processedCount === activeRoute.stops.length && activeRoute.status !== 'Completed' && (
+          <div className={styles.routeCompleteAlert}>
+            <strong>🎉 All stops processed!</strong>
+            <p style={{margin: '0.5rem 0 0 0', fontSize: '0.85rem'}}>
+              Contact dispatch to mark route as complete.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Timeline */}

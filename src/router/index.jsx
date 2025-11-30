@@ -63,7 +63,11 @@ export const AppRouter = () => {
             
             {/* Logistics Route (Protected) */}
             <Route element={<ProtectedRoute requiredPermissions={['LOGISTICS_VIEW']} />}>
-               <Route path="logistics" element={<LogisticsRoutes />} />
+               <Route path="logistics">
+                 <Route index element={<Navigate to="planner" replace />} />
+                 <Route path="planner" element={<LogisticsRoutes view="planner" />} />
+                 <Route path="driver" element={<LogisticsRoutes view="driver" />} />
+               </Route>
             </Route>
 
             {/* FINANCE MODULE */}
