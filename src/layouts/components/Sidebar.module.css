@@ -3,13 +3,26 @@
 .sidebar {
   display: none; /* Hidden on mobile */
   flex-direction: column;
-  width: 260px;
+  width: 70px; /* Collapsed width - icon only */
   height: 100%; 
   background-color: var(--bg-surface);
   border-right: 1px solid var(--border-color);
-  padding: 1.5rem 1rem;
+  padding: 1.5rem 0.5rem;
   overflow-y: auto;
-  transition: width 0.3s ease;
+  overflow-x: hidden;
+  transition: width 0.3s ease, padding 0.3s ease, box-shadow 0.3s ease;
+  position: fixed; /* Fixed positioning to overlay */
+  left: 0;
+  top: 64px; /* Start below header */
+  bottom: 0; /* Extend to bottom */
+  z-index: 40; /* Below header (50) */
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar:hover {
+  width: 260px; /* Expanded width on hover */
+  padding: 1.5rem 1rem;
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.1);
 }
 
 .nav {
@@ -37,6 +50,14 @@
   font-weight: 500;
   font-size: 0.9rem;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  justify-content: flex-start;
+}
+
+/* Collapsed state - center icon */
+.sidebar:not(:hover) .navLink {
+  justify-content: center;
+  padding: 0.6rem 0.5rem;
 }
 
 .navLink:hover {
@@ -57,6 +78,20 @@
   width: 20px;
   height: 20px;
   opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.labelText {
+  opacity: 1;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+}
+
+/* Hide labels when collapsed - only for direct navLink labels */
+.sidebar:not(:hover) .navLink > .labelText {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
 }
 
 .navLink.active .iconWrapper {
@@ -79,6 +114,18 @@
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+/* Collapsed state - center icon, hide chevron */
+.sidebar:not(:hover) .menuButton {
+  justify-content: center;
+  padding: 0.6rem 0.5rem;
+}
+
+/* Hide the chevron (last svg child) when collapsed */
+.sidebar:not(:hover) .menuButton > svg {
+  display: none;
 }
 
 .menuButton:hover {
@@ -95,6 +142,24 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* Ensure iconWrapper is always visible in labelGroup */
+.labelGroup .iconWrapper {
+  display: flex !important;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.menuButton.groupActive .labelGroup .iconWrapper,
+.menuButton:hover .labelGroup .iconWrapper {
+  opacity: 1;
+}
+
+/* Only hide the text label when collapsed */
+.sidebar:not(:hover) .labelGroup .labelText {
+  display: none !important;
 }
 
 .chevron {
@@ -137,6 +202,11 @@
   margin-bottom: 0.5rem;
 }
 
+/* Hide submenu completely when collapsed */
+.sidebar:not(:hover) .subList {
+  display: none;
+}
+
 .subLink {
   display: block;
   padding: 0.5rem 0.75rem;
@@ -174,6 +244,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity 0.2s ease;
+}
+
+/* Hide footer text when collapsed */
+.sidebar:not(:hover) .footer {
+  opacity: 0;
 }
 
 .copyright {

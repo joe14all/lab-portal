@@ -1,0 +1,31 @@
+/* LabLayout.module.css */
+
+.layout {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.wrapper {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  margin-top: 64px; /* Space for fixed header */
+}
+
+.main {
+  flex: 1;
+  padding: 2rem;
+  min-width: 0;
+  background-color: var(--bg-body);
+  overflow-y: auto;
+  margin-left: 0; /* No margin on mobile */
+}
+
+/* Desktop: Add margin for fixed sidebar */
+@media (min-width: 1024px) {
+  .main {
+    margin-left: 70px; /* Space for collapsed sidebar */
+  }
+}

@@ -82,14 +82,18 @@ const MapBoundsAdjuster = ({ locations }) => {
  * - routes: Array of route objects with stops
  * - unassignedTasks: Array of tasks not yet assigned
  * - selectedTask: Currently selected task (highlights on map)
+ * - hoveredTask: Currently hovered task (highlights on map)
  * - onMarkerClick: Callback when clinic marker is clicked (clinicId)
+ * - onMarkerHover: Callback when marker is hovered (clinicId or null)
  */
 const MapView = ({ 
   clinics = [], 
   routes = [], 
   unassignedTasks = [],
   selectedTask = null,
-  onMarkerClick = () => {}
+  hoveredTask = null,
+  onMarkerClick = () => {},
+  onMarkerHover = () => {}
 }) => {
   // Default center (New York City)
   const defaultCenter = [40.7128, -74.0060];
@@ -177,9 +181,9 @@ const MapView = ({
     return '#D1D5DB'; // light gray for no tasks
   };
 
-  // Check if clinic is selected
-  const isSelected = (clinicId) => {
-    return selectedTask?.clinicId === clinicId;
+  // Check if clinic is selected or hovered
+  const isHighlighted = (clinicId) => {
+    return selectedTask?.clinicId === clinicId || hoveredTask?.clinicId === clinicId;
   };
 
   return (
@@ -200,7 +204,7 @@ const MapView = ({
         {/* Render clinic markers */}
         {Array.from(clinicLocations.values()).map(location => {
           const color = getMarkerColor(location.id);
-          const selected = isSelected(location.id);
+          const highlighted = isHighlighted(location.id);
           const routeIndex = clinicRouteMap.get(location.id);
           const routeName = routeIndex !== undefined ? routes[routeIndex]?.name : null;
 
@@ -211,8 +215,10 @@ const MapView = ({
               icon={createCustomIcon(color)}
               eventHandlers={{
                 click: () => onMarkerClick(location.id),
+                mouseover: () => onMarkerHover(location.id),
+                mouseout: () => onMarkerHover(null),
               }}
-              zIndexOffset={selected ? 1000 : 0}
+              zIndexOffset={highlighted ? 1000 : 0}
             >
               <Popup>
                 <div className={styles.popup}>

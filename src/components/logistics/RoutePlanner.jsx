@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { TouchBackend } from 'react-dnd-touch-backend';
 import { List } from 'react-window';
 import { useLogistics, useCrm, useToast } from '../../contexts';
 import { IconTruck, IconBox, IconChevronRight } from '../../layouts/components/LabIcons';
@@ -10,13 +11,38 @@ import SearchBar from '../common/SearchBar';
 import { LabEventBus, EVENTS } from '../../utils/eventBus';
 import styles from './RoutePlanner.module.css';
 
+// Multi-backend for desktop + mobile support
+const isTouchDevice = () => {
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+};
+
+const DND_BACKEND = isTouchDevice() ? TouchBackend : HTML5Backend;
+const DND_OPTIONS = isTouchDevice() ? { enableMouseEvents: true } : {};
+
 // Drag and Drop Type
 const ItemTypes = {
   TASK: 'task'
 };
 
+// Route Color Palette for visual differentiation
+const ROUTE_COLORS = [
+  '#3B82F6', // Blue
+  '#10B981', // Green
+  '#F59E0B', // Amber
+  '#EF4444', // Red
+  '#8B5CF6', // Purple
+  '#EC4899', // Pink
+  '#14B8A6', // Teal
+  '#F97316', // Orange
+];
+
+const getRouteColor = (routeId) => {
+  const hash = routeId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return ROUTE_COLORS[hash % ROUTE_COLORS.length];
+};
+
 // Draggable Task Card Component
-const DraggableTaskCard = ({ task, isSelected, onSelect, selectedCount }) => {
+const DraggableTaskCard = React.memo(({ task, isSelected, onSelect, selectedCount, onHover }) => {
   const [{ isDragging }, drag] = useDrag({
     type: ItemTypes.TASK,
     item: { task, isSelected, selectedCount },
@@ -41,6 +67,8 @@ const DraggableTaskCard = ({ task, isSelected, onSelect, selectedCount }) => {
         ${task.isRush ? styles.taskRush : ''}
       `}
       onClick={handleClick}
+      onMouseEnter={() => onHover && onHover(task)}
+      onMouseLeave={() => onHover && onHover(null)}
       role="button"
       tabIndex={0}
       aria-label={`${task.type} task for ${task.clinicId}. ${task.isRush ? 'Rush priority. ' : ''}${task.notes}`}
@@ -86,10 +114,10 @@ const DraggableTaskCard = ({ task, isSelected, onSelect, selectedCount }) => {
       </div>
     </div>
   );
-};
+});
 
 // Droppable Route Column Component
-const DroppableRouteColumn = ({ route, selectedTask, onAssign, onOptimize, isOptimizing, isAssigning, children }) => {
+const DroppableRouteColumn = React.memo(({ route, selectedTask, onAssign, onOptimize, isOptimizing, isAssigning, children, routeColor, isCollapsed, onToggleCollapse, showMap }) => {
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: ItemTypes.TASK,
     drop: (item) => {
@@ -117,9 +145,22 @@ const DroppableRouteColumn = ({ route, selectedTask, onAssign, onOptimize, isOpt
           </div>
         </div>
       )}
-      <div className={styles.routeHeader}>
-        <div>
-          <div className={styles.driverInfo}>{route.name}</div>
+      <div className={styles.routeHeader} style={{ borderTop: `4px solid ${routeColor}` }}>
+        <div className={styles.routeColorBar} style={{ backgroundColor: routeColor }} aria-hidden="true" />
+        <button
+          className={styles.collapseButton}
+          onClick={() => onToggleCollapse(route.id)}
+          aria-label={isCollapsed ? 'Expand route' : 'Collapse route'}
+          aria-expanded={!isCollapsed}
+        >
+          {isCollapsed ? '▶' : '▼'}
+        </button>
+        <div style={{ flex: 1 }}>
+          <div className={styles.driverInfo}>
+            <span className={styles.routeColorDot} style={{ backgroundColor: routeColor }} aria-hidden="true" />
+            {route.name}
+            <span className={styles.stopCount}>({route.stops.length} stops)</span>
+          </div>
           <div className={styles.routeStats}>
             {route.driverId} • {route.status}
             {route.metrics && (
@@ -129,7 +170,7 @@ const DroppableRouteColumn = ({ route, selectedTask, onAssign, onOptimize, isOpt
             )}
           </div>
         </div>
-        <div style={{display: 'flex', gap: '0.5rem'}}>
+        <div className={`${styles.routeActions} ${!showMap ? styles.mapHidden : ''}`}>
           {route.stops.length > 1 && (
             <button 
               className="button secondary small" 
@@ -141,7 +182,7 @@ const DroppableRouteColumn = ({ route, selectedTask, onAssign, onOptimize, isOpt
               {isOptimizing ? '⏳' : '🗺️'} Optimize
             </button>
           )}
-          {selectedTask && (
+          {selectedTask && selectedTask.length > 0 && (
             <button 
               className="button secondary small" 
               onClick={() => onAssign(route.id, selectedTask)}
@@ -153,10 +194,10 @@ const DroppableRouteColumn = ({ route, selectedTask, onAssign, onOptimize, isOpt
           )}
         </div>
       </div>
-      {children}
+      {!isCollapsed && children}
     </div>
   );
-};
+});
 
 const RoutePlanner = () => {
   const { routes, pickups, deliveries, assignToRoute, assignMultipleTasks, createRoute, optimizeRouteStops } = useLogistics();
@@ -183,6 +224,15 @@ const RoutePlanner = () => {
   const [newRouteVehicle, setNewRouteVehicle] = useState('van-01');
   const searchInputRef = useRef(null);
   const containerRef = useRef(null);
+  
+  // New UI/UX State
+  const [mobileTab, setMobileTab] = useState('tasks'); // 'tasks' | 'map' | 'routes'
+  const [showMap, setShowMap] = useState(true); // Desktop map toggle
+  const [hoveredTask, setHoveredTask] = useState(null); // For map sync
+  // eslint-disable-next-line no-unused-vars
+  const [hoveredMarker, setHoveredMarker] = useState(null); // For task sync (used in handleMarkerClick to trigger UI updates)
+  const [groupBy, setGroupBy] = useState('zone'); // 'zone' | 'time' | 'none'
+  const [collapsedRoutes, setCollapsedRoutes] = useState(new Set()); // Track collapsed route IDs
 
   // 1. Prepare Pool of Tasks
   // Deliveries now come from LogisticsContext (derived from cases with status='stage-qc')
@@ -242,6 +292,42 @@ const RoutePlanner = () => {
     return allTasks;
   }, [pickups, deliveries, searchQuery, sortBy, dateFilter, statusFilter, typeFilter]);
 
+  // Group tasks by zone/time
+  const groupedTasks = useMemo(() => {
+    if (groupBy === 'none') return { 'All Tasks': pool };
+    
+    if (groupBy === 'zone') {
+      // Group by zip code (extract from clinicId or notes)
+      const groups = {};
+      pool.forEach(task => {
+        const zip = task.zipCode || task.clinicId?.match(/\d{5}/)?.[0] || 'Unknown Zone';
+        if (!groups[zip]) groups[zip] = [];
+        groups[zip].push(task);
+      });
+      return groups;
+    }
+    
+    if (groupBy === 'time') {
+      // Group by AM (before 12pm) vs PM (after 12pm)
+      const groups = { 'Morning (AM)': [], 'Afternoon (PM)': [], 'Unscheduled': [] };
+      pool.forEach(task => {
+        if (!task.requestedTime) {
+          groups['Unscheduled'].push(task);
+          return;
+        }
+        const hour = new Date(task.requestedTime).getHours();
+        if (hour < 12) {
+          groups['Morning (AM)'].push(task);
+        } else {
+          groups['Afternoon (PM)'].push(task);
+        }
+      });
+      return groups;
+    }
+    
+    return { 'All Tasks': pool };
+  }, [pool, groupBy]);
+
   // 2. Handlers
   const handleTaskSelect = (task, isShiftClick) => {
     if (isShiftClick && selectedTasks.length > 0) {
@@ -267,7 +353,10 @@ const RoutePlanner = () => {
   const handleAssign = useCallback(async (routeId, item) => {
     // Handle both direct task assignment and drag-drop with multi-select
     let tasksToAssign;
-    if (item && item.isSelected && item.selectedCount > 1) {
+    if (Array.isArray(item)) {
+      // Array of tasks passed directly (from button click)
+      tasksToAssign = item;
+    } else if (item && item.isSelected && item.selectedCount > 1) {
       // Multi-select drag: use all selected tasks
       tasksToAssign = selectedTasks;
     } else if (item && item.task) {
@@ -351,13 +440,46 @@ const RoutePlanner = () => {
     setNewRouteDriver('');
   };
 
-  const handleMarkerClick = (clinicId) => {
-    // Find the first unassigned task for this clinic
+  const handleMarkerClick = useCallback((clinicId) => {
+    // Find the first unassigned task for this clinic and scroll to it
     const taskForClinic = pool.find(t => t.clinicId === clinicId);
     if (taskForClinic) {
+      setHoveredMarker(clinicId);
+      // Scroll task into view
+      const taskElement = document.querySelector(`[data-task-id="${taskForClinic.id}"]`);
+      if (taskElement) {
+        taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       setSelectedTasks([taskForClinic]);
+      // Clear hover after a delay
+      setTimeout(() => setHoveredMarker(null), 2000);
     }
-  };
+  }, [pool]);
+  
+  const handleMarkerHover = useCallback((clinicId) => {
+    if (clinicId) {
+      const taskForClinic = pool.find(t => t.clinicId === clinicId);
+      setHoveredTask(taskForClinic || null);
+    } else {
+      setHoveredTask(null);
+    }
+  }, [pool]);
+  
+  const handleTaskHover = useCallback((task) => {
+    setHoveredTask(task);
+  }, []);
+
+  const handleToggleRouteCollapse = useCallback((routeId) => {
+    setCollapsedRoutes(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(routeId)) {
+        newSet.delete(routeId);
+      } else {
+        newSet.add(routeId);
+      }
+      return newSet;
+    });
+  }, []);
   
   const handleClearSelection = useCallback(() => {
     setSelectedTasks([]);
@@ -423,6 +545,13 @@ const RoutePlanner = () => {
       }
 
       switch (e.key.toLowerCase()) {
+        case 'm':
+          // M = Toggle map visibility
+          if (!e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            setShowMap(prev => !prev);
+          }
+          break;
         case 'n':
           // N = New route
           if (!e.ctrlKey && !e.metaKey) {
@@ -477,7 +606,7 @@ const RoutePlanner = () => {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedTasks, pool, routes, isAssigning, isOptimizing, handleCreateRoute, handleAssign, handleOptimizeRoute, handleClearSelection]);
+  }, [selectedTasks, pool, routes, isAssigning, isOptimizing, handleCreateRoute, handleAssign, handleOptimizeRoute, handleClearSelection, showMap]);
 
   // Subscribe to real-time route updates
   useEffect(() => {
@@ -516,7 +645,7 @@ const RoutePlanner = () => {
   }, [addToast]);
 
   return (
-    <DndProvider backend={HTML5Backend}>
+    <DndProvider backend={DND_BACKEND} options={DND_OPTIONS}>
       {/* Skip Link for Screen Readers */}
       <a href="#main-content" className={styles.skipLink}>
         Skip to main content
@@ -587,9 +716,10 @@ const RoutePlanner = () => {
 
       {/* Optimization Confirmation Modal */}
       {showOptimizationModal && optimizationData && (
-        <div className={styles.modal} onClick={handleCancelOptimization}>
+        <div className={styles.modalOverlay} onClick={handleCancelOptimization}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <h2>Route Optimization Results</h2>
+            <h2 className={styles.modalTitle}>Route Optimization Results</h2>
+            <p className={styles.modalSubtitle}>Review the improvements from optimizing stop order</p>
             
             <div className={styles.optimizationComparison}>
               <div className={styles.metricsColumn}>
@@ -657,10 +787,40 @@ const RoutePlanner = () => {
         </div>
       )}
 
-      <div className={styles.container} ref={containerRef} id="main-content">
+      {/* Mobile Tab Navigation */}
+      <div className={styles.mobileTabs}>
+        <div className={styles.tabButtons}>
+          <button 
+            className={`${styles.tabButton} ${mobileTab === 'tasks' ? styles.active : ''}`}
+            onClick={() => setMobileTab('tasks')}
+            aria-label={`Tasks tab, ${pool.length} unassigned tasks`}
+          >
+            <span className={styles.tabIcon}>📋</span>
+            <span>Tasks ({pool.length})</span>
+          </button>
+          <button 
+            className={`${styles.tabButton} ${mobileTab === 'map' ? styles.active : ''}`}
+            onClick={() => setMobileTab('map')}
+            aria-label="Map view tab"
+          >
+            <span className={styles.tabIcon}>🗺️</span>
+            <span>Map</span>
+          </button>
+          <button 
+            className={`${styles.tabButton} ${mobileTab === 'routes' ? styles.active : ''}`}
+            onClick={() => setMobileTab('routes')}
+            aria-label={`Routes tab, ${routes.length} active routes`}
+          >
+            <span className={styles.tabIcon}>🚛</span>
+            <span>Routes ({routes.length})</span>
+          </button>
+        </div>
+      </div>
+
+      <div className={`${styles.container} ${!showMap ? styles.mapHidden : ''}`} ref={containerRef} id="main-content">
         
-        {/* LEFT PANE: Task Pool + Filters (30%) */}
-        <div className={styles.leftPane}>
+        {/* LEFT PANE: Task Pool + Filters (25%) */}
+        <div className={`${styles.leftPane} ${styles.tabContent} ${mobileTab === 'tasks' ? styles.active : ''}`}>
           <div className={styles.poolSection} role="region" aria-label="Unassigned tasks pool">
             <div className={styles.poolHeader}>
               <div className={styles.poolHeaderTop}>
@@ -723,6 +883,31 @@ const RoutePlanner = () => {
                   <option value="clinic">Clinic Name</option>
                   <option value="type">Type</option>
                 </select>
+              </div>
+              
+              {/* Group By Controls */}
+              <div className={styles.groupByControls}>
+                <button 
+                  className={`${styles.groupByButton} ${groupBy === 'none' ? styles.active : ''}`}
+                  onClick={() => setGroupBy('none')}
+                  aria-pressed={groupBy === 'none'}
+                >
+                  All
+                </button>
+                <button 
+                  className={`${styles.groupByButton} ${groupBy === 'zone' ? styles.active : ''}`}
+                  onClick={() => setGroupBy('zone')}
+                  aria-pressed={groupBy === 'zone'}
+                >
+                  By Zone
+                </button>
+                <button 
+                  className={`${styles.groupByButton} ${groupBy === 'time' ? styles.active : ''}`}
+                  onClick={() => setGroupBy('time')}
+                  aria-pressed={groupBy === 'time'}
+                >
+                  By Time
+                </button>
               </div>
               
               {/* Filter Toggle */}
@@ -798,6 +983,32 @@ const RoutePlanner = () => {
                 <div style={{textAlign:'center', color:'var(--text-secondary)', padding:'2rem'}}>
                   {searchQuery ? 'No tasks match your search.' : 'No pending tasks.'}
                 </div>
+              ) : groupBy !== 'none' ? (
+                /* Grouped rendering */
+                Object.entries(groupedTasks).map(([groupName, groupTasks]) => (
+                  groupTasks.length > 0 && (
+                    <div key={groupName} className={styles.taskGroup}>
+                      <div className={styles.taskGroupHeader}>
+                        <div className={styles.taskGroupTitle}>
+                          <span>{groupName}</span>
+                          <span className={styles.taskGroupCount}>{groupTasks.length}</span>
+                        </div>
+                      </div>
+                      <div className={styles.taskGroupContent}>
+                        {groupTasks.map(task => (
+                          <DraggableTaskCard
+                            key={task.id}
+                            task={task}
+                            isSelected={selectedTasks.some(t => t.id === task.id)}
+                            onSelect={handleTaskSelect}
+                            selectedCount={selectedTasks.length}
+                            onHover={handleTaskHover}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )
+                ))
               ) : pool.length > 20 ? (
                 /* Virtual scrolling for performance with 20+ tasks */
                 <List
@@ -813,6 +1024,7 @@ const RoutePlanner = () => {
                         isSelected={selectedTasks.some(t => t.id === pool[index].id)}
                         onSelect={handleTaskSelect}
                         selectedCount={selectedTasks.length}
+                        onHover={handleTaskHover}
                       />
                     </div>
                   )}
@@ -826,6 +1038,7 @@ const RoutePlanner = () => {
                     isSelected={selectedTasks.some(t => t.id === task.id)}
                     onSelect={handleTaskSelect}
                     selectedCount={selectedTasks.length}
+                    onHover={handleTaskHover}
                   />
                 ))
               )}
@@ -833,24 +1046,35 @@ const RoutePlanner = () => {
           </div>
         </div>
 
-        {/* RIGHT PANE: Map + Routes Timeline (70%) */}
-        <div className={styles.rightPane}>
-          {/* --- MAP VIEW (TOP 60%) --- */}
+        {/* CENTER PANE: Map (50%) */}
+        <div className={`${styles.centerPane} ${!showMap ? styles.hidden : ''} ${styles.tabContent} ${mobileTab === 'map' ? styles.active : ''}`}>
           <div className={styles.mapSection}>
             <MapView
               clinics={clinics}
               routes={routes}
               unassignedTasks={pool}
               selectedTask={selectedTasks[0] || null}
+              hoveredTask={hoveredTask}
               onMarkerClick={handleMarkerClick}
+              onMarkerHover={handleMarkerHover}
             />
           </div>
+        </div>
 
-          {/* --- ROUTE TIMELINE (BOTTOM 40%) --- */}
+        {/* RIGHT PANE: Routes Timeline (25%) */}
+        <div className={`${styles.rightPane} ${styles.tabContent} ${mobileTab === 'routes' ? styles.active : ''}`}>
           <div className={styles.routesTimeline}>
             <div className={styles.routesHeader}>
               <h2 className={styles.routesTitle}>Active Routes ({routes.length})</h2>
               <div className={styles.routesActions}>
+                <button 
+                  className={styles.mapToggle}
+                  onClick={() => setShowMap(!showMap)}
+                  aria-label={showMap ? 'Hide map' : 'Show map'}
+                  title="Toggle map visibility (M)"
+                >
+                  {showMap ? '🗺️ Hide Map' : '🗺️ Show Map'}
+                </button>
                 <button 
                   className="button secondary small"
                   onClick={() => setShowKeyboardHelp(true)}
@@ -869,8 +1093,33 @@ const RoutePlanner = () => {
               </div>
             </div>
             
+            {/* Mobile Assignment Helper */}
+            {mobileTab === 'routes' && selectedTasks.length > 0 && (
+              <div style={{
+                padding: '0.75rem',
+                background: 'linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%)',
+                border: '2px solid #3b82f6',
+                borderRadius: '0.5rem',
+                fontSize: '0.9rem',
+                color: '#1e40af',
+                marginBottom: '1rem',
+                boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15)'
+              }}>
+                <div style={{ fontWeight: 700, marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '1.25rem' }}>✓</span>
+                  {selectedTasks.length} task{selectedTasks.length > 1 ? 's' : ''} selected
+                </div>
+                <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>
+                  Tap "Assign All" or "Assign Selected" on any route below to add your selected {selectedTasks.length > 1 ? 'tasks' : 'task'}.
+                </div>
+              </div>
+            )}
+            
             <div className={styles.routesGrid} role="region" aria-label="Active routes">
-              {routes.map(route => (
+              {routes.map(route => {
+                const routeColor = getRouteColor(route.id);
+                const isCollapsed = collapsedRoutes.has(route.id);
+                return (
               <DroppableRouteColumn
                 key={route.id}
                 route={route}
@@ -879,6 +1128,10 @@ const RoutePlanner = () => {
                 onOptimize={handleOptimizeRoute}
                 isOptimizing={isOptimizing}
                 isAssigning={isAssigning}
+                routeColor={routeColor}
+                isCollapsed={isCollapsed}
+                onToggleCollapse={handleToggleRouteCollapse}
+                showMap={showMap}
               >
                 <div className={styles.stopsList} role="list" aria-label={`Stops for ${route.name}`}>
                   {route.stops.length === 0 ? (
@@ -889,6 +1142,44 @@ const RoutePlanner = () => {
                       <div className={styles.emptyMessage}>Drag tasks here to create route</div>
                       <div className={styles.emptyHint}>or click task and press "Assign Selected"</div>
                     </div>
+                  ) : route.stops.length > 20 ? (
+                    /* Virtualize when stops > 20 for performance */
+                    <List
+                      height={400}
+                      itemCount={route.stops.length}
+                      itemSize={70}
+                      width="100%"
+                    >
+                      {({ index, style }) => {
+                        const stop = route.stops[index];
+                        const idx = index;
+                        return (
+                          <div style={style}>
+                            <div 
+                              className={styles.stopItem}
+                              role="listitem"
+                              aria-label={`Stop ${idx + 1} of ${route.stops.length}: ${stop.type} at ${stop.clinicId}, ${stop.status}`}
+                            >
+                              <div className={styles.seqBadge} aria-label={`Sequence number ${idx + 1}`}>{idx + 1}</div>
+                              <div className={styles.stopContent}>
+                                <div style={{fontWeight:600, fontSize:'0.9rem', display:'flex', alignItems:'center', gap:'0.5rem'}}>
+                                  {stop.clinicId}
+                                  {stop.type === 'Pickup' ? <IconBox width="14" /> : <IconTruck width="14" />}
+                                </div>
+                                <div style={{fontSize:'0.8rem', display:'flex', alignItems:'center', gap:'0.5rem'}}>
+                                  <StatusBadge 
+                                    status={stop.status === 'Pending' ? 'stage-new' : 
+                                            stop.status === 'InProgress' ? 'stage-processing' : 
+                                            stop.status === 'Completed' ? 'stage-delivered' : 
+                                            stop.status === 'Skipped' ? 'stage-hold' : 'stage-new'}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }}
+                    </List>
                   ) : (
                     route.stops.map((stop, idx) => (
                       <div 
@@ -917,7 +1208,8 @@ const RoutePlanner = () => {
                   )}
                 </div>
               </DroppableRouteColumn>
-              ))}
+              );
+              })}
             </div>
           </div>
         </div>
