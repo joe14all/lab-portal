@@ -16,10 +16,10 @@ const ItemTypes = {
 };
 
 // Draggable Task Card Component
-const DraggableTaskCard = ({ task, isSelected, onSelect }) => {
+const DraggableTaskCard = ({ task, isSelected, onSelect, selectedCount }) => {
   const [{ isDragging }, drag] = useDrag({
     type: ItemTypes.TASK,
-    item: { task },
+    item: { task, isSelected, selectedCount },
     collect: (monitor) => ({
       isDragging: monitor.isDragging()
     })
@@ -46,9 +46,19 @@ const DraggableTaskCard = ({ task, isSelected, onSelect }) => {
       aria-label={`${task.type} task for ${task.clinicId}. ${task.isRush ? 'Rush priority. ' : ''}${task.notes}`}
       onKeyDown={(e) => e.key === 'Enter' && onSelect(task, false)}
     >
+      {isSelected && selectedCount > 1 && (
+        <div className={styles.multiSelectBadge} aria-label={`${selectedCount} items selected`}>
+          {selectedCount}
+        </div>
+      )}
       <div className={styles.taskHeader}>
         <div className={styles.clinicName}>
-          {task.isRush && <span className={styles.rushBadge}>⚡ RUSH</span>}
+          {task.isRush && (
+            <span className={styles.rushBadge}>
+              <span className={styles.rushIcon}>⚡</span>
+              <span>RUSH</span>
+            </span>
+          )}
           {task.clinicId}
         </div>
         <span className={styles.taskType}>
@@ -83,7 +93,8 @@ const DroppableRouteColumn = ({ route, selectedTask, onAssign, onOptimize, isOpt
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: ItemTypes.TASK,
     drop: (item) => {
-      onAssign(route.id, item.task);
+      // Pass the full item object to handle multi-select
+      onAssign(route.id, item);
     },
     collect: (monitor) => ({
       isOver: monitor.isOver(),
@@ -99,6 +110,13 @@ const DroppableRouteColumn = ({ route, selectedTask, onAssign, onOptimize, isOpt
 
   return (
     <div ref={drop} className={dropZoneClass} aria-label={`Route ${route.name}, ${route.stops.length} stops`}>
+      {isOver && canDrop && (
+        <div className={styles.dropIndicator}>
+          <div className={styles.dropIndicatorText}>
+            📍 Drop here to assign
+          </div>
+        </div>
+      )}
       <div className={styles.routeHeader}>
         <div>
           <div className={styles.driverInfo}>{route.name}</div>
@@ -148,6 +166,13 @@ const RoutePlanner = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('priority'); // 'priority', 'time', 'clinic', 'type'
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
+  
+  // Filter states
+  const [dateFilter, setDateFilter] = useState(null);
+  const [statusFilter, setStatusFilter] = useState([]);
+  const [driverFilter, setDriverFilter] = useState(null);
+  const [typeFilter, setTypeFilter] = useState('');
   const [showOptimizationModal, setShowOptimizationModal] = useState(false);
   const [optimizationData, setOptimizationData] = useState(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -167,6 +192,24 @@ const RoutePlanner = () => {
       .map(p => ({ ...p, type: 'Pickup' }));
     
     let allTasks = [...pTasks, ...deliveries];
+    
+    // Apply date filter
+    if (dateFilter) {
+      allTasks = allTasks.filter(task => {
+        const taskDate = task.requestedTime ? new Date(task.requestedTime).toISOString().split('T')[0] : null;
+        return taskDate === dateFilter;
+      });
+    }
+    
+    // Apply status filter
+    if (statusFilter.length > 0) {
+      allTasks = allTasks.filter(task => statusFilter.includes(task.status));
+    }
+    
+    // Apply type filter
+    if (typeFilter) {
+      allTasks = allTasks.filter(task => task.type === typeFilter);
+    }
     
     // Apply search filter
     if (searchQuery) {
@@ -197,7 +240,7 @@ const RoutePlanner = () => {
     });
     
     return allTasks;
-  }, [pickups, deliveries, searchQuery, sortBy]);
+  }, [pickups, deliveries, searchQuery, sortBy, dateFilter, statusFilter, typeFilter]);
 
   // 2. Handlers
   const handleTaskSelect = (task, isShiftClick) => {
@@ -221,8 +264,23 @@ const RoutePlanner = () => {
     }
   };
 
-  const handleAssign = useCallback(async (routeId, task) => {
-    const tasksToAssign = task ? [task] : selectedTasks;
+  const handleAssign = useCallback(async (routeId, item) => {
+    // Handle both direct task assignment and drag-drop with multi-select
+    let tasksToAssign;
+    if (item && item.isSelected && item.selectedCount > 1) {
+      // Multi-select drag: use all selected tasks
+      tasksToAssign = selectedTasks;
+    } else if (item && item.task) {
+      // Single task from drag or parameter
+      tasksToAssign = [item.task];
+    } else if (item) {
+      // Direct task object (legacy support)
+      tasksToAssign = [item];
+    } else {
+      // No item provided, use selected tasks
+      tasksToAssign = selectedTasks;
+    }
+    
     if (tasksToAssign.length === 0) return;
     
     setIsAssigning(true);
@@ -303,6 +361,24 @@ const RoutePlanner = () => {
   
   const handleClearSelection = useCallback(() => {
     setSelectedTasks([]);
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setDateFilter(null);
+    setStatusFilter([]);
+    setDriverFilter(null);
+    setTypeFilter('');
+  }, []);
+
+  const handleFilterToday = useCallback(() => {
+    const today = new Date().toISOString().split('T')[0];
+    setDateFilter(today);
+  }, []);
+
+  const handleFilterTomorrow = useCallback(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    setDateFilter(tomorrow.toISOString().split('T')[0]);
   }, []);
 
   const handleOptimizeRoute = useCallback(async (routeId) => {
@@ -583,20 +659,8 @@ const RoutePlanner = () => {
 
       <div className={styles.container} ref={containerRef} id="main-content">
         
-        {/* --- MAP VIEW --- */}
-        <div className={styles.mapSection}>
-          <MapView
-            clinics={clinics}
-            routes={routes}
-            unassignedTasks={pool}
-            selectedTask={selectedTasks[0] || null}
-            onMarkerClick={handleMarkerClick}
-          />
-        </div>
-
-        {/* --- TASK POOL & ROUTES --- */}
-        <div className={styles.planningSection}>
-          {/* --- UNASSIGNED POOL --- */}
+        {/* LEFT PANE: Task Pool + Filters (30%) */}
+        <div className={styles.leftPane}>
           <div className={styles.poolSection} role="region" aria-label="Unassigned tasks pool">
             <div className={styles.poolHeader}>
               <div className={styles.poolHeaderTop}>
@@ -660,7 +724,74 @@ const RoutePlanner = () => {
                   <option value="type">Type</option>
                 </select>
               </div>
+              
+              {/* Filter Toggle */}
+              <button 
+                className={styles.filterToggle}
+                onClick={() => setShowFilters(!showFilters)}
+                aria-expanded={showFilters}
+                aria-label="Toggle filters"
+              >
+                🔍 Filters {showFilters ? '▼' : '▶'}
+              </button>
             </div>
+            
+            {/* Filters Panel */}
+            {showFilters && (
+              <div className={styles.filtersPanel}>
+                {/* Quick Filters */}
+                <div className={styles.quickFilters}>
+                  <button 
+                    className={`${styles.quickFilterBtn} ${dateFilter === new Date().toISOString().split('T')[0] ? styles.active : ''}`}
+                    onClick={handleFilterToday}
+                  >
+                    Today
+                  </button>
+                  <button 
+                    className={styles.quickFilterBtn}
+                    onClick={handleFilterTomorrow}
+                  >
+                    Tomorrow
+                  </button>
+                  {(dateFilter || statusFilter.length > 0 || typeFilter || driverFilter) && (
+                    <button 
+                      className={styles.clearFiltersBtn}
+                      onClick={handleClearFilters}
+                    >
+                      Clear All
+                    </button>
+                  )}
+                </div>
+                
+                {/* Advanced Filters */}
+                <div className={styles.advancedFilters}>
+                  <div className={styles.filterGroup}>
+                    <label htmlFor="type-filter">Type:</label>
+                    <select 
+                      id="type-filter"
+                      value={typeFilter} 
+                      onChange={(e) => setTypeFilter(e.target.value)}
+                      className={styles.filterSelect}
+                    >
+                      <option value="">All Types</option>
+                      <option value="Pickup">Pickup</option>
+                      <option value="Delivery">Delivery</option>
+                    </select>
+                  </div>
+                  
+                  <div className={styles.filterGroup}>
+                    <label htmlFor="date-filter">Date:</label>
+                    <input 
+                      id="date-filter"
+                      type="date" 
+                      value={dateFilter || ''} 
+                      onChange={(e) => setDateFilter(e.target.value || null)}
+                      className={styles.filterInput}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
             
             <div className={styles.poolList} role="list" aria-label="Task cards">
               {pool.length === 0 ? (
@@ -681,6 +812,7 @@ const RoutePlanner = () => {
                         task={pool[index]}
                         isSelected={selectedTasks.some(t => t.id === pool[index].id)}
                         onSelect={handleTaskSelect}
+                        selectedCount={selectedTasks.length}
                       />
                     </div>
                   )}
@@ -693,33 +825,52 @@ const RoutePlanner = () => {
                     task={task}
                     isSelected={selectedTasks.some(t => t.id === task.id)}
                     onSelect={handleTaskSelect}
+                    selectedCount={selectedTasks.length}
                   />
                 ))
               )}
             </div>
           </div>
+        </div>
 
-          {/* --- ACTIVE ROUTES --- */}
-          <div className={styles.routesSection} role="region" aria-label="Active routes">
-            <div style={{display:'flex', justifyContent:'flex-end', gap:'0.5rem'}}>
-              <button 
-                className="button secondary small"
-                onClick={() => setShowKeyboardHelp(true)}
-                aria-label="Show keyboard shortcuts"
-                title="Keyboard shortcuts (Shift+?)"
-              >
-                ⌨️ Shortcuts
-              </button>
-              <button 
-                className="button primary" 
-                onClick={handleCreateRoute}
-                aria-label="Create new delivery route"
-              >
-                + New Route
-              </button>
+        {/* RIGHT PANE: Map + Routes Timeline (70%) */}
+        <div className={styles.rightPane}>
+          {/* --- MAP VIEW (TOP 60%) --- */}
+          <div className={styles.mapSection}>
+            <MapView
+              clinics={clinics}
+              routes={routes}
+              unassignedTasks={pool}
+              selectedTask={selectedTasks[0] || null}
+              onMarkerClick={handleMarkerClick}
+            />
+          </div>
+
+          {/* --- ROUTE TIMELINE (BOTTOM 40%) --- */}
+          <div className={styles.routesTimeline}>
+            <div className={styles.routesHeader}>
+              <h2 className={styles.routesTitle}>Active Routes ({routes.length})</h2>
+              <div className={styles.routesActions}>
+                <button 
+                  className="button secondary small"
+                  onClick={() => setShowKeyboardHelp(true)}
+                  aria-label="Show keyboard shortcuts"
+                  title="Keyboard shortcuts (Shift+?)"
+                >
+                  ⌨️ Shortcuts
+                </button>
+                <button 
+                  className="button primary" 
+                  onClick={handleCreateRoute}
+                  aria-label="Create new delivery route"
+                >
+                  + New Route
+                </button>
+              </div>
             </div>
             
-            {routes.map(route => (
+            <div className={styles.routesGrid} role="region" aria-label="Active routes">
+              {routes.map(route => (
               <DroppableRouteColumn
                 key={route.id}
                 route={route}
@@ -766,7 +917,8 @@ const RoutePlanner = () => {
                   )}
                 </div>
               </DroppableRouteColumn>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 

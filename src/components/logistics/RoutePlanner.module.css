@@ -21,42 +21,62 @@
 }
 
 .container {
-  display: flex;
+  display: grid;
+  grid-template-columns: 30% 70%;
   gap: 1.5rem;
-  height: calc(100vh - 140px); /* Fill remaining height */
-  overflow: hidden;
+  padding-bottom: 2rem;
 }
 
-/* --- MAP SECTION (LEFT) --- */
+/* LEFT PANE: Task Pool + Filters (30%) */
+.leftPane {
+  display: flex;
+  flex-direction: column;
+  align-self: flex-start;
+}
+
+/* RIGHT PANE: Map + Routes Timeline (70%) */
+.rightPane {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* --- MAP SECTION (TOP 60% of right pane) --- */
 .mapSection {
-  flex: 1.2;
-  min-width: 400px;
-  height: 100%;
+  min-height: 500px;
+  background: white;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.06),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
-/* --- PLANNING SECTION (RIGHT) --- */
-.planningSection {
-  flex: 1;
+/* --- ROUTE TIMELINE (BOTTOM 40% of right pane) --- */
+.routesTimeline {
   display: flex;
-  gap: 1.5rem;
-  overflow: hidden;
+  flex-direction: column;
+  background: linear-gradient(to bottom, var(--bg-surface) 0%, var(--bg-body) 100%);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.06),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
 /* --- TASK POOL --- */
 .poolSection {
-  flex: 1;
   display: flex;
   flex-direction: column;
   background: linear-gradient(to bottom, var(--bg-surface) 0%, var(--bg-body) 100%);
   border: none;
   border-radius: 1rem;
-  min-width: 300px;
-  max-width: 400px;
   box-shadow: 
     0 2px 8px rgba(0, 0, 0, 0.04),
     0 4px 16px rgba(0, 0, 0, 0.06),
     inset 0 0 0 1px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
 }
 
 .poolHeader {
@@ -103,43 +123,154 @@
   outline-offset: 2px;
 }
 
+/* Filter Toggle Button */
+.filterToggle {
+  width: 100%;
+  padding: 0.625rem;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.filterToggle:hover {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.filterToggle:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Filters Panel */
+.filtersPanel {
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.quickFilters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.quickFilterBtn {
+  padding: 0.5rem 0.875rem;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-secondary);
+}
+
+.quickFilterBtn:hover {
+  background: var(--bg-body);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.quickFilterBtn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.clearFiltersBtn {
+  padding: 0.5rem 0.875rem;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #991b1b;
+}
+
+.clearFiltersBtn:hover {
+  background: #fecaca;
+  border-color: #f87171;
+}
+
+.advancedFilters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.filterGroup label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.filterSelect,
+.filterInput {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;
+  font-size: 0.85rem;
+  background: white;
+  transition: all 0.2s;
+}
+
+.filterSelect:focus,
+.filterInput:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-color: var(--primary);
+}
+
 .poolList {
-  flex: 1;
-  overflow-y: auto;
   padding: 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   background-color: var(--bg-body);
-  
-  /* Hide scrollbar while maintaining scroll functionality */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
 }
 
-.poolList::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-/* Task Card */
+/* Task Card - Enhanced Visual Hierarchy */
 .taskCard {
+  position: relative;
   background: white;
   border: none;
-  border-radius: 0.75rem;
-  padding: 0.875rem 1rem;
+  border-radius: 0.875rem;
+  padding: 1rem 1.125rem;
   cursor: grab;
   transition: all 0.2s ease;
-  border-left: 3px solid transparent;
+  border-left: 4px solid transparent;
   box-shadow: 
-    0 1px 3px rgba(0, 0, 0, 0.04),
-    0 1px 2px rgba(0, 0, 0, 0.02);
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 .taskCard:hover {
   box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.08),
-    0 4px 12px rgba(0, 0, 0, 0.06);
-  transform: translateY(-1px);
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 6px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }
 
 .taskCard:active {
@@ -147,37 +278,104 @@
 }
 
 .taskCard:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 3px solid var(--primary);
   outline-offset: 2px;
 }
 
-/* Task states */
-.taskPickup { border-left-color: var(--warning-500); }
-.taskDelivery { border-left-color: var(--success-500); }
+/* Task type indicators with better contrast */
+.taskPickup { 
+  border-left-color: #F59E0B;
+  border-left-width: 4px;
+}
 
+.taskDelivery { 
+  border-left-color: #10B981;
+  border-left-width: 4px;
+}
+
+/* RUSH Priority - Prominent Visual Treatment */
 .taskRush {
-  border-color: #EF4444;
-  background-color: #FEF2F2;
+  border-left-color: #DC2626 !important;
+  border-left-width: 5px !important;
+  background: linear-gradient(135deg, #FEF2F2 0%, #FFFFFF 100%);
+  box-shadow: 
+    0 2px 6px rgba(239, 68, 68, 0.15),
+    0 4px 12px rgba(239, 68, 68, 0.1),
+    inset 0 0 0 1px rgba(239, 68, 68, 0.1);
 }
 
 .taskRush:hover {
-  border-color: #DC2626;
-  background-color: #FEE2E2;
+  box-shadow: 
+    0 4px 16px rgba(220, 38, 38, 0.2),
+    0 8px 24px rgba(220, 38, 38, 0.15),
+    inset 0 0 0 1px rgba(220, 38, 38, 0.15);
+  transform: translateY(-2px);
 }
 
 .rushBadge {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.125rem 0.375rem;
-  background-color: #EF4444;
+  gap: 0.3rem;
+  padding: 0.25rem 0.625rem;
+  background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
   color: white;
-  border-radius: 0.25rem;
-  font-size: 0.65rem;
-  font-weight: 700;
+  border-radius: 0.375rem;
+  font-size: 0.7rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.025em;
-  margin-right: 0.5rem;
+  letter-spacing: 0.05em;
+  margin-right: 0.625rem;
+  box-shadow: 
+    0 2px 4px rgba(220, 38, 38, 0.3),
+    0 1px 2px rgba(220, 38, 38, 0.2);
+  animation: pulse-rush 2s ease-in-out infinite;
+}
+
+@keyframes pulse-rush {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 
+      0 2px 4px rgba(220, 38, 38, 0.3),
+      0 1px 2px rgba(220, 38, 38, 0.2);
+  }
+  50% {
+    opacity: 0.85;
+    box-shadow: 
+      0 4px 8px rgba(220, 38, 38, 0.4),
+      0 2px 4px rgba(220, 38, 38, 0.3);
+  }
+}
+
+.rushIcon {
+  font-size: 0.85rem;
+  animation: flash 1.5s ease-in-out infinite;
+}
+
+@keyframes flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Multi-Select Badge */
+.multiSelectBadge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-600) 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 800;
+  box-shadow: 
+    0 2px 6px rgba(59, 130, 246, 0.4),
+    0 1px 3px rgba(59, 130, 246, 0.3),
+    0 0 0 2px white;
+  z-index: 10;
 }
 
 .taskSelected {
@@ -194,98 +392,138 @@
 .taskHeader {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.25rem;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+  gap: 0.5rem;
 }
 
 .clinicName {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--text-primary);
+  line-height: 1.3;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.375rem;
 }
 
 .taskType {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-secondary);
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.3rem;
   white-space: nowrap;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
 }
 
 .taskMeta {
-  font-size: 0.8rem;
+  font-size: 0.825rem;
   color: var(--text-secondary);
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.375rem;
+  margin-top: 0.25rem;
 }
 
 .taskMetaRow {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.625rem;
   flex-wrap: wrap;
 }
 
 .metaIcon {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  font-size: 0.7rem;
+  gap: 0.3rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
-  background-color: var(--neutral-100);
-  padding: 0.125rem 0.375rem;
-  border-radius: 0.25rem;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
   white-space: nowrap;
+  font-weight: 500;
 }
 
 .taskNotes {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
-  line-height: 1.3;
-  margin-top: 0.125rem;
+  line-height: 1.4;
+  margin-top: 0.25rem;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   -webkit-box-orient: vertical;
+  padding: 0.375rem 0.5rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 0.375rem;
 }
 
-/* --- ACTIVE ROUTES --- */
-.routesSection {
-  flex: 2;
+/* Routes Header */
+.routesHeader {
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  overflow-y: auto;
-  padding-right: 0.5rem;
-  padding-top: 0.5rem;
-  
-  /* Hide scrollbar while maintaining scroll functionality */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.routesSection::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+.routesTitle {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.routesActions {
+  display: flex;
+  gap: 0.625rem;
+  align-items: center;
+}
+
+/* Routes Grid - Horizontal Scrolling Timeline */
+.routesGrid {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.75rem;
+  
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.routesGrid::-webkit-scrollbar {
+  display: none;
 }
 
 .routeColumn {
+  position: relative;
   background: linear-gradient(to bottom, var(--bg-surface) 0%, var(--bg-body) 100%);
   border: none;
   border-radius: 1rem;
   display: flex;
   flex-direction: column;
+  min-width: 380px;
+  max-width: 450px;
+  width: 400px;
   min-height: 250px;
+  flex-shrink: 0;
   transition: all 0.3s ease;
   box-shadow: 
     0 2px 8px rgba(0, 0, 0, 0.04),
     0 4px 16px rgba(0, 0, 0, 0.06),
     inset 0 0 0 1px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
 }
 
 .routeColumn:hover {
@@ -293,7 +531,7 @@
     0 4px 12px rgba(0, 0, 0, 0.08),
     0 8px 24px rgba(0, 0, 0, 0.1),
     inset 0 0 0 1px rgba(0, 0, 0, 0.06);
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.01);
 }
 
 /* Drop zone states */
@@ -310,46 +548,95 @@
   box-shadow: 
     0 6px 16px rgba(59, 130, 246, 0.2),
     0 12px 32px rgba(59, 130, 246, 0.15),
-    inset 0 0 0 2px var(--primary);
+    inset 0 0 0 3px var(--primary);
   background: linear-gradient(to bottom, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.04) 100%);
-  transform: scale(1.02);
+  transform: scale(1.03);
+}
+
+/* Drop Indicator Overlay */
+.dropIndicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.08) 100%);
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+}
+
+.dropIndicatorText {
+  background: var(--primary);
+  color: white;
+  padding: 0.875rem 1.75rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  font-size: 1rem;
+  box-shadow: 
+    0 4px 12px rgba(59, 130, 246, 0.4),
+    0 2px 6px rgba(59, 130, 246, 0.3);
+  animation: bounce-in 0.3s ease-out;
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .routeHeader {
-  padding: 1.5rem;
+  padding: 1.25rem 1.5rem;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 1rem;
   background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(59, 130, 246, 0.02) 100%);
   border-radius: 1rem 1rem 0 0;
+  flex-shrink: 0;
 }
 
 .driverInfo {
-  font-weight: 600;
-  font-size: 1rem;
+  font-weight: 700;
+  font-size: 1.05rem;
   color: var(--text-primary);
+  line-height: 1.3;
 }
 
 .routeStats {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
-  margin-top: 0.25rem;
+  margin-top: 0.375rem;
+  line-height: 1.4;
 }
 
 .stopsList {
-  padding: 1.25rem;
+  padding: 1rem 1.25rem 1.5rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.875rem;
+  flex: 1;
 }
 
-/* Stop Item */
+/* Stop Item - Enhanced for many tasks */
 .stopItem {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem 1.25rem;
+  padding: 0.875rem 1rem;
   background: white;
   border: none;
   border-radius: 0.75rem;
@@ -357,6 +644,7 @@
   box-shadow: 
     0 1px 3px rgba(0, 0, 0, 0.04),
     0 1px 2px rgba(0, 0, 0, 0.02);
+  min-height: 60px;
 }
 
 .stopItem:hover {
@@ -367,24 +655,25 @@
 }
 
 .seqBadge {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
   color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 700;
+  font-size: 0.9rem;
+  font-weight: 800;
   flex-shrink: 0;
   box-shadow: 
-    0 2px 4px rgba(59, 130, 246, 0.2),
-    0 1px 2px rgba(59, 130, 246, 0.1);
+    0 2px 4px rgba(59, 130, 246, 0.25),
+    0 1px 2px rgba(59, 130, 246, 0.15);
 }
 
 .stopContent {
   flex: 1;
+  min-width: 0;
 }
 
 .stopActions button {
@@ -865,79 +1154,95 @@ button:focus-visible {
 /* Tablet (768px - 1024px) */
 @media (max-width: 1024px) {
   .container {
+    grid-template-columns: 35% 65%;
     gap: 1rem;
   }
 
-  .mapSection {
-    flex: 1;
-    min-width: 300px;
+  .routeColumn {
+    min-width: 320px;
+    width: 340px;
   }
 
-  .planningSection {
-    gap: 1rem;
-  }
-
-  .poolSection {
-    min-width: 250px;
-    max-width: 350px;
-  }
-
-  .routesSection {
-    gap: 1rem;
+  .routesTimeline {
+    padding: 1rem;
   }
 }
 
 /* Mobile (max-width: 768px) */
 @media (max-width: 768px) {
   .container {
+    display: flex;
     flex-direction: column;
-    gap: 1rem;
-    height: auto;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    gap: 1.25rem;
+    padding: 0.5rem;
+    padding-bottom: 2rem;
   }
 
-  /* Hide map on mobile to save screen space */
-  .mapSection {
-    display: none;
-  }
-
-  .planningSection {
-    flex-direction: column;
-    gap: 1rem;
-    overflow: visible;
-    height: auto;
-  }
-
-  .poolSection,
-  .routesSection {
-    min-width: unset;
-    max-width: unset;
+  .leftPane {
+    order: 1;
     width: 100%;
-    height: auto;
-    overflow-y: visible;
+  }
+
+  .rightPane {
+    order: 2;
+    width: 100%;
+    gap: 1.25rem;
   }
 
   .poolSection {
-    max-height: none;
+    width: 100%;
+  }
+
+  .poolHeader {
+    padding: 1rem;
   }
 
   .poolList {
-    max-height: 400px;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    padding: 0.75rem;
   }
 
-  .routesSection {
+  .mapSection {
+    min-height: 400px;
+    width: 100%;
+  }
+
+  .routesTimeline {
+    padding: 1rem;
+    width: 100%;
+  }
+
+  .routesHeader {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .routesGrid {
+    display: flex;
     flex-direction: column;
-    overflow: visible;
-    padding-right: 0;
+    gap: 1rem;
   }
 
   .routeColumn {
+    width: 100%;
     min-width: unset;
     max-width: unset;
-    width: 100%;
+  }
+
+  .routeHeader {
+    padding: 1rem;
+  }
+
+  .stopsList {
+    padding: 0.75rem;
+  }
+
+  /* Filters on mobile */
+  .filtersPanel {
+    padding: 0.75rem;
+  }
+
+  .advancedFilters {
+    grid-template-columns: 1fr;
   }
 
   /* Increase touch targets for mobile */
@@ -947,6 +1252,11 @@ button:focus-visible {
   }
 
   .taskHeader {
+    gap: 0.75rem;
+  }
+
+  .stopItem {
+    padding: 0.75rem;
     gap: 0.75rem;
   }
 
@@ -1016,29 +1326,40 @@ button:focus-visible {
 /* Small mobile (max-width: 480px) */
 @media (max-width: 480px) {
   .container {
-    gap: 0.75rem;
+    gap: 1rem;
+    padding: 0.5rem;
   }
 
   .poolHeader,
   .routeHeader {
-    padding: 0.75rem;
+    padding: 0.875rem;
   }
 
   .poolList {
-    padding: 0.75rem;
-    gap: 0.5rem;
+    padding: 0.625rem;
+    gap: 0.625rem;
   }
 
   .taskCard {
     padding: 0.875rem;
   }
 
-  .routeColumn {
-    padding: 0.75rem;
+  .stopsList {
+    padding: 0.625rem;
+    gap: 0.625rem;
   }
 
   .stopItem {
     padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .mapSection {
+    height: 350px;
+  }
+
+  .routesTimeline {
+    padding: 0.875rem;
   }
 
   /* Ensure minimum button sizes */
