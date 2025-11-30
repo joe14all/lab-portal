@@ -1,10 +1,12 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { useLogistics, useCrm } from '../../contexts';
+import { useLogistics, useCrm, useToast } from '../../contexts';
 import { IconTruck, IconBox, IconChevronRight } from '../../layouts/components/LabIcons';
+import StatusBadge from '../cases/StatusBadge';
 import MapView from './MapView';
 import SearchBar from '../common/SearchBar';
+import { LabEventBus, EVENTS } from '../../utils/eventBus';
 import styles from './RoutePlanner.module.css';
 
 // Drag and Drop Type
@@ -44,21 +46,39 @@ const DraggableTaskCard = ({ task, isSelected, onSelect }) => {
       onKeyDown={(e) => e.key === 'Enter' && onSelect(task, false)}
     >
       <div className={styles.taskHeader}>
-        <span className={styles.clinicName}>
+        <div className={styles.clinicName}>
           {task.isRush && <span className={styles.rushBadge}>⚡ RUSH</span>}
           {task.clinicId}
+        </div>
+        <span className={styles.taskType}>
+          {task.type === 'Pickup' ? '📦' : '🚚'} {task.type}
         </span>
-        <span className={styles.taskType}>{task.type}</span>
       </div>
       <div className={styles.taskMeta}>
-        {task.notes}
+        <div className={styles.taskMetaRow}>
+          {task.notes && (
+            <span className={styles.metaIcon} title={task.notes}>
+              📝 Note
+            </span>
+          )}
+          {task.packageCount && (
+            <span className={styles.metaIcon}>
+              📦 ×{task.packageCount}
+            </span>
+          )}
+        </div>
+        {task.notes && (
+          <div className={styles.taskNotes}>
+            {task.notes}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 // Droppable Route Column Component
-const DroppableRouteColumn = ({ route, selectedTask, onAssign, onOptimize, isOptimizing, children }) => {
+const DroppableRouteColumn = ({ route, selectedTask, onAssign, onOptimize, isOptimizing, isAssigning, children }) => {
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: ItemTypes.TASK,
     drop: (item) => {
@@ -95,7 +115,7 @@ const DroppableRouteColumn = ({ route, selectedTask, onAssign, onOptimize, isOpt
             <button 
               className="button secondary small" 
               onClick={() => onOptimize(route.id)}
-              disabled={isOptimizing}
+              disabled={isOptimizing || isAssigning}
               aria-label={`Optimize ${route.name} to minimize travel distance`}
               title="Reorder stops for shortest route (O)"
             >
@@ -106,9 +126,10 @@ const DroppableRouteColumn = ({ route, selectedTask, onAssign, onOptimize, isOpt
             <button 
               className="button secondary small" 
               onClick={() => onAssign(route.id, selectedTask)}
+              disabled={isAssigning || isOptimizing}
               aria-label={`Assign ${selectedTask.length} selected task${selectedTask.length > 1 ? 's' : ''} to ${route.name}`}
             >
-              Assign {selectedTask.length > 1 ? `All (${selectedTask.length})` : 'Selected'}
+              {isAssigning ? '⏳ Assigning...' : `Assign ${selectedTask.length > 1 ? `All (${selectedTask.length})` : 'Selected'}`}
             </button>
           )}
         </div>
@@ -119,8 +140,9 @@ const DroppableRouteColumn = ({ route, selectedTask, onAssign, onOptimize, isOpt
 };
 
 const RoutePlanner = () => {
-  const { routes, pickups, deliveries, assignToRoute, createRoute, optimizeRouteStops } = useLogistics();
+  const { routes, pickups, deliveries, assignToRoute, assignMultipleTasks, createRoute, optimizeRouteStops } = useLogistics();
   const { clinics } = useCrm();
+  const { addToast } = useToast();
   const [selectedTasks, setSelectedTasks] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('priority'); // 'priority', 'time', 'clinic', 'type'
@@ -128,6 +150,7 @@ const RoutePlanner = () => {
   const [showOptimizationModal, setShowOptimizationModal] = useState(false);
   const [optimizationData, setOptimizationData] = useState(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [isAssigning, setIsAssigning] = useState(false);
   const searchInputRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -193,17 +216,41 @@ const RoutePlanner = () => {
     }
   };
 
-  const handleAssign = async (routeId, task) => {
+  const handleAssign = useCallback(async (routeId, task) => {
     const tasksToAssign = task ? [task] : selectedTasks;
     if (tasksToAssign.length === 0) return;
     
-    // Assign all selected tasks
-    for (const taskToAssign of tasksToAssign) {
-      await assignToRoute(routeId, taskToAssign);
-    }
+    setIsAssigning(true);
     
-    setSelectedTasks([]);
-  };
+    try {
+      if (tasksToAssign.length === 1) {
+        // Single task assignment
+        await assignToRoute(routeId, tasksToAssign[0]);
+        addToast(`Task assigned successfully`, 'success');
+      } else {
+        // Bulk assignment using optimized function
+        const result = await assignMultipleTasks(routeId, tasksToAssign);
+        
+        if (result.success > 0) {
+          addToast(
+            `Successfully assigned ${result.success} task${result.success > 1 ? 's' : ''}${result.failed > 0 ? ` (${result.failed} failed)` : ''}`,
+            result.failed > 0 ? 'warning' : 'success'
+          );
+        }
+        
+        if (result.failed > 0 && result.errors) {
+          console.error('Bulk assignment errors:', result.errors);
+        }
+      }
+      
+      setSelectedTasks([]);
+    } catch (error) {
+      console.error('Assignment failed:', error);
+      addToast('Failed to assign tasks. Please try again.', 'error');
+    } finally {
+      setIsAssigning(false);
+    }
+  }, [selectedTasks, assignToRoute, assignMultipleTasks, addToast]);
 
   const handleCreateRoute = useCallback(() => {
     const driverName = prompt("Enter Driver Name (or ID):");
@@ -224,9 +271,9 @@ const RoutePlanner = () => {
     }
   };
   
-  const handleClearSelection = () => {
+  const handleClearSelection = useCallback(() => {
     setSelectedTasks([]);
-  };
+  }, []);
 
   const handleOptimizeRoute = useCallback(async (routeId) => {
     setIsOptimizing(true);
@@ -292,10 +339,15 @@ const RoutePlanner = () => {
           }
           break;
         case 'a':
+          // A alone (when tasks selected) = Quick assign to first route
           // Ctrl/Cmd+A = Select all visible tasks
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
             setSelectedTasks(pool);
+          } else if (selectedTasks.length > 0 && routes.length > 0 && !isAssigning) {
+            // Quick assign selected tasks to first route
+            e.preventDefault();
+            handleAssign(routes[0].id, null);
           }
           break;
         case '?':
@@ -319,7 +371,43 @@ const RoutePlanner = () => {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedTasks, pool, handleCreateRoute]);
+  }, [selectedTasks, pool, routes, isAssigning, isOptimizing, handleCreateRoute, handleAssign, handleOptimizeRoute, handleClearSelection]);
+
+  // Subscribe to real-time route updates
+  useEffect(() => {
+    const handleRouteCreated = (data) => {
+      addToast(`New route created: ${data.routeName}`, 'info');
+    };
+
+    const handleRouteUpdated = (data) => {
+      addToast(`Route ${data.routeName || data.routeId} updated`, 'info');
+    };
+
+    const handleStopAssigned = (data) => {
+      addToast(`Task assigned to ${data.routeName || 'route'}`, 'success');
+    };
+
+    const handleRouteOptimized = (data) => {
+      const savings = data.improvement;
+      if (savings && savings.distanceSaved > 0) {
+        addToast(`Route optimized - saved ${savings.distanceSaved.toFixed(1)} km`, 'success');
+      }
+    };
+
+    // Subscribe to events
+    const unsubRouteCreated = LabEventBus.subscribe(EVENTS.ROUTE_CREATED, handleRouteCreated);
+    const unsubRouteUpdated = LabEventBus.subscribe(EVENTS.ROUTE_UPDATED, handleRouteUpdated);
+    const unsubStopAssigned = LabEventBus.subscribe(EVENTS.STOP_ASSIGNED, handleStopAssigned);
+    const unsubRouteOptimized = LabEventBus.subscribe(EVENTS.ROUTE_OPTIMIZED, handleRouteOptimized);
+
+    // Cleanup subscriptions
+    return () => {
+      unsubRouteCreated();
+      unsubRouteUpdated();
+      unsubStopAssigned();
+      unsubRouteOptimized();
+    };
+  }, [addToast]);
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -361,6 +449,10 @@ const RoutePlanner = () => {
               <div className={styles.shortcutItem}>
                 <dt><kbd>Ctrl</kbd>+<kbd>A</kbd> / <kbd>⌘</kbd>+<kbd>A</kbd></dt>
                 <dd>Select all tasks</dd>
+              </div>
+              <div className={styles.shortcutItem}>
+                <dt><kbd>A</kbd></dt>
+                <dd>Assign selected tasks to first route</dd>
               </div>
               <div className={styles.shortcutItem}>
                 <dt><kbd>Shift</kbd>+<kbd>?</kbd></dt>
@@ -480,6 +572,11 @@ const RoutePlanner = () => {
               <div className={styles.poolHeaderTop}>
                 <span aria-live="polite" aria-atomic="true">
                   Unassigned Tasks ({pool.length})
+                  {selectedTasks.length > 0 && (
+                    <span style={{marginLeft: '0.5rem', fontSize: '0.9em', color: 'var(--primary-color)'}}>
+                      • {selectedTasks.length} selected
+                    </span>
+                  )}
                 </span>
                 {selectedTasks.length > 0 && (
                   <button 
@@ -487,10 +584,25 @@ const RoutePlanner = () => {
                     onClick={handleClearSelection}
                     aria-label="Clear selection"
                   >
-                    Clear ({selectedTasks.length})
+                    Clear Selection
                   </button>
                 )}
               </div>
+              
+              {/* Bulk Assignment Helper */}
+              {selectedTasks.length > 1 && (
+                <div style={{
+                  padding: '0.5rem',
+                  background: 'var(--info-bg, #e0f2fe)',
+                  border: '1px solid var(--info-border, #7dd3fc)',
+                  borderRadius: '0.25rem',
+                  fontSize: '0.85rem',
+                  color: 'var(--info-text, #0c4a6e)',
+                  marginBottom: '0.5rem'
+                }}>
+                  💡 <strong>{selectedTasks.length} tasks selected.</strong> Click "Assign All" on a route or press <kbd>A</kbd> to assign to first route.
+                </div>
+              )}
               
               {/* Search Bar */}
               <div ref={searchInputRef}>
@@ -565,12 +677,16 @@ const RoutePlanner = () => {
                 onAssign={handleAssign}
                 onOptimize={handleOptimizeRoute}
                 isOptimizing={isOptimizing}
+                isAssigning={isAssigning}
               >
                 <div className={styles.stopsList} role="list" aria-label={`Stops for ${route.name}`}>
                   {route.stops.length === 0 ? (
                     <div className={styles.emptyRoute} role="status">
-                      <IconBox width="24" style={{opacity: 0.3, marginBottom: '0.5rem'}} aria-hidden="true" />
-                      <div>Drag tasks here to create route</div>
+                      <div className={styles.emptyIcon}>
+                        <IconBox width="32" aria-hidden="true" />
+                      </div>
+                      <div className={styles.emptyMessage}>Drag tasks here to create route</div>
+                      <div className={styles.emptyHint}>or click task and press "Assign Selected"</div>
                     </div>
                   ) : (
                     route.stops.map((stop, idx) => (
@@ -582,13 +698,18 @@ const RoutePlanner = () => {
                       >
                         <div className={styles.seqBadge} aria-label={`Sequence number ${idx + 1}`}>{idx + 1}</div>
                         <div className={styles.stopContent}>
-                          <div style={{fontWeight:600, fontSize:'0.9rem'}}>{stop.clinicId}</div>
-                          <div style={{fontSize:'0.8rem', color:'var(--text-secondary)'}}>
-                            {stop.type} • {stop.status}
+                          <div style={{fontWeight:600, fontSize:'0.9rem', display:'flex', alignItems:'center', gap:'0.5rem'}}>
+                            {stop.clinicId}
+                            {stop.type === 'Pickup' ? <IconBox width="14" /> : <IconTruck width="14" />}
                           </div>
-                        </div>
-                        <div aria-hidden="true">
-                          {stop.type === 'Pickup' ? <IconBox width="16" /> : <IconTruck width="16" />}
+                          <div style={{fontSize:'0.8rem', display:'flex', alignItems:'center', gap:'0.5rem'}}>
+                            <StatusBadge 
+                              status={stop.status === 'Pending' ? 'stage-new' : 
+                                      stop.status === 'InProgress' ? 'stage-processing' : 
+                                      stop.status === 'Completed' ? 'stage-delivered' : 
+                                      stop.status === 'Skipped' ? 'stage-hold' : 'stage-new'}
+                            />
+                          </div>
                         </div>
                       </div>
                     ))

@@ -49,6 +49,7 @@
 .stopPending { border-left-color: var(--neutral-400); }
 .stopInProgress { border-left-color: var(--primary); background-color: var(--primary-50); }
 .stopCompleted { border-left-color: var(--success-500); opacity: 0.7; }
+.stopSkipped { border-left-color: var(--warning-500); background-color: var(--warning-50); opacity: 0.85; }
 
 .stopHeader {
   display: flex;
@@ -61,14 +62,20 @@
   font-size: 1rem;
 }
 
-.stopBadge {
+.stopBadgeContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.taskTypeIcon {
   font-size: 0.75rem;
-  text-transform: uppercase;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-secondary);
-  background: var(--neutral-100);
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
 }
 
 .address {
@@ -93,14 +100,368 @@
 }
 
 .signatureBox {
-  height: 100px;
+  min-height: 100px;
   background-color: var(--bg-body);
   border: 1px dashed var(--border-color);
   border-radius: 0.5rem;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   color: var(--text-secondary);
   font-size: 0.8rem;
   margin-bottom: 0.5rem;
+}
+
+.signaturePlaceholder {
+  width: 100%;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-body) 100%);
+  border: 2px dashed var(--border-color);
+  border-radius: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.signaturePlaceholder:hover {
+  background: var(--bg-secondary);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.signaturePlaceholder:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.signaturePreview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem;
+}
+
+.signatureImage {
+  max-width: 100%;
+  height: auto;
+  max-height: 120px;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  background-color: white;
+}
+
+/* Skipped Stop Styling */
+.stopSkipped { 
+  border-left-color: var(--warning-500); 
+  background-color: var(--warning-50, #fffbeb); 
+  opacity: 0.8; 
+}
+
+/* Skip Stop Modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modalContent {
+  background-color: var(--bg-surface);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalTitle {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.modalSubtitle {
+  margin: 0 0 1.5rem 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.formGroup {
+  margin-bottom: 1rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.formSelect {
+  width: 100%;
+  padding: 0.625rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  background-color: var(--bg-surface);
+  cursor: pointer;
+}
+
+.formSelect:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-color: var(--primary);
+}
+
+.formTextarea {
+  width: 100%;
+  padding: 0.625rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  background-color: var(--bg-surface);
+}
+
+.formTextarea:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-color: var(--primary);
+}
+
+.modalAlert {
+  background-color: var(--warning-50, #fffbeb);
+  border: 1px solid var(--warning-200, #fde68a);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--warning-800, #92400e);
+}
+
+.modalAlert strong {
+  font-weight: 600;
+}
+
+.modalActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.modalActions button {
+  padding: 0.625rem 1.25rem;
+}
+
+/* Offline/Sync Status Banners */
+.offlineBanner {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid var(--warning-300, #fcd34d);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.offlineIcon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.offlineText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.offlineText strong {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--warning-900, #78350f);
+}
+
+.offlineText span {
+  font-size: 0.8rem;
+  color: var(--warning-700, #a16207);
+}
+
+.pendingBadge {
+  background-color: var(--warning-600, #ca8a04);
+  color: white;
+  padding: 0.25rem 0.625rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.syncBanner {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border: 1px solid var(--primary-300);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.syncIcon {
+  font-size: 1.5rem;
+  line-height: 1;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.syncText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.syncText strong {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary-900);
+}
+
+.syncText span {
+  font-size: 0.8rem;
+  color: var(--primary-700);
+}
+
+/* Pull-to-refresh styles */
+.pullIndicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, var(--primary-50, #eff6ff) 0%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.pullIcon {
+  font-size: 1.5rem;
+  color: var(--primary-color);
+  animation: pullRotate 1s linear infinite;
+}
+
+.pullText {
+  font-size: 0.85rem;
+  color: var(--primary-600);
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+@keyframes pullRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .manifestContainer {
+    padding: 0;
+    gap: 0.75rem;
+  }
+
+  .routeCard {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .stopCard {
+    border-radius: 0.5rem;
+  }
+
+  .address {
+    font-size: 0.9rem;
+  }
+
+  /* Ensure minimum touch targets */
+  .completeBtn,
+  button {
+    min-height: 48px;
+    padding: 0.75rem 1rem;
+  }
+
+  button.small,
+  .button.small {
+    min-height: 44px;
+    padding: 0.625rem 0.875rem;
+  }
+
+  /* Signature pad mobile optimization */
+  .signatureBox {
+    min-height: 120px;
+  }
+
+  .signaturePlaceholder {
+    padding: 1.25rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    font-size: 1rem;
+  }
+
+  .progress {
+    font-size: 0.8rem;
+  }
+
+  .stopCard {
+    padding: 0.875rem;
+  }
+
+  .stopHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .actions button {
+    font-size: 0.9rem;
+  }
 }

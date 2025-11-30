@@ -1,0 +1,109 @@
+/* SignaturePad.module.css */
+
+.signaturePadContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: var(--bg-surface, #ffffff);
+  border-radius: 0.5rem;
+}
+
+.signatureHeader {
+  text-align: center;
+}
+
+.signatureHeader h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.signatureHeader p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.canvasWrapper {
+  position: relative;
+  border: 2px solid var(--border-color);
+  border-radius: 0.375rem;
+  background-color: #ffffff;
+  overflow: hidden;
+}
+
+.signatureCanvas {
+  width: 100%;
+  height: 200px;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+/* Mobile optimization */
+@media (max-width: 768px) {
+  .signatureCanvas {
+    height: 180px;
+  }
+}
+
+.signatureLine {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.signatureLine::before {
+  content: '';
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  height: 1px;
+  background-color: var(--border-color);
+  opacity: 0.5;
+}
+
+.signatureLine span {
+  display: inline-block;
+  padding: 0 0.5rem;
+  background-color: #ffffff;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  position: relative;
+  z-index: 1;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.buttonGroup button {
+  flex: 0 1 auto;
+  min-width: 100px;
+}
+
+/* Mobile layout */
+@media (max-width: 768px) {
+  .buttonGroup {
+    flex-direction: column-reverse;
+  }
+
+  .buttonGroup button {
+    width: 100%;
+    min-width: unset;
+  }
+}
+
+/* Focus states for accessibility */
+.signatureCanvas:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: -2px;
+}

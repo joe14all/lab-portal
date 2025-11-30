@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useCallback, useMemo, useEf
 import { MockService } from '../_mock/service';
 import { useAuth } from './AuthContext';
 import { useLab } from './LabContext';
+import { LabEventBus, EVENTS } from '../utils/eventBus';
 
 const LogisticsContext = createContext(null);
 
@@ -90,6 +91,15 @@ export const LogisticsProvider = ({ children }) => {
         stops: []
       });
       setRoutes(prev => [...prev, newRoute]);
+      
+      // Publish event for real-time updates
+      LabEventBus.publish(EVENTS.ROUTE_CREATED, {
+        routeId: newRoute.id,
+        routeName: newRoute.name,
+        driverId: newRoute.driverId,
+        timestamp: new Date().toISOString()
+      });
+      
       return newRoute;
     } catch (err) {
       console.error("Failed to create route", err);
@@ -124,6 +134,29 @@ export const LogisticsProvider = ({ children }) => {
       });
 
       setRoutes(prev => prev.map(r => r.id === routeId ? updatedRoute : r));
+      
+      // Publish event for real-time updates
+      const updatedStop = updatedStops.find(s => s.id === stopId);
+      LabEventBus.publish(EVENTS.STOP_UPDATED, {
+        routeId,
+        stopId,
+        status: newStatus,
+        clinicId: updatedStop?.clinicId,
+        routeName: updatedRoute.name,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Publish specific event for completed stops
+      if (newStatus === 'Completed') {
+        LabEventBus.publish(EVENTS.STOP_COMPLETED, {
+          routeId,
+          stopId,
+          clinicId: updatedStop?.clinicId,
+          routeName: updatedRoute.name,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
       return updatedRoute;
     } catch (err) {
       console.error("Failed to update stop", err);
@@ -148,6 +181,62 @@ export const LogisticsProvider = ({ children }) => {
     }
   }, [activeLab]);
 
+  // Skip a route stop with reason and notification
+  const skipRouteStop = useCallback(async (routeId, stopId, skipReason, skipNotes = '') => {
+    try {
+      const route = routes.find(r => r.id === routeId);
+      if (!route) throw new Error("Route not found");
+
+      const stop = route.stops.find(s => s.id === stopId);
+      if (!stop) throw new Error("Stop not found");
+
+      const updatedStops = route.stops.map(s => {
+        if (s.id === stopId) {
+          return {
+            ...s,
+            status: 'Skipped',
+            skippedAt: new Date().toISOString(),
+            skipReason,
+            skipNotes,
+            requiresFollowUp: true
+          };
+        }
+        return s;
+      });
+
+      // Check if all stops are done (completed or skipped)
+      const allDone = updatedStops.every(s => s.status === 'Completed' || s.status === 'Skipped');
+      const routeStatus = allDone ? 'Completed' : 'InProgress';
+
+      const updatedRoute = await MockService.logistics.routes.update(routeId, {
+        stops: updatedStops,
+        status: routeStatus
+      });
+
+      setRoutes(prev => prev.map(r => r.id === routeId ? updatedRoute : r));
+
+      // Publish event for real-time updates
+      LabEventBus.publish(EVENTS.STOP_SKIPPED, {
+        routeId,
+        stopId,
+        skipReason,
+        skipNotes,
+        clinicId: stop.clinicId,
+        routeName: updatedRoute.name,
+        timestamp: new Date().toISOString()
+      });
+
+      // In a real app, this would send a notification to dispatcher
+      // For now, we'll just log it
+      console.log(`[NOTIFICATION] Stop skipped at ${stop.clinicId}. Reason: ${skipReason}. Notes: ${skipNotes}`);
+      
+      return updatedRoute;
+    } catch (err) {
+      console.error("Failed to skip stop", err);
+      throw err;
+    }
+  }, [routes]);
+
   // Mock function to "Assign" a pending item to a route
   // In a real backend, this would move the entity from "Pool" to "Route.stops"
   const assignToRoute = useCallback(async (routeId, task) => {
@@ -170,6 +259,16 @@ export const LogisticsProvider = ({ children }) => {
 
       setRoutes(prev => prev.map(r => r.id === routeId ? updatedRoute : r));
       
+      // Publish event for real-time updates
+      LabEventBus.publish(EVENTS.STOP_ASSIGNED, {
+        routeId,
+        routeName: route.name,
+        clinicId: task.clinicId,
+        taskType: task.type,
+        stopId: newStop.id,
+        timestamp: new Date().toISOString()
+      });
+      
       // If it was a pickup, update its status to 'Assigned'
       if (task.type === 'Pickup') {
         const updatedPickup = await MockService.logistics.pickups.update(task.id, { status: 'Assigned' });
@@ -178,6 +277,84 @@ export const LogisticsProvider = ({ children }) => {
 
     } catch (err) {
       console.error("Failed to assign task", err);
+      throw err;
+    }
+  }, [routes]);
+
+  // Assign multiple tasks to a route in a single operation (bulk assignment)
+  const assignMultipleTasks = useCallback(async (routeId, tasks) => {
+    if (!tasks || tasks.length === 0) {
+      return { success: 0, failed: 0 };
+    }
+
+    try {
+      const route = routes.find(r => r.id === routeId);
+      if (!route) throw new Error("Route not found");
+
+      const results = { success: 0, failed: 0, errors: [] };
+      const newStops = [];
+      const pickupsToUpdate = [];
+
+      // Create stops for all tasks
+      for (let i = 0; i < tasks.length; i++) {
+        const task = tasks[i];
+        try {
+          const newStop = {
+            id: `stop-${Date.now()}-${i}`,
+            sequence: route.stops.length + newStops.length + 1,
+            clinicId: task.clinicId,
+            type: task.type,
+            status: 'Pending',
+            pickupTasks: task.type === 'Pickup' ? [task] : [],
+            deliveryManifest: task.type === 'Delivery' ? [task] : []
+          };
+          newStops.push(newStop);
+          
+          if (task.type === 'Pickup') {
+            pickupsToUpdate.push(task.id);
+          }
+          
+          results.success++;
+        } catch (err) {
+          results.failed++;
+          results.errors.push({ taskId: task.id, error: err.message });
+        }
+      }
+
+      // Update route with all new stops in one operation
+      if (newStops.length > 0) {
+        const updatedRoute = await MockService.logistics.routes.update(routeId, {
+          stops: [...route.stops, ...newStops]
+        });
+
+        setRoutes(prev => prev.map(r => r.id === routeId ? updatedRoute : r));
+
+        // Publish bulk assignment event
+        LabEventBus.publish(EVENTS.STOP_ASSIGNED, {
+          routeId,
+          routeName: route.name,
+          taskCount: newStops.length,
+          clinicIds: newStops.map(s => s.clinicId),
+          timestamp: new Date().toISOString(),
+          bulk: true
+        });
+
+        // Update pickup statuses in batch
+        if (pickupsToUpdate.length > 0) {
+          for (const pickupId of pickupsToUpdate) {
+            try {
+              const updatedPickup = await MockService.logistics.pickups.update(pickupId, { status: 'Assigned' });
+              setPickups(prev => prev.map(p => p.id === pickupId ? updatedPickup : p));
+            } catch (err) {
+              console.error(`Failed to update pickup ${pickupId}:`, err);
+            }
+          }
+        }
+      }
+
+      return results;
+    } catch (err) {
+      console.error("Failed to assign multiple tasks", err);
       throw err;
     }
   }, [routes]);
@@ -191,7 +368,7 @@ export const LogisticsProvider = ({ children }) => {
       }
 
       // Import optimization utilities
-      const { nearestNeighborOptimization, calculateRouteMetrics } = await import('../../utils/logistics/routeOptimizer');
+      const { nearestNeighborOptimization, calculateRouteMetrics } = await import('../utils/logistics/routeOptimizer');
 
       // Get first stop's coordinates as starting location (or use depot/lab location)
       const startLocation = route.stops[0].coordinates || { lat: 40.7128, lng: -74.0060 };
@@ -230,14 +407,26 @@ export const LogisticsProvider = ({ children }) => {
 
       setRoutes(prev => prev.map(r => r.id === routeId ? updatedRoute : r));
 
+      // Calculate improvement metrics
+      const improvement = {
+        distanceSaved: currentMetrics.totalDistanceKm - optimizedMetrics.totalDistanceKm,
+        timeSaved: currentMetrics.estimatedDurationMin - optimizedMetrics.estimatedDurationMin
+      };
+
+      // Publish event for real-time updates
+      LabEventBus.publish(EVENTS.ROUTE_OPTIMIZED, {
+        routeId,
+        routeName: route.name,
+        improvement,
+        stopCount: reorderedStops.length,
+        timestamp: new Date().toISOString()
+      });
+
       // Return optimization results for UI feedback
       return {
         before: currentMetrics,
         after: optimizedMetrics,
-        improvement: {
-          distanceSaved: currentMetrics.totalDistanceKm - optimizedMetrics.totalDistanceKm,
-          timeSaved: currentMetrics.estimatedDurationMin - optimizedMetrics.estimatedDurationMin
-        }
+        improvement
       };
 
     } catch (err) {
@@ -452,7 +641,9 @@ export const LogisticsProvider = ({ children }) => {
     updateRouteStopStatus,
     createPickupRequest,
     assignToRoute,
+    assignMultipleTasks,
     optimizeRouteStops,
+    skipRouteStop,
     
     // Filter & Sort Actions
     setDateFilter,
@@ -486,7 +677,9 @@ export const LogisticsProvider = ({ children }) => {
     updateRouteStopStatus, 
     createPickupRequest, 
     assignToRoute,
+    assignMultipleTasks,
     optimizeRouteStops,
+    skipRouteStop,
     setDateFilter,
     setStatusFilter,
     setDriverFilter,
