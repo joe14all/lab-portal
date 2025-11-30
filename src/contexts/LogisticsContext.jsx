@@ -191,7 +191,7 @@ export const LogisticsProvider = ({ children }) => {
       }
 
       // Import optimization utilities
-      const { nearestNeighborOptimization, calculateRouteMetrics } = await import('../../utils/logistics/index.ts');
+      const { nearestNeighborOptimization, calculateRouteMetrics } = await import('../../utils/logistics/routeOptimizer');
 
       // Get first stop's coordinates as starting location (or use depot/lab location)
       const startLocation = route.stops[0].coordinates || { lat: 40.7128, lng: -74.0060 };
