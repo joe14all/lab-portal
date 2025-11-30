@@ -21,7 +21,8 @@ const DND_OPTIONS = isTouchDevice() ? { enableMouseEvents: true } : {};
 
 // Drag and Drop Type
 const ItemTypes = {
-  TASK: 'task'
+  TASK: 'task',
+  STOP: 'stop'
 };
 
 // Route Color Palette for visual differentiation
@@ -40,6 +41,66 @@ const getRouteColor = (routeId) => {
   const hash = routeId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return ROUTE_COLORS[hash % ROUTE_COLORS.length];
 };
+
+// Draggable Stop Component for reordering
+const DraggableStop = React.memo(({ stop, index, routeId, onDrop, isCompleted, onMoveToRoute }) => {
+  const ref = useRef(null);
+  
+  const [{ isDragging }, drag] = useDrag({
+    type: ItemTypes.STOP,
+    item: { stopId: stop.id, routeId, index },
+    canDrag: !isCompleted,
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging()
+    })
+  });
+
+  const [{ isOver, canDrop }, drop] = useDrop({
+    accept: ItemTypes.STOP,
+    canDrop: (item) => {
+      // Can't drop on completed stops, can't drop from different routes
+      return !isCompleted && item.routeId === routeId;
+    },
+    drop: (item) => {
+      if (item.index !== index) {
+        onDrop(routeId, item.index, index);
+      }
+    },
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+      canDrop: monitor.canDrop()
+    })
+  });
+
+  return (
+    <div 
+      ref={(node) => {
+        ref.current = node;
+        drag(drop(node));
+      }}
+      className={`${styles.stopItem} ${isDragging ? styles.stopDragging : ''} ${isOver && canDrop ? styles.stopHover : ''}`}
+      style={{ opacity: isDragging ? 0.5 : 1, cursor: isCompleted ? 'default' : 'grab' }}
+      role="listitem"
+      aria-label={`Stop ${index + 1}: ${stop.type} at ${stop.clinicId}, ${stop.status}`}
+    >
+      <div className={styles.seqBadge} aria-label={`Sequence number ${index + 1}`}>{index + 1}</div>
+      <div className={styles.stopContent}>
+        <div style={{fontWeight:600, fontSize:'0.9rem', display:'flex', alignItems:'center', gap:'0.5rem'}}>
+          {stop.clinicId}
+          {stop.type === 'Pickup' ? <IconBox width="14" /> : <IconTruck width="14" />}
+        </div>
+        <div style={{fontSize:'0.8rem', display:'flex', alignItems:'center', gap:'0.5rem'}}>
+          <StatusBadge 
+            status={stop.status === 'Pending' ? 'stage-new' : 
+                    stop.status === 'InProgress' ? 'stage-processing' : 
+                    stop.status === 'Completed' ? 'stage-delivered' : 
+                    stop.status === 'Skipped' ? 'stage-hold' : 'stage-new'}
+          />
+        </div>
+      </div>
+    </div>
+  );
+});
 
 // Draggable Task Card Component
 const DraggableTaskCard = React.memo(({ task, isSelected, onSelect, selectedCount, onHover }) => {
@@ -117,12 +178,17 @@ const DraggableTaskCard = React.memo(({ task, isSelected, onSelect, selectedCoun
 });
 
 // Droppable Route Column Component
-const DroppableRouteColumn = React.memo(({ route, selectedTask, onAssign, onOptimize, isOptimizing, isAssigning, children, routeColor, isCollapsed, onToggleCollapse, showMap }) => {
+const DroppableRouteColumn = React.memo(({ route, selectedTask, onAssign, onOptimize, isOptimizing, isAssigning, children, routeColor, isCollapsed, onToggleCollapse, showMap, onMoveStopToRoute }) => {
   const [{ isOver, canDrop }, drop] = useDrop({
-    accept: ItemTypes.TASK,
+    accept: [ItemTypes.TASK, ItemTypes.STOP],
     drop: (item) => {
-      // Pass the full item object to handle multi-select
-      onAssign(route.id, item);
+      if (item.task) {
+        // It's a TASK item - assign to route
+        onAssign(route.id, item);
+      } else if (item.stopId && item.routeId !== route.id) {
+        // It's a STOP item from a different route - move it
+        onMoveStopToRoute(item.routeId, route.id, item.stopId);
+      }
     },
     collect: (monitor) => ({
       isOver: monitor.isOver(),
@@ -200,7 +266,7 @@ const DroppableRouteColumn = React.memo(({ route, selectedTask, onAssign, onOpti
 });
 
 const RoutePlanner = () => {
-  const { routes, pickups, deliveries, assignToRoute, assignMultipleTasks, createRoute, optimizeRouteStops } = useLogistics();
+  const { routes, pickups, deliveries, assignToRoute, assignMultipleTasks, createRoute, optimizeRouteStops, reorderStops, moveStopBetweenRoutes } = useLogistics();
   const { clinics } = useCrm();
   const { addToast } = useToast();
   const [selectedTasks, setSelectedTasks] = useState([]);
@@ -522,6 +588,26 @@ const RoutePlanner = () => {
       setIsOptimizing(false);
     }
   }, [optimizeRouteStops, addToast]);
+
+  const handleReorderStops = useCallback(async (routeId, fromIndex, toIndex) => {
+    try {
+      await reorderStops(routeId, fromIndex, toIndex);
+      addToast('Stop order updated', 'success');
+    } catch (error) {
+      console.error('Failed to reorder stops:', error);
+      addToast('Failed to reorder stops', 'error');
+    }
+  }, [reorderStops, addToast]);
+
+  const handleMoveStopToRoute = useCallback(async (fromRouteId, toRouteId, stopId) => {
+    try {
+      await moveStopBetweenRoutes(fromRouteId, toRouteId, stopId);
+      addToast('Stop moved to new route', 'success');
+    } catch (error) {
+      console.error('Failed to move stop:', error);
+      addToast('Failed to move stop', 'error');
+    }
+  }, [moveStopBetweenRoutes, addToast]);
 
   const handleConfirmOptimization = () => {
     setShowOptimizationModal(false);
@@ -1132,6 +1218,7 @@ const RoutePlanner = () => {
                 isCollapsed={isCollapsed}
                 onToggleCollapse={handleToggleRouteCollapse}
                 showMap={showMap}
+                onMoveStopToRoute={handleMoveStopToRoute}
               >
                 <div className={styles.stopsList} role="list" aria-label={`Stops for ${route.name}`}>
                   {route.stops.length === 0 ? (
@@ -1182,28 +1269,14 @@ const RoutePlanner = () => {
                     </List>
                   ) : (
                     route.stops.map((stop, idx) => (
-                      <div 
-                        key={stop.id} 
-                        className={styles.stopItem}
-                        role="listitem"
-                        aria-label={`Stop ${idx + 1} of ${route.stops.length}: ${stop.type} at ${stop.clinicId}, ${stop.status}`}
-                      >
-                        <div className={styles.seqBadge} aria-label={`Sequence number ${idx + 1}`}>{idx + 1}</div>
-                        <div className={styles.stopContent}>
-                          <div style={{fontWeight:600, fontSize:'0.9rem', display:'flex', alignItems:'center', gap:'0.5rem'}}>
-                            {stop.clinicId}
-                            {stop.type === 'Pickup' ? <IconBox width="14" /> : <IconTruck width="14" />}
-                          </div>
-                          <div style={{fontSize:'0.8rem', display:'flex', alignItems:'center', gap:'0.5rem'}}>
-                            <StatusBadge 
-                              status={stop.status === 'Pending' ? 'stage-new' : 
-                                      stop.status === 'InProgress' ? 'stage-processing' : 
-                                      stop.status === 'Completed' ? 'stage-delivered' : 
-                                      stop.status === 'Skipped' ? 'stage-hold' : 'stage-new'}
-                            />
-                          </div>
-                        </div>
-                      </div>
+                      <DraggableStop
+                        key={stop.id}
+                        stop={stop}
+                        index={idx}
+                        routeId={route.id}
+                        onDrop={handleReorderStops}
+                        isCompleted={stop.status === 'Completed' || stop.status === 'Delivered'}
+                      />
                     ))
                   )}
                 </div>

@@ -27,6 +27,7 @@ const getStageIcon = (stageId) => {
   if (stageId.includes('processing')) return <IconLayers width="16" height="16" />; 
   if (stageId.includes('finishing')) return <IconMicroscope width="16" height="16" />;
   if (stageId.includes('qc')) return <IconCheck width="16" height="16" />;
+  if (stageId.includes('shipping')) return <IconBox width="16" height="16" />;
   if (stageId.includes('shipped')) return <IconTruck width="16" height="16" />;
   if (stageId.includes('tryin')) return <IconTooth width="16" height="16" />; // Try-in Icon
   return null;
@@ -34,11 +35,11 @@ const getStageIcon = (stageId) => {
 
 // --- FALLBACK WORKFLOW DEFINITIONS ---
 const WORKFLOWS = {
-  REMOVABLE: ['stage-new', 'stage-received', 'stage-model', 'stage-waxup', 'stage-processing', 'stage-finishing', 'stage-qc', 'stage-shipped'],
-  CASTING: ['stage-new', 'stage-received', 'stage-model', 'stage-waxup', 'stage-casting', 'stage-finishing', 'stage-qc', 'stage-shipped'],
-  ORTHO: ['stage-new', 'stage-received', 'stage-model', 'stage-processing', 'stage-finishing', 'stage-qc', 'stage-shipped'],
-  IMPLANT: ['stage-new', 'stage-received', 'stage-model', 'stage-design', 'stage-milling', 'stage-finishing', 'stage-qc', 'stage-shipped'],
-  FIXED_DIGITAL: ['stage-new', 'stage-received', 'stage-design', 'stage-milling', 'stage-finishing', 'stage-qc', 'stage-shipped']
+  REMOVABLE: ['stage-new', 'stage-received', 'stage-model', 'stage-waxup', 'stage-processing', 'stage-finishing', 'stage-qc', 'stage-shipping'],
+  CASTING: ['stage-new', 'stage-received', 'stage-model', 'stage-waxup', 'stage-casting', 'stage-finishing', 'stage-qc', 'stage-shipping'],
+  ORTHO: ['stage-new', 'stage-received', 'stage-model', 'stage-processing', 'stage-finishing', 'stage-qc', 'stage-shipping'],
+  IMPLANT: ['stage-new', 'stage-received', 'stage-model', 'stage-design', 'stage-milling', 'stage-finishing', 'stage-qc', 'stage-shipping'],
+  FIXED_DIGITAL: ['stage-new', 'stage-received', 'stage-design', 'stage-milling', 'stage-finishing', 'stage-qc', 'stage-shipping']
 };
 
 const detectWorkflow = (activeCase) => {

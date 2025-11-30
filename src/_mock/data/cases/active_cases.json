@@ -311,5 +311,45 @@
       "invoiceId": null
     },
     "tags": ["Removable", "Metal"]
+  },
+  {
+    "id": "case-5009",
+    "labId": "lab-001",
+    "caseNumber": "2025-1009",
+    "clinicId": "clinic-001",
+    "doctorId": "doc-001",
+    "patient": {
+      "name": "Robert Martinez",
+      "age": 52,
+      "gender": "Male",
+      "chartNumber": "P-5544"
+    },
+    "status": "stage-shipping",
+    "dates": {
+      "created": "2025-11-20T08:00:00Z",
+      "received": "2025-11-20T09:30:00Z",
+      "due": "2025-11-27T17:00:00Z",
+      "shipped": null
+    },
+    "units": [
+      {
+        "id": "unit-5009-12",
+        "tooth": 12,
+        "type": "Crown",
+        "material": "Zirconia Full Contour",
+        "shade": "A1",
+        "stumpShade": "ND2",
+        "instructions": "Ready to ship to clinic",
+        "status": "stage-shipping"
+      }
+    ],
+    "panNumbers": ["C15"],
+    "financial": {
+      "priceListId": "pl-standard",
+      "estimatedTotal": 99.00,
+      "currency": "USD",
+      "invoiceId": null
+    },
+    "tags": ["Digital Impression", "Rush"]
   }
 ]

@@ -535,7 +535,7 @@
   flex-direction: column;
   gap: 1rem;
   overflow-y: auto;
-  max-height: calc(100vh - 200px);
+  max-height: calc(100vh - 100px);
   padding-right: 0.5rem;
 }
 
@@ -548,7 +548,7 @@
   flex-direction: column;
   min-width: 100%;
   width: 100%;
-  min-height: 200px;
+  min-height: 100px;
   transition: all 0.2s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
@@ -717,6 +717,16 @@
 .stopItem:hover {
   background: var(--bg-hover);
   border-color: var(--primary-200);
+}
+
+.stopDragging {
+  opacity: 0.5;
+  cursor: grabbing !important;
+}
+
+.stopHover {
+  border: 2px dashed var(--primary);
+  background: rgba(59, 130, 246, 0.05);
 }
 
 .seqBadge {

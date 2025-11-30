@@ -489,6 +489,90 @@ export const LogisticsProvider = ({ children }) => {
     }
   }, [routes]);
 
+  // Manually reorder stops in a route
+  const reorderStops = useCallback(async (routeId, fromIndex, toIndex) => {
+    try {
+      const route = routes.find(r => r.id === routeId);
+      if (!route) throw new Error('Route not found');
+
+      // Don't allow reordering completed/delivered stops
+      const fromStop = route.stops[fromIndex];
+      const toStop = route.stops[toIndex];
+      
+      if (fromStop.status === 'Completed' || fromStop.status === 'Delivered') {
+        return; // Don't move completed stops
+      }
+      
+      if (toStop.status === 'Completed' || toStop.status === 'Delivered') {
+        return; // Don't allow inserting into completed positions
+      }
+
+      const updatedStops = [...route.stops];
+      const [movedStop] = updatedStops.splice(fromIndex, 1);
+      updatedStops.splice(toIndex, 0, movedStop);
+
+      // Update route with new stop order
+      const updatedRoute = await MockService.logistics.routes.update(routeId, {
+        stops: updatedStops
+      });
+
+      setRoutes(prev => prev.map(r => r.id === routeId ? updatedRoute : r));
+      
+      // Clear cache
+      routeCache.delete(routeId);
+      
+      return updatedRoute;
+    } catch (err) {
+      console.error('Failed to reorder stops:', err);
+      throw err;
+    }
+  }, [routes]);
+
+  const moveStopBetweenRoutes = useCallback(async (fromRouteId, toRouteId, stopId) => {
+    try {
+      const fromRoute = routes.find(r => r.id === fromRouteId);
+      const toRoute = routes.find(r => r.id === toRouteId);
+      
+      if (!fromRoute || !toRoute) throw new Error('Route not found');
+      
+      const stop = fromRoute.stops.find(s => s.id === stopId);
+      if (!stop) throw new Error('Stop not found');
+      
+      // Don't allow moving completed/delivered stops
+      if (stop.status === 'Completed' || stop.status === 'Delivered') {
+        throw new Error('Cannot move completed or delivered stops');
+      }
+      
+      // Remove from source route
+      const updatedFromStops = fromRoute.stops.filter(s => s.id !== stopId);
+      const updatedFromRoute = await MockService.logistics.routes.update(fromRouteId, {
+        stops: updatedFromStops
+      });
+      
+      // Add to destination route
+      const updatedToStops = [...toRoute.stops, stop];
+      const updatedToRoute = await MockService.logistics.routes.update(toRouteId, {
+        stops: updatedToStops
+      });
+      
+      // Update state
+      setRoutes(prev => prev.map(r => {
+        if (r.id === fromRouteId) return updatedFromRoute;
+        if (r.id === toRouteId) return updatedToRoute;
+        return r;
+      }));
+      
+      // Clear cache
+      routeCache.delete(fromRouteId);
+      routeCache.delete(toRouteId);
+      
+      return { fromRoute: updatedFromRoute, toRoute: updatedToRoute };
+    } catch (err) {
+      console.error('Failed to move stop between routes:', err);
+      throw err;
+    }
+  }, [routes]);
+
   // ============================================================
   // SELECTORS (Section 4.2.2 - Memoized selectors)
   // ============================================================
@@ -499,10 +583,10 @@ export const LogisticsProvider = ({ children }) => {
     if (!cases || cases.length === 0) return [];
     
     // Find cases that are ready for delivery:
-    // - Status is "stage-qc" (Quality Control completed, ready to ship)
+    // - Status is "stage-shipping" (Ready to Ship - QC completed, bagged and tagged)
     // - Not yet assigned to any route
     const readyToShipCases = cases.filter(c => 
-      c.status === 'stage-qc' && 
+      c.status === 'stage-shipping' && 
       !routes.some(r => r.stops.some(s => 
         s.type === 'Delivery' && 
         s.deliveryManifest?.some(d => d.caseId === c.id)
@@ -697,6 +781,8 @@ export const LogisticsProvider = ({ children }) => {
     assignToRoute,
     assignMultipleTasks,
     optimizeRouteStops,
+    reorderStops,
+    moveStopBetweenRoutes,
     skipRouteStop,
     
     // Filter & Sort Actions
@@ -733,6 +819,8 @@ export const LogisticsProvider = ({ children }) => {
     assignToRoute,
     assignMultipleTasks,
     optimizeRouteStops,
+    reorderStops,
+    moveStopBetweenRoutes,
     skipRouteStop,
     setDateFilter,
     setStatusFilter,
