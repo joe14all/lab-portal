@@ -8,6 +8,7 @@
     "description": "Base pricing for Full Service Lab accounts.",
     "items": [
       { "productId": "prod-zirc-crn", "price": 99.00 },
+      { "productId": "prod-emax-ven", "price": 129.00 },
       { "productId": "prod-pfm", "price": 129.00 },
       { "productId": "prod-denture-comp", "price": 199.00 },
       { "productId": "fee-rush", "price": 25.00 },
@@ -28,6 +29,7 @@
     "description": "Premium pricing including expedited handling for top-tier clients.",
     "items": [
       { "productId": "prod-zirc-crn", "price": 119.00 },
+      { "productId": "prod-emax-ven", "price": 149.00 },
       { "productId": "prod-pfm", "price": 149.00 },
       { "productId": "prod-denture-comp", "price": 229.00 },
       { "productId": "fee-rush", "price": 0.00 }, 

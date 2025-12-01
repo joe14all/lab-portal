@@ -81,9 +81,29 @@ class MockEntity {
 
     if (index === -1) throw new Error(`${this.name} with ID ${id} not found.`);
 
+    const currentItem = this.data[index];
+
+    // OPTIMISTIC LOCKING: Check version if provided in updates
+    if (updates.version !== undefined && currentItem.version !== undefined) {
+      if (updates.version !== currentItem.version) {
+        const error = new Error(
+          `Concurrency conflict: ${this.name} ${id} was modified by another user. ` +
+            `Expected version ${updates.version}, but found ${currentItem.version}.`
+        );
+        error.name = "ConcurrencyError";
+        error.entityId = id;
+        error.expectedVersion = updates.version;
+        error.actualVersion = currentItem.version;
+        throw error;
+      }
+    }
+
     const updatedItem = {
-      ...this.data[index],
+      ...currentItem,
       ...updates,
+      // Increment version if it exists
+      version:
+        currentItem.version !== undefined ? currentItem.version + 1 : undefined,
       updatedAt: new Date().toISOString(),
     };
 

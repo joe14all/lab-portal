@@ -24,6 +24,7 @@
         "tooth": 14,
         "type": "Crown",
         "material": "Zirconia Full Contour",
+        "productId": "prod-zirc-crn",
         "shade": "A2",
         "stumpShade": "ND1",
         "instructions": "Light occlusion, broad contacts.",
@@ -37,7 +38,8 @@
       "currency": "USD",
       "invoiceId": null
     },
-    "tags": ["Digital Impression", "Rush"]
+    "tags": ["Digital Impression", "Rush"],
+    "version": 0
   },
   {
     "id": "case-5002",
@@ -62,6 +64,7 @@
         "tooth": 8,
         "type": "Veneer",
         "material": "E.max",
+        "productId": "prod-emax-ven",
         "shade": "BL1",
         "instructions": "Match texture of adjacent #9.",
         "status": "stage-hold",
@@ -73,7 +76,8 @@
       "priceListId": "pl-standard",
       "estimatedTotal": 129.00,
       "currency": "USD"
-    }
+    },
+    "version": 0
   },
   {
     "id": "case-5003",
@@ -102,6 +106,7 @@
         "tooth": 30, 
         "type": "Implant Crown", 
         "material": "Zirconia w/ TiBase",
+        "productId": "prod-imp-screw",
         "status": "stage-shipped"
       }
     ],
@@ -109,7 +114,8 @@
       "invoiceId": "inv-2025-005",
       "finalTotal": 250.00,
       "currency": "USD"
-    }
+    },
+    "version": 0
   },
   {
     "id": "case-5004",
@@ -136,6 +142,7 @@
         "tooth": null,
         "type": "Complete Denture",
         "material": "High Impact Acrylic",
+        "productId": "prod-denture-comp",
         "shade": "A3",
         "instructions": "Upper Arch. Premium Teeth.",
         "status": "stage-received"
@@ -147,7 +154,8 @@
       "currency": "USD",
       "invoiceId": null
     },
-    "tags": ["Removable", "Premium Teeth"]
+    "tags": ["Removable", "Premium Teeth"],
+    "version": 0
   },
   {
     "id": "case-5005",
@@ -173,6 +181,7 @@
         "tooth": 19,
         "type": "Implant Crown",
         "material": "Zirconia Screw-Retained",
+        "productId": "prod-imp-screw",
         "shade": "A3.5",
         "instructions": "Screw access hole on occlusal.",
         "status": "stage-milling"
@@ -184,7 +193,8 @@
       "currency": "USD",
       "invoiceId": null
     },
-    "tags": ["Implant", "Digital Workflow"]
+    "tags": ["Implant", "Digital Workflow"],
+    "version": 0
   },
   {
     "id": "case-5006",
@@ -210,6 +220,7 @@
         "tooth": null,
         "type": "Nightguard",
         "material": "Hard/Soft Thermal",
+        "productId": "prod-nightguard",
         "shade": "Clear",
         "instructions": "Upper arch.",
         "status": "stage-finishing"
@@ -221,7 +232,8 @@
       "currency": "USD",
       "invoiceId": null
     },
-    "tags": ["Ortho", "Splint"]
+    "tags": ["Ortho", "Splint"],
+    "version": 0
   },
   {
     "id": "case-5007",
@@ -247,6 +259,7 @@
         "tooth": 3,
         "type": "Bridge Unit (Retainer)",
         "material": "PFM (High Noble)",
+        "productId": "prod-pfm",
         "shade": "C2",
         "status": "stage-design"
       },
@@ -255,6 +268,7 @@
         "tooth": 4,
         "type": "Bridge Unit (Pontic)",
         "material": "PFM (High Noble)",
+        "productId": "prod-pfm",
         "shade": "C2",
         "status": "stage-design"
       },
@@ -263,6 +277,7 @@
         "tooth": 5,
         "type": "Bridge Unit (Retainer)",
         "material": "PFM (High Noble)",
+        "productId": "prod-pfm",
         "shade": "C2",
         "status": "stage-design"
       }
@@ -273,7 +288,8 @@
       "currency": "USD",
       "invoiceId": null
     },
-    "tags": ["Fixed", "Complex"]
+    "tags": ["Fixed", "Complex"],
+    "version": 0
   },
   {
     "id": "case-5008",
@@ -299,6 +315,7 @@
         "tooth": null,
         "type": "Cast Partial Frame",
         "material": "Chrome Cobalt",
+        "productId": "prod-partial-cast",
         "shade": "N/A",
         "instructions": "Lower Arch. Kennedy Class I.",
         "status": "stage-qc"
@@ -310,7 +327,8 @@
       "currency": "USD",
       "invoiceId": null
     },
-    "tags": ["Removable", "Metal"]
+    "tags": ["Removable", "Metal"],
+    "version": 0
   },
   {
     "id": "case-5009",
@@ -337,6 +355,7 @@
         "tooth": 12,
         "type": "Crown",
         "material": "Zirconia Full Contour",
+        "productId": "prod-zirc-crn",
         "shade": "A1",
         "stumpShade": "ND2",
         "instructions": "Ready to ship to clinic",
@@ -350,6 +369,7 @@
       "currency": "USD",
       "invoiceId": null
     },
-    "tags": ["Digital Impression", "Rush"]
+    "tags": ["Digital Impression", "Rush"],
+    "version": 0
   }
 ]

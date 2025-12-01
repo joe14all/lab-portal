@@ -15,15 +15,50 @@ import detailStyles from '../cases/CaseDetail.module.css';
 
 const CaseList = () => {
   const navigate = useNavigate();
-  const { cases, stages, loading: labLoading, createCase } = useLab();
+  const { cases, stages, loading: labLoading, createCase, bulkUpdateCaseStatus, checkDuplicateCase } = useLab();
   const { doctors, clinics, loading: crmLoading } = useCrm();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [showBulkStatusModal, setShowBulkStatusModal] = useState(false);
+  const [bulkTargetStatus, setBulkTargetStatus] = useState('');
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
+  const [activePreset, setActivePreset] = useState(null);
 
   const isLoading = labLoading || crmLoading;
+
+  // Saved filter presets
+  const FILTER_PRESETS = {
+    MY_RUSH: {
+      label: 'My Rush Cases',
+      filter: (c) => {
+        const dueDate = new Date(c.dates?.due);
+        const today = new Date();
+        const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+        return daysUntilDue <= 2 && c.status !== 'stage-shipped' && c.status !== 'stage-delivered';
+      }
+    },
+    ON_HOLD: {
+      label: 'On Hold This Week',
+      filter: (c) => {
+        if (c.status !== 'stage-hold') return false;
+        const heldDate = new Date(c.updatedAt || c.createdAt);
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        return heldDate >= weekAgo;
+      }
+    },
+    READY_TO_SHIP: {
+      label: 'Ready to Ship',
+      filter: (c) => c.status === 'stage-ready-to-ship'
+    },
+    IN_PRODUCTION: {
+      label: 'In Production',
+      filter: (c) => ['stage-design', 'stage-milling', 'stage-finishing'].includes(c.status)
+    }
+  };
 
   const filteredCases = useMemo(() => {
     if (!cases) return [];
@@ -54,10 +89,11 @@ const CaseList = () => {
         item.doctorName.toLowerCase().includes(searchLower);
       const matchesStatus = statusFilter === 'All' || item.status === statusFilter;
       const matchesStageFilter = item.status !== 'stage-production' || statusFilter === 'stage-production' || statusFilter === 'All';
+      const matchesPreset = !activePreset || FILTER_PRESETS[activePreset].filter(item);
 
-      return matchesSearch && matchesStatus && matchesStageFilter;
+      return matchesSearch && matchesStatus && matchesStageFilter && matchesPreset;
     });
-  }, [cases, doctors, clinics, stages, searchQuery, statusFilter]);
+  }, [cases, doctors, clinics, stages, searchQuery, statusFilter, activePreset]);
 
   const selectedCases = useMemo(() => {
     return filteredCases.filter(c => selectedIds.includes(c.id));
@@ -74,13 +110,28 @@ const CaseList = () => {
   
   const handleNewCaseSubmit = useCallback(async (newCaseData) => {
     try {
+        // Check for duplicates
+        const duplicates = checkDuplicateCase(newCaseData);
+        
+        if (duplicates.length > 0) {
+          const confirmCreate = window.confirm(
+            `Warning: Found ${duplicates.length} similar case(s) for this patient and doctor today.\n\n` +
+            `Existing case(s): ${duplicates.map(d => d.caseNumber).join(', ')}\n\n` +
+            `Do you want to create a new case anyway?`
+          );
+          
+          if (!confirmCreate) {
+            return; // Cancel creation
+          }
+        }
+
         const newCase = await createCase(newCaseData);
         setShowCreateModal(false);
         navigate(`/cases/${newCase.id}`); 
     } catch (error) {
         console.error("Failed to create new case:", error);
     }
-  }, [createCase, navigate]);
+  }, [createCase, navigate, checkDuplicateCase]);
 
   const handleBatchPrint = () => {
     window.print();
@@ -88,6 +139,37 @@ const CaseList = () => {
 
   const handleClearSelection = () => {
     setSelectedIds([]);
+  };
+
+  const handleBulkStatusUpdate = () => {
+    setShowBulkStatusModal(true);
+  };
+
+  const handleBulkStatusSubmit = async () => {
+    if (!bulkTargetStatus) return;
+    
+    setIsBulkUpdating(true);
+    try {
+      const result = await bulkUpdateCaseStatus(selectedIds, bulkTargetStatus);
+      
+      if (result.errors.length > 0) {
+        alert(`Updated ${result.success.length}/${result.total} cases. ${result.errors.length} failed.`);
+      } else {
+        alert(`Successfully updated ${result.success.length} cases to ${bulkTargetStatus}`);
+      }
+      
+      setSelectedIds([]);
+      setShowBulkStatusModal(false);
+      setBulkTargetStatus('');
+    } catch (error) {
+      alert(`Bulk update failed: ${error.message}`);
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+
+  const handlePresetClick = (presetKey) => {
+    setActivePreset(activePreset === presetKey ? null : presetKey);
   };
 
   if (isLoading) {
@@ -135,6 +217,9 @@ const CaseList = () => {
           </div>
           
           <div className={styles.batchActions}>
+            <button className="button secondary" onClick={handleBulkStatusUpdate}>
+              Bulk Status Update
+            </button>
             <button className="button secondary" onClick={handleBatchPrint}>
               <IconPrinter width="16" height="16" style={{marginRight: '0.5rem'}}/> 
               Print Tickets
@@ -152,6 +237,19 @@ const CaseList = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by case #, patient, or doctor..."
             />
+          </div>
+
+          {/* Filter Presets */}
+          <div className={styles.presetButtons}>
+            {Object.entries(FILTER_PRESETS).map(([key, preset]) => (
+              <button
+                key={key}
+                className={`${styles.presetBtn} ${activePreset === key ? styles.presetActive : ''}`}
+                onClick={() => handlePresetClick(key)}
+              >
+                {preset.label}
+              </button>
+            ))}
           </div>
 
           <div className={styles.filterGroup}>
@@ -204,6 +302,52 @@ const CaseList = () => {
               onSubmit={handleNewCaseSubmit}
               onCancel={() => setShowCreateModal(false)}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Status Update Modal */}
+      {showBulkStatusModal && (
+        <div className={detailStyles.modalBackdrop}>
+          <div className={detailStyles.modalContent} style={{maxWidth: '500px'}}>
+            <div className={detailStyles.modalHeader}>
+              <h3>Bulk Status Update</h3>
+              <button className="icon-button" onClick={() => setShowBulkStatusModal(false)}>
+                <IconClose width="24" height="24" />
+              </button>
+            </div>
+            <div style={{padding: '1.5rem'}}>
+              <p style={{marginBottom: '1rem'}}>
+                Update {selectedIds.length} selected case{selectedIds.length > 1 ? 's' : ''} to:
+              </p>
+              <select
+                value={bulkTargetStatus}
+                onChange={(e) => setBulkTargetStatus(e.target.value)}
+                className={styles.selectInput}
+                style={{width: '100%', marginBottom: '1.5rem'}}
+              >
+                <option value="">Select Status...</option>
+                {stages.map(stage => (
+                  <option key={stage.id} value={stage.id}>{stage.label}</option>
+                ))}
+              </select>
+              <div style={{display: 'flex', gap: '0.75rem', justifyContent: 'flex-end'}}>
+                <button 
+                  className="button secondary" 
+                  onClick={() => setShowBulkStatusModal(false)}
+                  disabled={isBulkUpdating}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="button primary" 
+                  onClick={handleBulkStatusSubmit}
+                  disabled={!bulkTargetStatus || isBulkUpdating}
+                >
+                  {isBulkUpdating ? 'Updating...' : 'Update Cases'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

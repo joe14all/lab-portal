@@ -19,8 +19,14 @@ const DEFAULT_FORM_VALUES = {
   units: [] 
 };
 
-// --- VALIDATION SCHEMA ---
-// FIX: Added .nullable() to optional fields to allow 'null' values from form logic
+// --- VALIDATION SCHEMAS ---
+// Minimal schema for draft mode (only requires essential fields)
+const draftSchema = z.object({
+  patientName: z.string().min(1, "Patient name is required"),
+  clinicId: z.string().min(1, "Clinic is required")
+});
+
+// Full schema for complete submission
 const schema = z.object({
   patientName: z.string().min(1, "Patient name is required"),
   patientAge: z.any().optional(),
@@ -48,11 +54,12 @@ const schema = z.object({
   path: ["dueDate"],
 });
 
-const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
+const CaseForm = ({ initialData = null, onSubmit, onCancel, onSaveDraft }) => {
   const { clinics, doctors, products, addons } = useCrm();
   const { getWorkflowsForCategory } = useLab();
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState(null);
+  const [isDraft, setIsDraft] = useState(initialData?.isDraft || false);
 
   // --- Helpers ---
   const getProductDetails = (productName) => {
@@ -203,6 +210,37 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
     });
   };
 
+  const handleSaveDraft = (e) => {
+    e.preventDefault();
+    setFormError(null);
+    
+    // Validate with minimal schema
+    const result = draftSchema.safeParse(formData);
+    if (!result.success) {
+      const fieldErrors = {};
+      result.error.issues.forEach(issue => {
+        fieldErrors[issue.path[0]] = issue.message;
+      });
+      setErrors(fieldErrors);
+      setFormError("Please provide at least patient name and clinic.");
+      return;
+    }
+
+    const draftSubmission = {
+      ...formData,
+      isDraft: true,
+      patient: {
+        name: formData.patientName,
+        age: formData.patientAge,
+        gender: formData.patientGender
+      }
+    };
+
+    if (onSaveDraft) {
+      onSaveDraft(draftSubmission);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setFormError(null);
@@ -282,10 +320,18 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel }) => {
             {formError}
           </span>
         )}
+        {isDraft && (
+          <span className={styles.draftBadge}>Draft Mode</span>
+        )}
         
         <button type="button" className="button secondary" onClick={onCancel}>
           Cancel
         </button>
+        {onSaveDraft && (
+          <button type="button" className="button secondary" onClick={handleSaveDraft}>
+            Save as Draft
+          </button>
+        )}
         <button type="submit" className="button primary">
           {initialData ? 'Save Changes' : 'Create Case'}
         </button>

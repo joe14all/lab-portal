@@ -1,0 +1,444 @@
+# ============================================================================
+# AWS AppSync GraphQL Schema - Cases Domain
+# Lab Portal EHR System
+# ============================================================================
+#
+# This schema implements:
+# - Point 1: Optimistic locking via version field
+# - Point 2: Product catalog linkage via productId
+# - Point 3: Business rule validation (hold prevents shipment)
+# - Real-time subscriptions for case updates
+#
+# Last Updated: November 30, 2025
+# ============================================================================
+
+# ============================================================================
+# CUSTOM SCALARS
+# ============================================================================
+
+scalar AWSDateTime
+scalar AWSJSON
+scalar AWSEmail
+
+# ============================================================================
+# ENUMS
+# ============================================================================
+
+enum CaseStage {
+  STAGE_NEW
+  STAGE_RECEIVED
+  STAGE_MODEL
+  STAGE_DESIGN
+  STAGE_WAXUP
+  STAGE_MILLING
+  STAGE_CASTING
+  STAGE_PROCESSING
+  STAGE_FINISHING
+  STAGE_TRYIN
+  STAGE_QC
+  STAGE_HOLD
+  STAGE_SHIPPING
+  STAGE_SHIPPED
+  STAGE_DELIVERED
+}
+
+enum CaseFileCategoryEnum {
+  INPUT_SCAN
+  INPUT_PHOTO
+  INPUT_PRESCRIPTION
+  INPUT_REFERENCE
+  DESIGN_CAD
+  DESIGN_ITERATION
+  PRODUCTION_NC_FILE
+  PRODUCTION_QC_REPORT
+  SHIPPING_PACKING_SLIP
+  SHIPPING_LABEL
+}
+
+enum MessageSenderType {
+  LAB_TECH
+  LAB_ADMIN
+  DOCTOR
+  CLINIC_STAFF
+  SYSTEM
+}
+
+# ============================================================================
+# INPUT TYPES
+# ============================================================================
+
+input CaseFilterInput {
+  labId: ID!
+  status: CaseStage
+  clinicId: ID
+  doctorId: ID
+  dueDateFrom: AWSDateTime
+  dueDateTo: AWSDateTime
+  searchTerm: String
+}
+
+input CreateCaseInput {
+  labId: ID!
+  clinicId: ID!
+  doctorId: ID!
+  patient: PatientInput!
+  units: [CaseUnitInput!]!
+  dueDate: AWSDateTime!
+  tags: [String!]
+  panNumbers: [String!]
+  priceListId: ID
+}
+
+input UpdateCaseInput {
+  id: ID!
+  version: Int! # Point 1: Optimistic locking
+  status: CaseStage
+  holdReason: String
+  heldAtStageId: CaseStage
+  dueDate: AWSDateTime
+  tags: [String!]
+  panNumbers: [String!]
+}
+
+input UpdateCaseStatusInput {
+  caseId: ID!
+  version: Int! # Point 1: Optimistic locking
+  newStage: CaseStage!
+  unitId: ID # Optional: update specific unit vs all units
+  holdReason: String
+}
+
+input PatientInput {
+  name: String!
+  age: Int
+  gender: String
+  chartNumber: String
+}
+
+input CaseUnitInput {
+  tooth: Int
+  type: String!
+  material: String!
+  productId: ID # Point 2: Product catalog linkage
+  shade: String
+  stumpShade: String
+  instructions: String
+}
+
+input AddCaseFileInput {
+  caseId: ID!
+  fileName: String!
+  fileSize: Int!
+  contentType: String!
+  category: CaseFileCategoryEnum!
+  subCategory: String
+  s3Key: String!
+  sha256Hash: String # Point 2: File integrity verification
+  metadata: AWSJSON
+}
+
+input AddCaseMessageInput {
+  caseId: ID!
+  content: String!
+  isInternal: Boolean!
+}
+
+# ============================================================================
+# TYPES
+# ============================================================================
+
+type Case {
+  id: ID!
+  labId: ID!
+  caseNumber: String!
+  clinicId: ID!
+  doctorId: ID!
+
+  # Patient data
+  patient: Patient!
+
+  # Status and workflow
+  status: CaseStage!
+  holdReason: String
+  heldAtStageId: CaseStage
+
+  # Units (restorations)
+  units: [CaseUnit!]!
+
+  # Dates
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  receivedAt: AWSDateTime
+  dueDate: AWSDateTime!
+  shippedAt: AWSDateTime
+
+  # Physical tracking
+  panNumbers: [String!]
+
+  # Financial
+  financial: CaseFinancial!
+
+  # Metadata
+  tags: [String!]
+
+  # Point 1: Optimistic locking
+  version: Int!
+
+  # Relationships (resolver fields)
+  clinic: Clinic
+  doctor: Doctor
+  files: [CaseFile!]
+  messages: [CaseMessage!]
+  workflow: Workflow
+}
+
+type CaseUnit {
+  id: ID!
+  caseId: ID!
+  tooth: Int
+  type: String!
+  material: String!
+
+  # Point 2: Product catalog linkage
+  productId: ID
+  product: Product # Resolver field
+  shade: String
+  stumpShade: String
+  instructions: String
+  status: CaseStage!
+  holdReason: String
+
+  # Metadata
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type CaseFile {
+  id: ID!
+  labId: ID!
+  caseId: ID!
+  fileName: String!
+  fileSize: Int!
+  contentType: String!
+  category: CaseFileCategoryEnum!
+  subCategory: String
+
+  # Storage
+  s3Key: String!
+  s3Bucket: String!
+  presignedUrl: String # Resolver field (15min TTL)
+  # Security & integrity
+  sha256Hash: String
+  encryptionKeyId: String
+
+  # Versioning
+  version: Int!
+  isLatest: Boolean!
+  parentFileId: ID
+
+  # Metadata
+  metadata: AWSJSON
+  uploadedBy: ID!
+  uploadedAt: AWSDateTime!
+
+  # Flags
+  isImmutable: Boolean! # Original scans cannot be deleted
+}
+
+type CaseMessage {
+  id: ID!
+  labId: ID!
+  caseId: ID!
+  senderId: ID!
+  senderName: String!
+  senderType: MessageSenderType!
+  content: String!
+  isInternal: Boolean! # Lab-only vs visible to clinic
+  createdAt: AWSDateTime!
+
+  # Attachments
+  attachmentIds: [ID!]
+  attachments: [CaseFile!] # Resolver field
+}
+
+type Patient {
+  name: String!
+  age: Int
+  gender: String
+  chartNumber: String
+}
+
+type CaseFinancial {
+  priceListId: ID!
+  estimatedTotal: Float!
+  currency: String!
+  invoiceId: ID
+  invoice: Invoice # Resolver field
+}
+
+# ============================================================================
+# REFERENCE TYPES (Defined in other schemas)
+# ============================================================================
+
+type Clinic {
+  id: ID!
+  name: String!
+  email: AWSEmail
+}
+
+type Doctor {
+  id: ID!
+  firstName: String!
+  lastName: String!
+  email: AWSEmail
+}
+
+type Product {
+  id: ID!
+  sku: String!
+  name: String!
+  category: String!
+  materialId: ID
+  turnaroundDays: Int!
+}
+
+type Workflow {
+  id: ID!
+  name: String!
+  category: String!
+  stages: [ID!]!
+}
+
+type Invoice {
+  id: ID!
+  caseId: ID!
+  total: Float!
+  status: String!
+}
+
+# ============================================================================
+# RESPONSE TYPES
+# ============================================================================
+
+type CaseConnection {
+  items: [Case!]!
+  nextToken: String
+  total: Int
+}
+
+type PresignedUploadUrl {
+  uploadUrl: String!
+  s3Key: String!
+  expiresAt: AWSDateTime!
+}
+
+type UpdateCaseStatusResponse {
+  case: Case!
+  # Point 3: Business rule validation messages
+  warnings: [String!]
+}
+
+# ============================================================================
+# QUERIES
+# ============================================================================
+
+type Query {
+  # Get single case
+  getCase(id: ID!): Case
+
+  # List cases with filtering and pagination
+  listCases(
+    filter: CaseFilterInput!
+    limit: Int
+    nextToken: String
+  ): CaseConnection!
+
+  # Get cases by clinic
+  getCasesByClinic(
+    clinicId: ID!
+    status: CaseStage
+    limit: Int
+    nextToken: String
+  ): CaseConnection!
+
+  # Get cases by status (for workflow boards)
+  getCasesByStatus(
+    labId: ID!
+    status: CaseStage!
+    limit: Int
+    nextToken: String
+  ): CaseConnection!
+
+  # Get case files
+  getCaseFiles(caseId: ID!): [CaseFile!]!
+
+  # Get case messages
+  getCaseMessages(caseId: ID!): [CaseMessage!]!
+
+  # Generate presigned URL for file upload
+  generateUploadUrl(
+    caseId: ID!
+    fileName: String!
+    contentType: String!
+  ): PresignedUploadUrl!
+}
+
+# ============================================================================
+# MUTATIONS
+# ============================================================================
+
+type Mutation {
+  # Create new case
+  createCase(input: CreateCaseInput!): Case!
+
+  # Update case metadata
+  updateCase(input: UpdateCaseInput!): Case!
+
+  # Update case/unit status with business rule validation
+  # Point 3: Throws error if trying to ship case with held units
+  updateCaseStatus(input: UpdateCaseStatusInput!): UpdateCaseStatusResponse!
+
+  # Add file to case
+  addCaseFile(input: AddCaseFileInput!): CaseFile!
+
+  # Add message to case
+  addCaseMessage(input: AddCaseMessageInput!): CaseMessage!
+
+  # Delete case (soft delete, requires admin permission)
+  deleteCase(id: ID!, version: Int!): Boolean!
+}
+
+# ============================================================================
+# SUBSCRIPTIONS
+# ============================================================================
+
+type Subscription {
+  # Real-time case updates
+  # Triggered by: updateCase, updateCaseStatus
+  onCaseUpdated(labId: ID!, caseId: ID!): Case
+    @aws_subscribe(mutations: ["updateCase", "updateCaseStatus"])
+
+  # Real-time file uploads
+  # Triggered by: addCaseFile
+  onCaseFileAdded(caseId: ID!): CaseFile
+    @aws_subscribe(mutations: ["addCaseFile"])
+
+  # Real-time messages
+  # Triggered by: addCaseMessage
+  onCaseMessageAdded(caseId: ID!): CaseMessage
+    @aws_subscribe(mutations: ["addCaseMessage"])
+
+  # Lab-wide case status changes (for dashboard)
+  onCaseStatusChanged(labId: ID!): Case
+    @aws_subscribe(mutations: ["updateCaseStatus"])
+}
+
+# ============================================================================
+# SCHEMA DEFINITION
+# ============================================================================
+
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useLab, useAuth } from '../../../contexts';
+import { useLab, useAuth, useToast } from '../../../contexts';
 import Modal from '../../common/Modal'; 
 import { 
   IconCheck, 
@@ -57,6 +57,7 @@ const detectWorkflow = (activeCase) => {
 const CaseDetailStepper = ({ activeCase, stages }) => {
   const { updateCaseStatus, workflows } = useLab(); 
   const { hasAnyPermission } = useAuth();
+  const { addToast } = useToast();
   const [showHoldModal, setShowHoldModal] = useState(false);
 
   const currentStatus = activeCase?.status;
@@ -105,7 +106,7 @@ const CaseDetailStepper = ({ activeCase, stages }) => {
   const canEditStatus = hasAnyPermission(['ALL_ACCESS', 'CASE_MANAGE', 'CASE_EDIT_PRODUCTION']);
 
   // --- Handlers ---
-  const handleStepClick = (stage, index) => {
+  const handleStepClick = async (stage, index) => {
     // Hold Badge Interaction
     if (isHold && index === safeActiveIndex) {
       setShowHoldModal(true);
@@ -118,7 +119,18 @@ const CaseDetailStepper = ({ activeCase, stages }) => {
     if (index < safeActiveIndex && !isHold) {
       if (!window.confirm(`Roll back to ${stage.label}?`)) return;
     }
-    updateCaseStatus(activeCase.id, stage.id);
+    
+    // Point 3: Catch shipment prevention errors
+    try {
+      await updateCaseStatus(activeCase.id, stage.id);
+    } catch (error) {
+      if (error.message && error.message.includes('Cannot ship case')) {
+        addToast(error.message, 'error', 6000);
+      } else {
+        addToast('Failed to update case status', 'error', 4000);
+      }
+      console.error('Failed to update case status:', error);
+    }
   };
 
   const getStepStateClass = (index) => {

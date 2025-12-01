@@ -9,6 +9,15 @@
     "turnaroundDays": 5
   },
   {
+    "id": "prod-emax-ven",
+    "labId": "lab-001",
+    "sku": "EMAX-VEN",
+    "name": "E.max Veneer",
+    "category": "Crown & Bridge",
+    "materialId": "mat-emax-ingot",
+    "turnaroundDays": 7
+  },
+  {
     "id": "prod-pfm",
     "labId": "lab-001",
     "sku": "PFM-STD",

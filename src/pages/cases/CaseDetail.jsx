@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useLab, useAuth, useCrm } from '../../contexts'; 
+import { useLab, useAuth, useCrm, useToast } from '../../contexts'; 
 import CaseForm from '../../components/cases/CaseForm'; 
 import { IconClose } from '../../layouts/components/LabIcons';
 import styles from './CaseDetail.module.css';
@@ -24,9 +24,17 @@ const CaseDetail = () => {
 
   const { clinics, doctors, loading: crmLoading } = useCrm(); 
   const { user } = useAuth();
+  const { addToast } = useToast();
   
   const [showEditModal, setShowEditModal] = useState(false);
 
+  /**
+   * Handle case edit submission with optimistic locking
+   * If a concurrency error occurs, LabContext will:
+   * 1. Show a toast notification to the user
+   * 2. Automatically refresh the case with latest data
+   * 3. User can retry the operation with fresh data
+   */
   const handleCaseEditSubmit = useCallback(async (updates) => {
     try {
       // FIX: Removed unused 'result' variable assignment
@@ -34,6 +42,8 @@ const CaseDetail = () => {
       setShowEditModal(false);
     } catch (error) {
       console.error('Failed to save case updates:', error);
+      // Concurrency errors are handled in LabContext with toast notifications
+      // Keep modal open so user can retry with refreshed data
     }
   }, [caseId, updateCase]);
 
@@ -83,11 +93,24 @@ const CaseDetail = () => {
   }
 
   const handleEditClick = () => setShowEditModal(true);
-  const updateUnitStatus = (unitId, newStatus, holdReason = null) => {
-    // Pass 'holdReason' to context function. 
-    // We need to update the Context signature in the next step to handle this.
-    updateCaseStatus(activeCase.id, newStatus, unitId, holdReason);
-  };
+  
+  /**
+   * Update unit status with error handling for Point 3 business rule
+   * Catches shipment prevention errors and displays user-friendly toast
+   */
+  const updateUnitStatus = useCallback(async (unitId, newStatus, holdReason = null) => {
+    try {
+      await updateCaseStatus(activeCase.id, newStatus, unitId, holdReason);
+    } catch (error) {
+      // Point 3: Show user-friendly error when shipment blocked due to held units
+      if (error.message && error.message.includes('Cannot ship case')) {
+        addToast(error.message, 'error', 6000);
+      } else {
+        addToast('Failed to update case status', 'error', 4000);
+      }
+      console.error('Failed to update unit status:', error);
+    }
+  }, [activeCase, updateCaseStatus, addToast]);
 
   return (
     <>

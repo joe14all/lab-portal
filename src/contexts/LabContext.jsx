@@ -2,11 +2,13 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import { MockService } from '../_mock/service';
 import { useAuth } from './AuthContext';
+import { useToast } from './ToastContext';
 
 const LabContext = createContext(null);
 
 export const LabProvider = ({ children }) => {
   const { user, activeLab, hasRole } = useAuth();
+  const { addToast } = useToast();
 
   // --- State ---
   const [cases, setCases] = useState([]);
@@ -81,9 +83,103 @@ export const LabProvider = ({ children }) => {
     return true;
   }, [hasRole]);
 
+  /**
+   * Point 3: Prevent shipment if any unit is on hold
+   * Business Rule: Cases with held units cannot be shipped
+   * Prevents incomplete cases from being sent to clinics
+   * 
+   * @param {Array} units - Case units to check
+   * @param {string} targetStage - Stage attempting to transition to
+   * @throws {Error} If attempting to ship case with held units
+   */
+  const preventShipmentIfOnHold = useCallback((units = [], targetStage) => {
+    // Only validate when attempting to ship
+    const isShippingStage = targetStage === 'stage-shipping' || targetStage === 'stage-shipped';
+    if (!isShippingStage) return true;
+
+    // Check if any unit is on hold
+    const heldUnits = units.filter(u => u.status === 'stage-hold');
+    
+    if (heldUnits.length > 0) {
+      const heldTeeth = heldUnits
+        .map(u => u.tooth ? `#${u.tooth}` : u.id)
+        .join(', ');
+      
+      throw new Error(
+        `Cannot ship case: ${heldUnits.length} unit(s) on hold (${heldTeeth}). ` +
+        `Resolve hold issues before shipping.`
+      );
+    }
+
+    return true;
+  }, []);
+
   const getWorkflowsForCategory = useCallback((category) => {
     return workflows.filter(w => w.category === category);
   }, [workflows]);
+
+  /**
+   * Check for duplicate cases based on patient name, doctor, and date
+   * @param {Object} caseData - Case data to check
+   * @returns {Array} - Array of potential duplicates
+   */
+  const checkDuplicateCase = useCallback((caseData) => {
+    const patientName = caseData.patient?.name || caseData.patientName;
+    const doctorId = caseData.doctorId;
+    const receivedDate = caseData.dates?.received || caseData.receivedDate;
+    
+    if (!patientName || !doctorId || !receivedDate) return [];
+
+    const sameDayStart = new Date(receivedDate);
+    sameDayStart.setHours(0, 0, 0, 0);
+    const sameDayEnd = new Date(sameDayStart);
+    sameDayEnd.setHours(23, 59, 59, 999);
+
+    return cases.filter(c => {
+      const caseDate = new Date(c.dates?.received || c.createdAt);
+      return (
+        c.patient.name.toLowerCase() === patientName.toLowerCase() &&
+        c.doctorId === doctorId &&
+        caseDate >= sameDayStart &&
+        caseDate <= sameDayEnd
+      );
+    });
+  }, [cases]);
+
+  /**
+   * Calculate estimated price for case units using productId catalog linkage
+   * Replaces fragile string matching with direct product lookup
+   * @param {Array} units - Case units with productId references
+   * @param {string} priceListId - Price list to use for lookup
+   * @returns {number} Total estimated price
+   */
+  const calculateCasePrice = useCallback(async (units = [], priceListId) => {
+    if (!units || units.length === 0) return 0;
+    if (!priceListId) return 0;
+
+    try {
+      // Fetch price list from CRM service
+      const priceList = await MockService.crm.priceLists.getById(priceListId);
+      if (!priceList) return 0;
+
+      let total = 0;
+      
+      for (const unit of units) {
+        // Use productId for lookup (Point 2 implementation)
+        if (unit.productId) {
+          const priceItem = priceList.items?.find(item => item.productId === unit.productId);
+          if (priceItem) {
+            total += priceItem.price;
+          }
+        }
+      }
+
+      return total;
+    } catch (err) {
+      console.error("Failed to calculate case price", err);
+      return 0;
+    }
+  }, []);
 
 
   // ============================================================
@@ -155,24 +251,98 @@ export const LabProvider = ({ children }) => {
     }
   }, [activeLab, user]);
 
+  /**
+   * Bulk update status for multiple cases
+   * @param {Array<string>} caseIds - Array of case IDs to update
+   * @param {string} newStage - New stage to apply
+   * @returns {Promise<Object>} - Results with success/error counts
+   */
+  const bulkUpdateCaseStatus = useCallback(async (caseIds, newStage) => {
+    if (!caseIds || caseIds.length === 0) {
+      throw new Error("No cases selected for bulk update");
+    }
+
+    const results = [];
+    const errors = [];
+
+    for (const caseId of caseIds) {
+      try {
+        const currentCase = cases.find(c => c.id === caseId);
+        if (!currentCase) {
+          errors.push({ caseId, error: "Case not found" });
+          continue;
+        }
+
+        // Validate business rules
+        preventShipmentIfOnHold(currentCase.units, newStage);
+        validateTransition(currentCase.status, newStage);
+
+        // Update all units to new stage
+        const updatedUnits = currentCase.units.map(u => ({
+          ...u,
+          status: newStage
+        }));
+
+        const updatedCase = await MockService.cases.cases.update(caseId, {
+          units: updatedUnits,
+          status: newStage,
+          version: currentCase.version
+        });
+
+        results.push(updatedCase);
+      } catch (err) {
+        errors.push({ caseId, error: err.message });
+      }
+    }
+
+    // Update state with successful updates
+    if (results.length > 0) {
+      setCases(prev => prev.map(c => {
+        const updated = results.find(r => r.id === c.id);
+        return updated || c;
+      }));
+    }
+
+    return { 
+      success: results, 
+      errors,
+      total: caseIds.length 
+    };
+  }, [cases, preventShipmentIfOnHold, validateTransition]);
+
   const createCase = useCallback(async (newCaseData) => {
     if (!activeLab) return;
     try {
+      // Prepare units with IDs
+      const preparedUnits = (newCaseData.units || []).map((unit, idx) => ({
+        id: `unit-${Date.now()}-${idx}`,
+        ...unit,
+        status: 'stage-new'
+      }));
+
+      // Calculate estimated total using productId lookups (Point 2)
+      const priceListId = newCaseData.financial?.priceListId || 'pl-standard-2025';
+      const estimatedTotal = await calculateCasePrice(preparedUnits, priceListId);
+
       const newCase = await MockService.cases.cases.create({
         ...newCaseData,
         labId: activeLab.id,
         caseNumber: `2025-${Math.floor(Math.random() * 10000)}`,
         status: 'stage-new',
-        units: (newCaseData.units || []).map((unit, idx) => ({
-           id: `unit-${Date.now()}-${idx}`,
-           ...unit,
-           status: 'stage-new'
-        })),
+        version: 0, // Initialize version for optimistic locking
+        units: preparedUnits,
         dates: {
           created: new Date().toISOString(),
           received: new Date().toISOString(),
           due: newCaseData.dates?.due || null, 
           shipped: null
+        },
+        financial: {
+          ...newCaseData.financial,
+          priceListId,
+          estimatedTotal, // Auto-calculated from product catalog
+          currency: newCaseData.financial?.currency || 'USD',
+          invoiceId: null
         },
         systemInfo: { createdBy: user?.id || 'system' }
       });
@@ -183,18 +353,42 @@ export const LabProvider = ({ children }) => {
       console.error("Failed to create case", err);
       throw err;
     }
-  }, [activeLab, user]);
+  }, [activeLab, user, calculateCasePrice]);
 
   const updateCase = useCallback(async (caseId, updates) => {
     try {
-      const updatedCase = await MockService.cases.cases.update(caseId, updates);
+      const currentCase = cases.find(c => c.id === caseId);
+      if (!currentCase) throw new Error("Case not found");
+
+      // Include current version for optimistic locking
+      const updatesWithVersion = {
+        ...updates,
+        version: currentCase.version
+      };
+
+      const updatedCase = await MockService.cases.cases.update(caseId, updatesWithVersion);
       setCases(prev => prev.map(c => c.id === caseId ? updatedCase : c));
       return updatedCase;
     } catch (err) {
+      // Handle concurrency conflicts
+      if (err.name === 'ConcurrencyError') {
+        addToast(
+          'This case was modified by another user. Please refresh and try again.',
+          'error',
+          5000
+        );
+        // Refresh the case from server
+        try {
+          const refreshedCase = await MockService.cases.cases.getById(caseId);
+          setCases(prev => prev.map(c => c.id === caseId ? refreshedCase : c));
+        } catch (refreshErr) {
+          console.error("Failed to refresh case after conflict", refreshErr);
+        }
+      }
       console.error("Failed to update case", err);
       throw err;
     }
-  }, []);
+  }, [cases, addToast]);
 
   const updateCaseStatus = useCallback(async (caseId, newStageId, unitId = null, holdReason = null) => {
     try {
@@ -225,22 +419,42 @@ export const LabProvider = ({ children }) => {
         }));
       }
 
+      // Point 3: Prevent shipment if any unit is on hold
+      preventShipmentIfOnHold(updatedUnits, newStageId);
+
       const derivedStatus = deriveCaseStatus(updatedUnits);
       const caseHoldReason = derivedStatus === 'stage-hold' ? holdReason : null;
 
+      // Include current version for optimistic locking
       const updatedCase = await MockService.cases.cases.update(caseId, {
         units: updatedUnits,
         status: derivedStatus,
         holdReason: caseHoldReason,
-        heldAtStageId: derivedStatus === 'stage-hold' ? currentCase.status : null
+        heldAtStageId: derivedStatus === 'stage-hold' ? currentCase.status : null,
+        version: currentCase.version // Pass current version
       });
 
       setCases(prev => prev.map(c => c.id === caseId ? updatedCase : c));
     } catch (err) {
+      // Handle concurrency conflicts
+      if (err.name === 'ConcurrencyError') {
+        addToast(
+          'This case was modified by another user. The page will refresh with the latest data.',
+          'error',
+          5000
+        );
+        // Refresh the case from server
+        try {
+          const refreshedCase = await MockService.cases.cases.getById(caseId);
+          setCases(prev => prev.map(c => c.id === caseId ? refreshedCase : c));
+        } catch (refreshErr) {
+          console.error("Failed to refresh case after conflict", refreshErr);
+        }
+      }
       console.error("Failed to update status", err);
       throw err;
     }
-  }, [cases, validateTransition, deriveCaseStatus]);
+  }, [cases, validateTransition, preventShipmentIfOnHold, deriveCaseStatus, addToast]);
   
   // ============================================================
   // 3. WORKFLOW HANDLERS
@@ -297,6 +511,9 @@ export const LabProvider = ({ children }) => {
     getCaseFiles,
     getCaseMessages,
     getWorkflowsForCategory,
+    calculateCasePrice,
+    checkDuplicateCase,
+    bulkUpdateCaseStatus,
     addCaseMessage,
     addCaseFile,
     createCase,
@@ -309,7 +526,9 @@ export const LabProvider = ({ children }) => {
     deleteWorkflow
   }), [
     cases, stages, workflows, loading, error,
-    getCaseById, getCaseFiles, getCaseMessages, getWorkflowsForCategory, addCaseMessage, addCaseFile, createCase, updateCase, updateCaseStatus,
+    getCaseById, getCaseFiles, getCaseMessages, getWorkflowsForCategory, calculateCasePrice, 
+    checkDuplicateCase, bulkUpdateCaseStatus,
+    addCaseMessage, addCaseFile, createCase, updateCase, updateCaseStatus,
     deriveCaseStatus,
     createWorkflow, updateWorkflow, deleteWorkflow
   ]);

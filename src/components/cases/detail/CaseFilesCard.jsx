@@ -93,6 +93,7 @@ const CaseFilesCard = ({ files, caseId }) => {
   const fileInputRef = useRef(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'input' | 'design' | 'production' | 'shipping'
   
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [viewingFile, setViewingFile] = useState(null); // Passed to UniversalViewer
@@ -103,11 +104,17 @@ const CaseFilesCard = ({ files, caseId }) => {
     return [...files.inputs, ...files.designs];
   }, [files]);
 
+  // --- Filter by simplified category ---
+  const filteredFiles = useMemo(() => {
+    if (activeTab === 'all') return allFiles;
+    return allFiles.filter(file => file.simplifiedCategory === activeTab);
+  }, [allFiles, activeTab]);
+
   // --- Group by Date ---
   const groupedFiles = useMemo(() => {
-    if (allFiles.length === 0) return {};
+    if (filteredFiles.length === 0) return {};
     
-    const sorted = [...allFiles].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const sorted = [...filteredFiles].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     
     return sorted.reduce((groups, file) => {
       const dateKey = new Date(file.createdAt).toLocaleDateString(undefined, { 
@@ -117,7 +124,7 @@ const CaseFilesCard = ({ files, caseId }) => {
       groups[dateKey].push(file);
       return groups;
     }, {});
-  }, [allFiles]);
+  }, [filteredFiles]);
 
   // --- Handlers ---
   const processFiles = (fileList) => {
@@ -154,7 +161,41 @@ const CaseFilesCard = ({ files, caseId }) => {
         {/* Header */}
         <div className={styles.header}>
           <h3 className={styles.title}>Case Files</h3>
-          <span className={styles.countBadge}>{allFiles.length}</span>
+          <span className={styles.countBadge}>{filteredFiles.length}</span>
+        </div>
+
+        {/* Category Tabs */}
+        <div className={styles.tabs}>
+          <button 
+            className={`${styles.tab} ${activeTab === 'all' ? styles.activeTab : ''}`}
+            onClick={() => setActiveTab('all')}
+          >
+            All ({allFiles.length})
+          </button>
+          <button 
+            className={`${styles.tab} ${activeTab === 'input' ? styles.activeTab : ''}`}
+            onClick={() => setActiveTab('input')}
+          >
+            Inputs ({allFiles.filter(f => f.simplifiedCategory === 'input').length})
+          </button>
+          <button 
+            className={`${styles.tab} ${activeTab === 'design' ? styles.activeTab : ''}`}
+            onClick={() => setActiveTab('design')}
+          >
+            Designs ({allFiles.filter(f => f.simplifiedCategory === 'design').length})
+          </button>
+          <button 
+            className={`${styles.tab} ${activeTab === 'production' ? styles.activeTab : ''}`}
+            onClick={() => setActiveTab('production')}
+          >
+            Production ({allFiles.filter(f => f.simplifiedCategory === 'production').length})
+          </button>
+          <button 
+            className={`${styles.tab} ${activeTab === 'shipping' ? styles.activeTab : ''}`}
+            onClick={() => setActiveTab('shipping')}
+          >
+            Shipping ({allFiles.filter(f => f.simplifiedCategory === 'shipping').length})
+          </button>
         </div>
 
         {/* Scrollable List */}
@@ -176,7 +217,9 @@ const CaseFilesCard = ({ files, caseId }) => {
               </div>
             ))
           ) : (
-            <div className={styles.emptyText}>No files uploaded yet.</div>
+            <div className={styles.emptyText}>
+              {activeTab === 'all' ? 'No files uploaded yet.' : `No ${activeTab} files.`}
+            </div>
           )}
         </div>
 

@@ -99,6 +99,43 @@
   flex: 1;
 }
 
+.presetButtons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.presetBtn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.presetBtn:hover {
+  background-color: var(--primary-50);
+  border-color: var(--primary-300);
+  color: var(--primary-700);
+}
+
+.presetActive {
+  background-color: var(--primary-500);
+  border-color: var(--primary-600);
+  color: white;
+}
+
+.presetActive:hover {
+  background-color: var(--primary-600);
+  border-color: var(--primary-700);
+  color: white;
+}
+
 .filterGroup {
   display: flex;
   gap: 0.75rem;
