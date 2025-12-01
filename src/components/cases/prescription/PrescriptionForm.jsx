@@ -15,7 +15,7 @@ const RESTORATION_TYPES = {
     defaultMaterial: 'Zirconia',
     materials: ['Zirconia', 'E.max', 'PFM', 'Gold', 'Acrylic Temp'],
     unitCount: 1,
-    color: '#3b82f6' // Blue
+    color: '#2563eb' // Strong Blue
   },
   BRIDGE: {
     label: 'Bridge',
@@ -23,8 +23,8 @@ const RESTORATION_TYPES = {
     requiresRange: true,
     defaultMaterial: 'Zirconia',
     materials: ['Zirconia', 'E.max', 'PFM', 'Gold'],
-    unitCount: 'dynamic', // Based on tooth range
-    color: '#8b5cf6' // Purple
+    unitCount: 'dynamic',
+    color: '#7c3aed' // Strong Purple
   },
   IMPLANT_CROWN: {
     label: 'Implant Crown',
@@ -34,7 +34,7 @@ const RESTORATION_TYPES = {
     materials: ['Zirconia', 'E.max', 'PFM'],
     unitCount: 1,
     extraFields: ['implantSystem', 'abutmentType'],
-    color: '#06b6d4' // Cyan
+    color: '#0891b2' // Strong Cyan
   },
   IMPLANT_BRIDGE: {
     label: 'Implant Bridge',
@@ -44,7 +44,7 @@ const RESTORATION_TYPES = {
     materials: ['Zirconia', 'E.max', 'PFM'],
     unitCount: 'dynamic',
     extraFields: ['implantSystem', 'abutmentType'],
-    color: '#0891b2' // Dark Cyan
+    color: '#0e7490' // Dark Cyan
   },
   VENEER: {
     label: 'Veneer',
@@ -53,7 +53,7 @@ const RESTORATION_TYPES = {
     defaultMaterial: 'E.max',
     materials: ['E.max', 'Feldspathic Porcelain', 'Composite'],
     unitCount: 1,
-    color: '#ec4899' // Pink
+    color: '#db2777' // Strong Pink
   },
   INLAY_ONLAY: {
     label: 'Inlay / Onlay',
@@ -62,7 +62,8 @@ const RESTORATION_TYPES = {
     defaultMaterial: 'E.max',
     materials: ['E.max', 'Zirconia', 'Gold'],
     unitCount: 1,
-    color: '#f59e0b' // Amber
+    extraFields: ['surfaces'],
+    color: '#ea580c' // Strong Orange
   },
   DENTURE_FULL: {
     label: 'Full Denture',
@@ -71,7 +72,7 @@ const RESTORATION_TYPES = {
     arch: true,
     materials: ['Acrylic', 'Valplast', 'TCS (Tooth Colored Base)'],
     unitCount: 1,
-    color: '#ef4444' // Red
+    color: '#dc2626' // Strong Red
   },
   DENTURE_PARTIAL: {
     label: 'Partial Denture',
@@ -80,7 +81,8 @@ const RESTORATION_TYPES = {
     arch: true,
     materials: ['Cast Metal Frame', 'Valplast', 'Acrylic'],
     unitCount: 1,
-    color: '#f97316' // Orange
+    extraFields: ['rpdComponents'],
+    color: '#c2410c' // Dark Orange
   }
 };
 
@@ -100,6 +102,16 @@ const SHADE_SYSTEMS = {
   VITA_3D: ['1M1', '1M2', '2M1', '2M2', '2M3', '2R1.5', '2R2.5', '3M1', '3M2', '3M3', '3R1.5', '3R2.5', '4M1', '4M2', '4M3', '5M1', '5M2', '5M3']
 };
 
+const TOOTH_SURFACES = ['M', 'O', 'D', 'I', 'B', 'L', 'F'];
+
+const RPD_COMPONENTS = {
+  CLASPS: ['Circumferential Clasp', 'Akers Clasp', 'C-Clasp', 'I-Bar', 'Ring Clasp', 'Back Action Clasp'],
+  RESTS: ['Occlusal Rest', 'Cingulum Rest', 'Incisal Rest'],
+  CONNECTORS_MAJOR: ['Palatal Strap', 'Palatal Plate', 'Horseshoe', 'Lingual Bar', 'Lingual Plate', 'Kennedy Bar'],
+  CONNECTORS_MINOR: ['Minor Connector', 'Approach Arm'],
+  OTHER: ['Reciprocal Arm', 'Indirect Retainer', 'Denture Base', 'Artificial Teeth']
+};
+
 const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
   // Persistent odontogram selection
   const [selectedTeeth, setSelectedTeeth] = useState([]);
@@ -115,6 +127,9 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
   const [currentInstructions, setCurrentInstructions] = useState('');
   const [currentArch, setCurrentArch] = useState('Upper');
   const [selectedArchForDenture, setSelectedArchForDenture] = useState(null); // 'upper' | 'lower' | 'both'
+  const [selectedSurfaces, setSelectedSurfaces] = useState({}); // { toothNum: ['M', 'O', 'D'] }
+  const [rpdComponents, setRpdComponents] = useState([]); // Array of selected RPD components
+  const [rpdDetails, setRpdDetails] = useState({}); // { componentType: { teeth: [], notes: '' } }
   
   // Completed prescriptions list
   const [prescriptions, setPrescriptions] = useState([]);
@@ -179,6 +194,9 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
       setSelectedTeeth([]);
       setToothRoles({});
       setSelectedArchForDenture(null);
+      setSelectedSurfaces({});
+      setRpdComponents([]);
+      setRpdDetails({});
     }
   };
   
@@ -196,6 +214,33 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
         [tooth]: prev[tooth] === 'abutment' ? 'rpd_component' : 'abutment'
       }));
     }
+  };
+  
+  const handleSurfaceToggle = (tooth, surface) => {
+    setSelectedSurfaces(prev => {
+      const toothSurfaces = prev[tooth] || [];
+      if (toothSurfaces.includes(surface)) {
+        return {
+          ...prev,
+          [tooth]: toothSurfaces.filter(s => s !== surface)
+        };
+      } else {
+        return {
+          ...prev,
+          [tooth]: [...toothSurfaces, surface]
+        };
+      }
+    });
+  };
+  
+  const handleRpdComponentToggle = (component) => {
+    setRpdComponents(prev => {
+      if (prev.includes(component)) {
+        return prev.filter(c => c !== component);
+      } else {
+        return [...prev, component];
+      }
+    });
   };
 
   const handleAddToPrescription = () => {
@@ -225,6 +270,8 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
         instructions: currentInstructions,
         teeth: currentRestoration === 'DENTURE_PARTIAL' ? selectedTeeth : [],
         toothRoles: currentRestoration === 'DENTURE_PARTIAL' ? toothRoles : {},
+        rpdComponents: currentRestoration === 'DENTURE_PARTIAL' ? rpdComponents : null,
+        rpdDetails: currentRestoration === 'DENTURE_PARTIAL' ? rpdDetails : null,
         units: [{
           type: RESTORATION_TYPES[currentRestoration].label,
           arch: archLabel,
@@ -232,7 +279,9 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
           shade: currentShade,
           instructions: currentInstructions,
           teeth: currentRestoration === 'DENTURE_PARTIAL' ? selectedTeeth : [],
-          toothRoles: currentRestoration === 'DENTURE_PARTIAL' ? toothRoles : {}
+          toothRoles: currentRestoration === 'DENTURE_PARTIAL' ? toothRoles : {},
+          rpdComponents: currentRestoration === 'DENTURE_PARTIAL' ? rpdComponents : null,
+          rpdDetails: currentRestoration === 'DENTURE_PARTIAL' ? rpdDetails : null
         }]
       };
       setPrescriptions([...prescriptions, newPrescription]);
@@ -301,6 +350,7 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
         implantSystem: currentImplantSystem,
         abutmentType: currentAbutmentType,
         instructions: currentInstructions,
+        surfaces: currentRestoration === 'INLAY_ONLAY' ? selectedSurfaces : null,
         units
       };
 
@@ -312,8 +362,12 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
     setToothRoles({});
     setSelectedArchForDenture(null);
     setCurrentInstructions('');
+    setSelectedSurfaces({});
+    setRpdComponents([]);
+    setRpdDetails({});
     // Don't reset currentRestoration - allows adding multiple of same type
   };
+
 
   const handleRemovePrescription = (id) => {
     setPrescriptions(prescriptions.filter(p => p.id !== id));
@@ -330,7 +384,10 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
       instructions: rx.instructions || '',
       teeth: rx.teeth || [],
       toothRoles: rx.toothRoles || {},
-      arch: rx.arch || 'Upper'
+      arch: rx.arch || 'Upper',
+      surfaces: rx.surfaces || {},
+      rpdComponents: rx.rpdComponents || [],
+      rpdDetails: rx.rpdDetails || {}
     });
   };
   
@@ -348,7 +405,10 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
           instructions: editForm.instructions,
           teeth: editForm.teeth,
           toothRoles: editForm.toothRoles,
-          arch: editForm.arch
+          arch: editForm.arch,
+          surfaces: editForm.surfaces,
+          rpdComponents: editForm.rpdComponents,
+          rpdDetails: editForm.rpdDetails
         };
         
         // Update label with new teeth
@@ -560,6 +620,75 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
         </>
       )}
       </div>
+      
+      {/* Surface Selection for Inlay/Onlay */}
+      {currentRestoration === 'INLAY_ONLAY' && selectedTeeth.length > 0 && (
+        <div className={styles.surfaceSelection}>
+          <h4 className={styles.sectionTitle}>Select Surfaces for Each Tooth</h4>
+          {selectedTeeth.sort((a, b) => a - b).map(tooth => (
+            <div key={tooth} className={styles.toothSurfaceRow}>
+              <span className={styles.toothLabel}>Tooth #{tooth}:</span>
+              <div className={styles.surfaceButtons}>
+                {TOOTH_SURFACES.map(surface => (
+                  <button
+                    key={surface}
+                    type="button"
+                    className={`${styles.surfaceBtn} ${selectedSurfaces[tooth]?.includes(surface) ? styles.active : ''}`}
+                    onClick={() => handleSurfaceToggle(tooth, surface)}
+                    title={`${surface} - ${
+                      surface === 'M' ? 'Mesial' :
+                      surface === 'O' ? 'Occlusal' :
+                      surface === 'D' ? 'Distal' :
+                      surface === 'I' ? 'Incisal' :
+                      surface === 'B' ? 'Buccal' :
+                      surface === 'L' ? 'Lingual' :
+                      'Facial'
+                    }`}
+                  >
+                    {surface}
+                  </button>
+                ))}
+              </div>
+              <span className={styles.surfaceDisplay}>
+                {selectedSurfaces[tooth]?.length ? selectedSurfaces[tooth].join('') : 'None'}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* RPD Components for Partial Denture */}
+      {currentRestoration === 'DENTURE_PARTIAL' && (
+        <div className={styles.rpdComponents}>
+          <h4 className={styles.sectionTitle}>Select RPD Components</h4>
+          
+          {Object.entries(RPD_COMPONENTS).map(([category, components]) => (
+            <div key={category} className={styles.componentCategory}>
+              <label className={styles.categoryLabel}>
+                {category.replace('_', ' ')}:
+              </label>
+              <div className={styles.componentButtons}>
+                {components.map(component => (
+                  <button
+                    key={component}
+                    type="button"
+                    className={`${styles.componentBtn} ${rpdComponents.includes(component) ? styles.active : ''}`}
+                    onClick={() => handleRpdComponentToggle(component)}
+                  >
+                    {component}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          
+          {rpdComponents.length > 0 && (
+            <div className={styles.selectedComponents}>
+              <strong>Selected:</strong> {rpdComponents.join(', ')}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Odontogram - Always visible */}
       {currentRestoration && (
@@ -803,6 +932,77 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
                           )}
                         </div>
                       )}
+                      
+                      {/* Surface Selection in Edit Mode */}
+                      {rx.type === 'INLAY_ONLAY' && editForm.teeth?.length > 0 && (
+                        <div className={styles.editSurfaces}>
+                          <label>Surfaces:</label>
+                          {editForm.teeth.sort((a, b) => a - b).map(tooth => (
+                            <div key={tooth} className={styles.toothSurfaceRow}>
+                              <span className={styles.toothLabel}>#{tooth}:</span>
+                              <div className={styles.surfaceButtons}>
+                                {TOOTH_SURFACES.map(surface => (
+                                  <button
+                                    key={surface}
+                                    type="button"
+                                    className={`${styles.surfaceBtn} ${editForm.surfaces?.[tooth]?.includes(surface) ? styles.active : ''}`}
+                                    onClick={() => {
+                                      const currentSurfaces = editForm.surfaces?.[tooth] || [];
+                                      const updated = currentSurfaces.includes(surface)
+                                        ? currentSurfaces.filter(s => s !== surface)
+                                        : [...currentSurfaces, surface];
+                                      setEditForm({
+                                        ...editForm,
+                                        surfaces: { ...editForm.surfaces, [tooth]: updated }
+                                      });
+                                    }}
+                                  >
+                                    {surface}
+                                  </button>
+                                ))}
+                              </div>
+                              <span className={styles.surfaceDisplay}>
+                                {editForm.surfaces?.[tooth]?.join('') || 'None'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* RPD Components in Edit Mode */}
+                      {rx.type === 'DENTURE_PARTIAL' && (
+                        <div className={styles.editRpd}>
+                          <label>RPD Components:</label>
+                          {Object.entries(RPD_COMPONENTS).map(([category, components]) => (
+                            <div key={category} className={styles.componentCategory}>
+                              <label className={styles.categoryLabel}>
+                                {category.replace('_', ' ')}:
+                              </label>
+                              <div className={styles.componentButtons}>
+                                {components.map(component => (
+                                  <button
+                                    key={component}
+                                    type="button"
+                                    className={`${styles.componentBtn} ${editForm.rpdComponents?.includes(component) ? styles.active : ''}`}
+                                    onClick={() => {
+                                      const current = editForm.rpdComponents || [];
+                                      const updated = current.includes(component)
+                                        ? current.filter(c => c !== component)
+                                        : [...current, component];
+                                      setEditForm({
+                                        ...editForm,
+                                        rpdComponents: updated
+                                      });
+                                    }}
+                                  >
+                                    {component}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -834,6 +1034,14 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
                       {rx.shade && <span>• Shade: {rx.shade}</span>}
                       {rx.implantSystem && <span>• {rx.implantSystem}</span>}
                       <span>• {rx.units.length} unit{rx.units.length > 1 ? 's' : ''}</span>
+                      {rx.surfaces && Object.keys(rx.surfaces).length > 0 && (
+                        <span>• Surfaces: {Object.entries(rx.surfaces).map(([tooth, surfs]) => 
+                          `#${tooth}(${surfs.join('')})`
+                        ).join(', ')}</span>
+                      )}
+                      {rx.rpdComponents && rx.rpdComponents.length > 0 && (
+                        <span>• Components: {rx.rpdComponents.join(', ')}</span>
+                      )}
                     </div>
                     {rx.instructions && (
                       <div className={styles.rxInstructions}>{rx.instructions}</div>
