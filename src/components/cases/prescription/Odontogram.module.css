@@ -34,6 +34,15 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.quadrant.archSelected {
+  background: var(--primary-100);
+  border: 2px solid var(--primary-500);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 .quadrantLabel {
@@ -106,7 +115,14 @@
 
 .tooth.highlighted {
   border-width: 3px;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.tooth.highlighted .toothNumber,
+.tooth.highlighted .toothName {
+  position: relative;
+  z-index: 1;
 }
 
 .toothNumber {
@@ -128,16 +144,18 @@
 
 .highlightLabel {
   position: absolute;
-  bottom: -8px;
+  bottom: -10px;
   left: 50%;
   transform: translateX(-50%);
   font-size: 0.625rem;
-  padding: 0.125rem 0.375rem;
+  padding: 0.125rem 0.5rem;
   border-radius: 0.25rem;
   color: white;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  z-index: 10;
+  letter-spacing: 0.025em;
 }
 
 .selectionSummary {
@@ -159,6 +177,49 @@
   margin-left: 0.5rem;
   color: var(--text-secondary);
   font-size: 0.8125rem;
+}
+
+/* Arch Selection for Complete Dentures */
+.archSelection {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--primary-50);
+  border: 2px solid var(--primary-200);
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.archSelectBtn {
+  padding: 0.625rem 1.25rem;
+  border: 2px solid var(--primary-400);
+  border-radius: 0.5rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--primary-700);
+}
+
+.archSelectBtn:hover {
+  background: var(--primary-100);
+  transform: translateY(-1px);
+}
+
+.archSelectBtn.active {
+  background: var(--primary-600);
+  border-color: var(--primary-700);
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.archLabel {
+  font-weight: 600;
+  color: var(--primary-700);
+  font-size: 0.875rem;
 }
 
 /* Dark Mode */

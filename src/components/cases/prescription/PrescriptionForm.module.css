@@ -75,6 +75,223 @@
   gap: 0.75rem;
 }
 
+/* Compact Restoration Toolbar */
+.restorationToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.toolbarBtn {
+  padding: 0.625rem 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.toolbarBtn:hover {
+  border-color: var(--primary-400);
+  background: var(--primary-50);
+  transform: translateY(-1px);
+}
+
+.toolbarBtn.active {
+  border-color: var(--primary-600);
+  background: var(--primary-600);
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* Ultra-Compact Inline Toolbar */
+.compactToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--bg-surface);
+  border: 2px solid var(--primary-200);
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.toolbarSection {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toolbarLabel {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.compactSelect {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;
+  background: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+}
+
+.compactSelect:hover {
+  border-color: var(--primary-300);
+}
+
+.compactSelect:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.compactInput {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;
+  background: white;
+  font-size: 0.875rem;
+  width: 100%;
+  min-width: 200px;
+}
+
+.compactInput:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Odontogram Section */
+.odontogramSection {
+  margin-top: 1rem;
+}
+
+/* Color Legend */
+.colorLegend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.legendTitle {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-right: 0.5rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legendColor {
+  width: 16px;
+  height: 16px;
+  border-radius: 0.25rem;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.legendLabel {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Compact Role Buttons */
+.compactRoles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--primary-50);
+  border-radius: 0.375rem;
+}
+
+.rolesLabel {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.helpText {
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-left: 0.5rem;
+}
+
+.compactRoleBtn {
+  padding: 0.375rem 0.625rem;
+  border: 2px solid var(--border-color);
+  border-radius: 0.375rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.compactRoleBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.compactRoleBtn.retainer {
+  border-color: var(--primary-500);
+  background: var(--primary-100);
+  color: var(--primary-700);
+}
+
+.compactRoleBtn.pontic {
+  border-color: var(--neutral-400);
+  background: var(--neutral-100);
+  color: var(--neutral-700);
+}
+
+.compactRoleBtn.abutment {
+  border-color: var(--success-500);
+  background: var(--success-100);
+  color: var(--success-700);
+}
+
+.compactRoleBtn.rpd_component {
+  border-color: var(--neutral-400);
+  background: var(--neutral-100);
+  color: var(--neutral-700);
+}
+
+/* Empty State */
+.emptyState {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  background: var(--bg-subtle);
+  border-radius: 0.5rem;
+  border: 2px dashed var(--border-color);
+}
+
 .restorationCard {
   padding: 1.125rem 1rem;
   border: 2px solid var(--border-color);
@@ -300,6 +517,30 @@
   font-size: 0.9375rem;
 }
 
+.rxActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.editBtn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: var(--primary-100);
+  color: var(--primary-600);
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.editBtn:hover {
+  background: var(--primary-600);
+  color: white;
+}
+
 .removeBtn {
   width: 28px;
   height: 28px;
@@ -317,6 +558,168 @@
 .removeBtn:hover {
   background: var(--danger-600);
   color: white;
+}
+
+/* Edit Mode Styles */
+.editMode {
+  background: var(--primary-50);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  border: 2px solid var(--primary-300);
+}
+
+.editActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.saveBtn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: var(--success-500);
+  color: white;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.saveBtn:hover {
+  background: var(--success-600);
+  transform: scale(1.1);
+}
+
+.cancelBtn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: var(--neutral-300);
+  color: var(--neutral-700);
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.cancelBtn:hover {
+  background: var(--neutral-400);
+}
+
+.editFields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.editRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.editRow label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 70px;
+}
+
+.editSelect {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;
+  background: white;
+  font-size: 0.875rem;
+  flex: 1;
+  min-width: 120px;
+}
+
+.editSelect:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.editInput {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;
+  background: white;
+  font-size: 0.875rem;
+  flex: 1;
+}
+
+.editInput:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.editTeeth {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.editTeeth label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.toothGrid {
+  display: grid;
+  grid-template-columns: repeat(16, 1fr);
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 0.375rem;
+}
+
+.toothBtn {
+  padding: 0.375rem 0.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.toothBtn:hover:not(.disabled) {
+  background: var(--primary-50);
+  border-color: var(--primary-400);
+}
+
+.toothBtn.selected {
+  background: var(--primary-500);
+  border-color: var(--primary-600);
+  color: white;
+}
+
+.toothBtn.disabled {
+  background: var(--neutral-100);
+  color: var(--neutral-400);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.editRoles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 0.375rem;
 }
 
 .rxDetails {
@@ -375,6 +778,77 @@
   gap: 0.75rem;
 }
 
+/* Role Assignment for Bridges/RPD */
+.roleAssignment {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--primary-50);
+  border: 2px solid var(--primary-200);
+  border-radius: 0.5rem;
+}
+
+.roleLabel {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--primary-700);
+  font-size: 0.875rem;
+}
+
+.roleButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.roleBtn {
+  padding: 0.5rem 0.875rem;
+  border: 2px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.roleBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.roleBtn.retainer {
+  border-color: var(--primary-500);
+  background: var(--primary-100);
+  color: var(--primary-700);
+}
+
+.roleBtn.pontic {
+  border-color: var(--neutral-400);
+  background: var(--neutral-100);
+  color: var(--neutral-700);
+}
+
+.roleBtn.abutment {
+  border-color: var(--success-500);
+  background: var(--success-100);
+  color: var(--success-700);
+}
+
+.roleBtn.rpd_component {
+  border-color: var(--neutral-400);
+  background: var(--neutral-100);
+  color: var(--neutral-700);
+}
+
+.roleHint {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0.5rem 0 0 0;
+  font-style: italic;
+}
+
 /* Dark mode support */
 :global(body.dark) .prescriptionSummary {
   background: rgba(59, 130, 246, 0.1);
@@ -402,5 +876,38 @@
 
   .shadeRow {
     flex-direction: column;
+  }
+  
+  .compactToolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .toolbarSection {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .toolbarLabel {
+    font-size: 0.75rem;
+  }
+  
+  .compactSelect,
+  .compactInput {
+    width: 100%;
+    min-width: unset;
+  }
+  
+  .toothGrid {
+    grid-template-columns: repeat(8, 1fr);
+  }
+  
+  .editRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .editRow label {
+    min-width: unset;
   }
 }

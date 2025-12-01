@@ -38,7 +38,11 @@ const Odontogram = ({
   onSelectionChange, 
   mode = 'single', // 'single' | 'multiple' | 'range'
   disabledTeeth = [],
-  highlightedTeeth = {} // { toothNumber: { color, label } }
+  highlightedTeeth = {}, // { toothNumber: { color, label } }
+  allowCrossQuadrant = false, // Allow bridge selection across midline
+  archSelectionMode = false, // For complete dentures - select arch instead of teeth
+  onArchSelect = null, // Callback for arch selection
+  selectedArch = null // 'upper' | 'lower' | 'both'
 }) => {
   const [rangeStart, setRangeStart] = useState(null);
   const [hoverTooth, setHoverTooth] = useState(null);
@@ -65,14 +69,21 @@ const Odontogram = ({
       } else {
         // Get range between rangeStart and current tooth
         const range = getToothRange(rangeStart, tooth);
-        onSelectionChange(range);
-        setRangeStart(null);
+        if (range.length === 0) {
+          // Invalid range (crosses upper/lower arch)
+          alert('Bridge cannot cross between upper and lower arches. Please select teeth within the same arch.');
+          setRangeStart(null);
+          onSelectionChange([]);
+        } else {
+          onSelectionChange(range);
+          setRangeStart(null);
+        }
       }
     }
   };
 
   const getToothRange = (start, end) => {
-    // Find teeth in same arch between start and end
+    // Find teeth in same quadrant
     let quadrant = null;
     for (const [key, teeth] of Object.entries(QUADRANTS)) {
       if (teeth.includes(start) && teeth.includes(end)) {
@@ -81,7 +92,34 @@ const Odontogram = ({
       }
     }
     
-    if (!quadrant) return [start, end]; // Different arches, return both
+    // If different quadrants but cross-quadrant allowed, handle midline crossing
+    if (!quadrant && allowCrossQuadrant) {
+      // Check if both in upper arch (UR + UL) - CAN cross midline
+      const upperTeeth = [...QUADRANTS.UR, ...QUADRANTS.UL];
+      if (upperTeeth.includes(start) && upperTeeth.includes(end)) {
+        const startIdx = upperTeeth.indexOf(start);
+        const endIdx = upperTeeth.indexOf(end);
+        const minIdx = Math.min(startIdx, endIdx);
+        const maxIdx = Math.max(startIdx, endIdx);
+        return upperTeeth.slice(minIdx, maxIdx + 1);
+      }
+      
+      // Check if both in lower arch (LL + LR) - CAN cross midline
+      const lowerTeeth = [...QUADRANTS.LL, ...QUADRANTS.LR];
+      if (lowerTeeth.includes(start) && lowerTeeth.includes(end)) {
+        const startIdx = lowerTeeth.indexOf(start);
+        const endIdx = lowerTeeth.indexOf(end);
+        const minIdx = Math.min(startIdx, endIdx);
+        const maxIdx = Math.max(startIdx, endIdx);
+        return lowerTeeth.slice(minIdx, maxIdx + 1);
+      }
+      
+      // One in upper, one in lower - CANNOT cross arches
+      // Return empty to prevent selection
+      return [];
+    }
+    
+    if (!quadrant) return [start, end]; // Different quadrants, no cross-quadrant allowed
 
     const startIdx = quadrant.indexOf(start);
     const endIdx = quadrant.indexOf(end);
@@ -93,7 +131,19 @@ const Odontogram = ({
 
   const getRangePreview = () => {
     if (!rangeStart || !hoverTooth) return [];
-    return getToothRange(rangeStart, hoverTooth);
+    const range = getToothRange(rangeStart, hoverTooth);
+    // Don't show preview if range is invalid (empty array = crosses arches)
+    return range.length > 0 ? range : [];
+  };
+  
+  const handleArchClick = (arch) => {
+    if (archSelectionMode && onArchSelect) {
+      if (selectedArch === arch) {
+        onArchSelect(null); // Deselect
+      } else {
+        onArchSelect(arch);
+      }
+    }
   };
 
   const rangePreview = mode === 'range' && rangeStart ? getRangePreview() : [];
@@ -136,21 +186,31 @@ const Odontogram = ({
   return (
     <div className={styles.odontogram}>
       <div className={styles.instructions}>
-        {mode === 'single' && 'Click a tooth to select'}
-        {mode === 'multiple' && 'Click teeth to select/deselect multiple'}
-        {mode === 'range' && (rangeStart ? 'Click end tooth to complete range' : 'Click start tooth for bridge/range')}
+        {archSelectionMode && 'Click arch areas (Upper/Lower) to select for complete denture'}
+        {!archSelectionMode && mode === 'single' && 'Click a tooth to select'}
+        {!archSelectionMode && mode === 'multiple' && 'Click teeth to select/deselect (select all teeth for each restoration item)'}
+        {!archSelectionMode && mode === 'range' && (rangeStart ? 'Click end tooth to complete range (must be in same arch)' : 'Click start tooth for bridge range')}
+        {!archSelectionMode && mode === 'range' && allowCrossQuadrant && ' - can cross midline'}
       </div>
 
       {/* Upper Arch */}
       <div className={styles.upperArch}>
-        <div className={styles.quadrant}>
+        <div 
+          className={`${styles.quadrant} ${archSelectionMode && (selectedArch === 'upper' || selectedArch === 'both') ? styles.archSelected : ''}`}
+          onClick={() => archSelectionMode && handleArchClick('upper')}
+          style={archSelectionMode ? {cursor: 'pointer'} : {}}
+        >
           <div className={styles.quadrantLabel}>UR</div>
           <div className={styles.teeth}>
             {QUADRANTS.UR.map(renderTooth)}
           </div>
         </div>
         <div className={styles.midline}></div>
-        <div className={styles.quadrant}>
+        <div 
+          className={`${styles.quadrant} ${archSelectionMode && (selectedArch === 'upper' || selectedArch === 'both') ? styles.archSelected : ''}`}
+          onClick={() => archSelectionMode && handleArchClick('upper')}
+          style={archSelectionMode ? {cursor: 'pointer'} : {}}
+        >
           <div className={styles.quadrantLabel}>UL</div>
           <div className={styles.teeth}>
             {QUADRANTS.UL.map(renderTooth)}
@@ -160,20 +220,46 @@ const Odontogram = ({
 
       {/* Lower Arch */}
       <div className={styles.lowerArch}>
-        <div className={styles.quadrant}>
+        <div 
+          className={`${styles.quadrant} ${archSelectionMode && (selectedArch === 'lower' || selectedArch === 'both') ? styles.archSelected : ''}`}
+          onClick={() => archSelectionMode && handleArchClick('lower')}
+          style={archSelectionMode ? {cursor: 'pointer'} : {}}
+        >
           <div className={styles.quadrantLabel}>LR</div>
           <div className={styles.teeth}>
             {QUADRANTS.LR.map(renderTooth)}
           </div>
         </div>
         <div className={styles.midline}></div>
-        <div className={styles.quadrant}>
+        <div 
+          className={`${styles.quadrant} ${archSelectionMode && (selectedArch === 'lower' || selectedArch === 'both') ? styles.archSelected : ''}`}
+          onClick={() => archSelectionMode && handleArchClick('lower')}
+          style={archSelectionMode ? {cursor: 'pointer'} : {}}
+        >
           <div className={styles.quadrantLabel}>LL</div>
           <div className={styles.teeth}>
             {QUADRANTS.LL.map(renderTooth)}
           </div>
         </div>
       </div>
+      
+      {/* Arch Selection for Complete Dentures */}
+      {archSelectionMode && (
+        <div className={styles.archSelection}>
+          <button
+            type="button"
+            className={`${styles.archSelectBtn} ${selectedArch === 'both' ? styles.active : ''}`}
+            onClick={() => handleArchClick('both')}
+          >
+            Both Arches
+          </button>
+          {selectedArch && (
+            <span className={styles.archLabel}>
+              Selected: {selectedArch.charAt(0).toUpperCase() + selectedArch.slice(1)}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Selection Summary */}
       {selectedTeeth.length > 0 && (

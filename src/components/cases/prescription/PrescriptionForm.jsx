@@ -14,7 +14,8 @@ const RESTORATION_TYPES = {
     requiresRange: false,
     defaultMaterial: 'Zirconia',
     materials: ['Zirconia', 'E.max', 'PFM', 'Gold', 'Acrylic Temp'],
-    unitCount: 1
+    unitCount: 1,
+    color: '#3b82f6' // Blue
   },
   BRIDGE: {
     label: 'Bridge',
@@ -22,7 +23,8 @@ const RESTORATION_TYPES = {
     requiresRange: true,
     defaultMaterial: 'Zirconia',
     materials: ['Zirconia', 'E.max', 'PFM', 'Gold'],
-    unitCount: 'dynamic' // Based on tooth range
+    unitCount: 'dynamic', // Based on tooth range
+    color: '#8b5cf6' // Purple
   },
   IMPLANT_CROWN: {
     label: 'Implant Crown',
@@ -31,7 +33,8 @@ const RESTORATION_TYPES = {
     defaultMaterial: 'Zirconia',
     materials: ['Zirconia', 'E.max', 'PFM'],
     unitCount: 1,
-    extraFields: ['implantSystem', 'abutmentType']
+    extraFields: ['implantSystem', 'abutmentType'],
+    color: '#06b6d4' // Cyan
   },
   IMPLANT_BRIDGE: {
     label: 'Implant Bridge',
@@ -40,7 +43,8 @@ const RESTORATION_TYPES = {
     defaultMaterial: 'Zirconia',
     materials: ['Zirconia', 'E.max', 'PFM'],
     unitCount: 'dynamic',
-    extraFields: ['implantSystem', 'abutmentType']
+    extraFields: ['implantSystem', 'abutmentType'],
+    color: '#0891b2' // Dark Cyan
   },
   VENEER: {
     label: 'Veneer',
@@ -48,7 +52,8 @@ const RESTORATION_TYPES = {
     requiresRange: false,
     defaultMaterial: 'E.max',
     materials: ['E.max', 'Feldspathic Porcelain', 'Composite'],
-    unitCount: 1
+    unitCount: 1,
+    color: '#ec4899' // Pink
   },
   INLAY_ONLAY: {
     label: 'Inlay / Onlay',
@@ -56,7 +61,8 @@ const RESTORATION_TYPES = {
     requiresRange: false,
     defaultMaterial: 'E.max',
     materials: ['E.max', 'Zirconia', 'Gold'],
-    unitCount: 1
+    unitCount: 1,
+    color: '#f59e0b' // Amber
   },
   DENTURE_FULL: {
     label: 'Full Denture',
@@ -64,7 +70,8 @@ const RESTORATION_TYPES = {
     requiresRange: false,
     arch: true,
     materials: ['Acrylic', 'Valplast', 'TCS (Tooth Colored Base)'],
-    unitCount: 1
+    unitCount: 1,
+    color: '#ef4444' // Red
   },
   DENTURE_PARTIAL: {
     label: 'Partial Denture',
@@ -72,7 +79,8 @@ const RESTORATION_TYPES = {
     requiresRange: true,
     arch: true,
     materials: ['Cast Metal Frame', 'Valplast', 'Acrylic'],
-    unitCount: 1
+    unitCount: 1,
+    color: '#f97316' // Orange
   }
 };
 
@@ -95,6 +103,7 @@ const SHADE_SYSTEMS = {
 const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
   // Persistent odontogram selection
   const [selectedTeeth, setSelectedTeeth] = useState([]);
+  const [toothRoles, setToothRoles] = useState({}); // { toothNum: 'retainer' | 'pontic' | 'abutment' | 'rpd_component' }
   
   // Current prescription being built
   const [currentRestoration, setCurrentRestoration] = useState(null); // RESTORATION_TYPES key
@@ -105,12 +114,23 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
   const [currentAbutmentType, setCurrentAbutmentType] = useState('Custom Abutment');
   const [currentInstructions, setCurrentInstructions] = useState('');
   const [currentArch, setCurrentArch] = useState('Upper');
+  const [selectedArchForDenture, setSelectedArchForDenture] = useState(null); // 'upper' | 'lower' | 'both'
   
   // Completed prescriptions list
   const [prescriptions, setPrescriptions] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({});
 
   const restorationConfig = currentRestoration ? RESTORATION_TYPES[currentRestoration] : null;
-  const selectionMode = restorationConfig?.requiresRange ? 'range' : 'multiple';
+  // Use range selection for bridges, multiple for everything else
+  const selectionMode = (currentRestoration === 'BRIDGE' || currentRestoration === 'IMPLANT_BRIDGE') ? 'range' : 'multiple';
+  
+  // Arch quadrant mapping for dentures
+  const ARCH_QUADRANTS = {
+    upper: ['UR', 'UL'],
+    lower: ['LR', 'LL'],
+    both: ['UR', 'UL', 'LR', 'LL']
+  };
 
   // Get already used teeth from existing units and current prescriptions
   const usedTeeth = [
@@ -119,6 +139,7 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
   ];
   
   const highlightedTeeth = {};
+  // Show existing units in green
   existingUnits.forEach(unit => {
     if (unit.tooth) {
       highlightedTeeth[unit.tooth] = {
@@ -128,13 +149,22 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
     }
   });
   
-  // Highlight current prescriptions
+  // Show current prescriptions with restoration-type colors
   prescriptions.forEach(p => {
+    const restoColor = RESTORATION_TYPES[p.type]?.color || '#6b7280';
+    const restoLabel = RESTORATION_TYPES[p.type]?.label || 'Unit';
+    
     p.units.forEach(unit => {
       if (unit.tooth) {
+        // Show role for bridges (R/P) or type abbreviation
+        let displayLabel = restoLabel.substring(0, 3);
+        if (unit.role === 'retainer') displayLabel = 'R';
+        if (unit.role === 'pontic') displayLabel = 'P';
+        if (unit.role === 'abutment') displayLabel = 'A';
+        
         highlightedTeeth[unit.tooth] = {
-          color: '#3b82f6',
-          label: p.label.split(' ')[0]
+          color: restoColor,
+          label: displayLabel
         };
       }
     });
@@ -145,7 +175,26 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
     const resto = RESTORATION_TYPES[type];
     if (resto) {
       setCurrentMaterial(resto.defaultMaterial || resto.materials[0]);
-      // Keep selected teeth - don't clear selection when changing type
+      // Clear teeth selection when changing restoration type
+      setSelectedTeeth([]);
+      setToothRoles({});
+      setSelectedArchForDenture(null);
+    }
+  };
+  
+  const handleToothRoleToggle = (tooth) => {
+    // For bridges: toggle between retainer and pontic
+    // For RPD: toggle between abutment and component
+    if (currentRestoration === 'BRIDGE' || currentRestoration === 'IMPLANT_BRIDGE') {
+      setToothRoles(prev => ({
+        ...prev,
+        [tooth]: prev[tooth] === 'retainer' ? 'pontic' : 'retainer'
+      }));
+    } else if (currentRestoration === 'DENTURE_PARTIAL') {
+      setToothRoles(prev => ({
+        ...prev,
+        [tooth]: prev[tooth] === 'abutment' ? 'rpd_component' : 'abutment'
+      }));
     }
   };
 
@@ -157,50 +206,82 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
 
     if (restorationConfig.arch) {
       // Arch-based restoration (dentures)
+      if (!selectedArchForDenture && currentRestoration === 'DENTURE_FULL') {
+        alert('Please select arch on odontogram (Upper/Lower/Both)');
+        return;
+      }
+      
+      const archLabel = selectedArchForDenture ? 
+        selectedArchForDenture.charAt(0).toUpperCase() + selectedArchForDenture.slice(1) : 
+        currentArch;
+      
       const newPrescription = {
         id: `rx-${Date.now()}`,
         type: currentRestoration,
-        label: `${RESTORATION_TYPES[currentRestoration].label} - ${currentArch}`,
-        arch: currentArch,
+        label: `${RESTORATION_TYPES[currentRestoration].label} - ${archLabel}`,
+        arch: archLabel,
         material: currentMaterial,
         shade: restorationConfig.category === 'Removable' ? currentShade : null,
         instructions: currentInstructions,
+        teeth: currentRestoration === 'DENTURE_PARTIAL' ? selectedTeeth : [],
+        toothRoles: currentRestoration === 'DENTURE_PARTIAL' ? toothRoles : {},
         units: [{
           type: RESTORATION_TYPES[currentRestoration].label,
-          arch: currentArch,
+          arch: archLabel,
           material: currentMaterial,
           shade: currentShade,
-          instructions
+          instructions: currentInstructions,
+          teeth: currentRestoration === 'DENTURE_PARTIAL' ? selectedTeeth : [],
+          toothRoles: currentRestoration === 'DENTURE_PARTIAL' ? toothRoles : {}
         }]
       };
       setPrescriptions([...prescriptions, newPrescription]);
     } else {
       // Tooth-based restoration
       if (selectedTeeth.length === 0) {
-        alert('Please select teeth');
+        alert('Please select teeth on odontogram');
         return;
       }
 
-      if (currentRestoration === 'BRIDGE' && selectedTeeth.length < 3) {
-        alert('Bridge requires at least 3 teeth (2 abutments + 1 pontic)');
+      if ((currentRestoration === 'BRIDGE' || currentRestoration === 'IMPLANT_BRIDGE') && selectedTeeth.length < 3) {
+        alert('Bridge requires at least 3 teeth (2 retainers + 1 pontic)');
         return;
       }
+      
+      // Check bridge has at least 2 retainers
+      if (currentRestoration === 'BRIDGE' || currentRestoration === 'IMPLANT_BRIDGE') {
+        const retainerCount = selectedTeeth.filter(t => toothRoles[t] === 'retainer').length;
+        if (retainerCount < 2) {
+          alert('Bridge requires at least 2 retainer teeth');
+          return;
+        }
+      }
 
-      const units = selectedTeeth.map((tooth, idx) => {
+      // Sort teeth numerically for consistent ordering
+      const sortedTeeth = [...selectedTeeth].sort((a, b) => a - b);
+      
+      const units = sortedTeeth.map((tooth, idx) => {
         let unitType = RESTORATION_TYPES[currentRestoration].label;
         
-        // For bridges, mark abutments and pontics
-        if (currentRestoration === 'BRIDGE') {
-          if (idx === 0 || idx === selectedTeeth.length - 1) {
-            unitType = `${unitType} Abutment`;
-          } else {
-            unitType = `${unitType} Pontic`;
+        // For bridges, use specified roles (or auto-assign if not set)
+        if (currentRestoration === 'BRIDGE' || currentRestoration === 'IMPLANT_BRIDGE') {
+          let role = toothRoles[tooth];
+          // Auto-assign: first and last are retainers, middle are pontics
+          if (!role) {
+            role = (idx === 0 || idx === sortedTeeth.length - 1) ? 'retainer' : 'pontic';
           }
+          unitType = `${unitType} ${role.charAt(0).toUpperCase() + role.slice(1)}`;
+        }
+        
+        // For RPD, mark abutments
+        if (currentRestoration === 'DENTURE_PARTIAL' && toothRoles[tooth] === 'abutment') {
+          unitType = `${unitType} Abutment`;
         }
 
         return {
           tooth,
           type: unitType,
+          role: toothRoles[tooth] || (currentRestoration === 'BRIDGE' || currentRestoration === 'IMPLANT_BRIDGE' ? ((idx === 0 || idx === sortedTeeth.length - 1) ? 'retainer' : 'pontic') : null),
           material: currentMaterial,
           shade: currentShade,
           implantSystem: restorationConfig.extraFields?.includes('implantSystem') ? currentImplantSystem : null,
@@ -212,8 +293,9 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
       const newPrescription = {
         id: `rx-${Date.now()}`,
         type: currentRestoration,
-        label: `${RESTORATION_TYPES[currentRestoration].label} #${selectedTeeth.sort((a,b) => a-b).join(', ')}`,
-        teeth: selectedTeeth,
+        label: `${RESTORATION_TYPES[currentRestoration].label} #${sortedTeeth.join(', ')}`,
+        teeth: sortedTeeth,
+        toothRoles,
         material: currentMaterial,
         shade: currentShade,
         implantSystem: currentImplantSystem,
@@ -225,13 +307,133 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
       setPrescriptions([...prescriptions, newPrescription]);
     }
 
-    // Reset form
+    // Reset only selection and roles - keep restoration type and material settings
     setSelectedTeeth([]);
+    setToothRoles({});
+    setSelectedArchForDenture(null);
     setCurrentInstructions('');
+    // Don't reset currentRestoration - allows adding multiple of same type
   };
 
   const handleRemovePrescription = (id) => {
     setPrescriptions(prescriptions.filter(p => p.id !== id));
+  };
+  
+  const handleEditPrescription = (rx) => {
+    setEditingId(rx.id);
+    setEditForm({
+      material: rx.material,
+      shade: rx.shade || '',
+      shadeSystem: rx.shadeSystem || 'VITA_CLASSICAL',
+      implantSystem: rx.implantSystem || '',
+      abutmentType: rx.abutmentType || 'Custom Abutment',
+      instructions: rx.instructions || '',
+      teeth: rx.teeth || [],
+      toothRoles: rx.toothRoles || {},
+      arch: rx.arch || 'Upper'
+    });
+  };
+  
+  const handleSaveEdit = (id) => {
+    setPrescriptions(prescriptions.map(rx => {
+      if (rx.id === id) {
+        // Update prescription with edited values
+        const updatedRx = {
+          ...rx,
+          material: editForm.material,
+          shade: editForm.shade,
+          shadeSystem: editForm.shadeSystem,
+          implantSystem: editForm.implantSystem,
+          abutmentType: editForm.abutmentType,
+          instructions: editForm.instructions,
+          teeth: editForm.teeth,
+          toothRoles: editForm.toothRoles,
+          arch: editForm.arch
+        };
+        
+        // Update label with new teeth
+        if (editForm.teeth.length > 0) {
+          updatedRx.label = `${RESTORATION_TYPES[rx.type].label} #${editForm.teeth.sort((a,b) => a-b).join(', ')}`;
+        }
+        
+        // Regenerate units with updated values
+        const sortedTeeth = [...editForm.teeth].sort((a, b) => a - b);
+        updatedRx.units = sortedTeeth.map((tooth, idx) => {
+          let unitType = RESTORATION_TYPES[rx.type].label;
+          
+          if (rx.type === 'BRIDGE' || rx.type === 'IMPLANT_BRIDGE') {
+            let role = editForm.toothRoles[tooth];
+            if (!role) {
+              role = (idx === 0 || idx === sortedTeeth.length - 1) ? 'retainer' : 'pontic';
+            }
+            unitType = `${unitType} ${role.charAt(0).toUpperCase() + role.slice(1)}`;
+          }
+          
+          if (rx.type === 'DENTURE_PARTIAL' && editForm.toothRoles[tooth] === 'abutment') {
+            unitType = `${unitType} Abutment`;
+          }
+          
+          return {
+            tooth,
+            type: unitType,
+            role: editForm.toothRoles[tooth] || (rx.type === 'BRIDGE' || rx.type === 'IMPLANT_BRIDGE' ? ((idx === 0 || idx === sortedTeeth.length - 1) ? 'retainer' : 'pontic') : null),
+            material: editForm.material,
+            shade: editForm.shade,
+            implantSystem: editForm.implantSystem,
+            abutmentType: editForm.abutmentType,
+            instructions: idx === 0 ? editForm.instructions : ''
+          };
+        });
+        
+        return updatedRx;
+      }
+      return rx;
+    }));
+    setEditingId(null);
+    setEditForm({});
+  };
+  
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditForm({});
+  };
+  
+  const handleToothToggleInEdit = (tooth) => {
+    const currentTeeth = editForm.teeth || [];
+    if (currentTeeth.includes(tooth)) {
+      setEditForm({
+        ...editForm,
+        teeth: currentTeeth.filter(t => t !== tooth)
+      });
+    } else {
+      setEditForm({
+        ...editForm,
+        teeth: [...currentTeeth, tooth]
+      });
+    }
+  };
+  
+  const handleEditRoleToggle = (tooth) => {
+    const currentRx = prescriptions.find(p => p.id === editingId);
+    if (!currentRx) return;
+    
+    if (currentRx.type === 'BRIDGE' || currentRx.type === 'IMPLANT_BRIDGE') {
+      setEditForm({
+        ...editForm,
+        toothRoles: {
+          ...editForm.toothRoles,
+          [tooth]: editForm.toothRoles[tooth] === 'retainer' ? 'pontic' : 'retainer'
+        }
+      });
+    } else if (currentRx.type === 'DENTURE_PARTIAL') {
+      setEditForm({
+        ...editForm,
+        toothRoles: {
+          ...editForm.toothRoles,
+          [tooth]: editForm.toothRoles[tooth] === 'abutment' ? 'rpd_component' : 'abutment'
+        }
+      });
+    }
   };
 
   const handleSubmitAll = () => {
@@ -249,79 +451,36 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
     <div className={styles.prescriptionForm}>
       <div className={styles.header}>
         <h3>Prescription Entry</h3>
-        <p className={styles.subtitle}>Select teeth and add restorations to build your prescription</p>
+        <p className={styles.subtitle}>Configure restoration details, then select teeth on odontogram below</p>
       </div>
 
-      {/* ALWAYS VISIBLE: Odontogram */}
-      <div className={styles.section}>
-        <label className={styles.label}>👄 Select Teeth</label>
-        <Odontogram
-          selectedTeeth={selectedTeeth}
-          onSelectionChange={setSelectedTeeth}
-          mode={selectionMode}
-          disabledTeeth={usedTeeth}
-          highlightedTeeth={highlightedTeeth}
-        />
-      </div>
-
-      {/* Restoration Type Selection - Always visible */}
-      <div className={styles.section}>
-        <label className={styles.label}>🦷 Restoration Type</label>
-        <div className={styles.restorationGrid}>
-          {Object.entries(RESTORATION_TYPES).map(([key, resto]) => (
-            <button
-              key={key}
-              type="button"
-              className={`${styles.restorationCard} ${currentRestoration === key ? styles.selected : ''}`}
-              onClick={() => handleRestorationTypeSelect(key)}
-            >
-              <div className={styles.restoName}>{resto.label}</div>
-              <div className={styles.restoCategory}>{resto.category}</div>
-            </button>
-          ))}
+      {/* Compact Inline Configuration Toolbar */}
+      <div className={styles.compactToolbar}>
+        {/* Restoration Type */}
+        <div className={styles.toolbarSection}>
+          <label className={styles.toolbarLabel}>Type:</label>
+          <select
+            value={currentRestoration || ''}
+            onChange={(e) => handleRestorationTypeSelect(e.target.value)}
+            className={styles.compactSelect}
+          >
+            <option value="">Select Restoration...</option>
+            {Object.entries(RESTORATION_TYPES).map(([key, resto]) => (
+              <option key={key} value={key}>{resto.label}</option>
+            ))}
+          </select>
         </div>
-      </div>
 
-      {/* CONDITIONAL: Details for selected restoration type */}
-      {currentRestoration && (
+        {/* Conditional inline details */}
+        {currentRestoration && (
         <>
-          {/* Arch Selection for dentures */}
-          {restorationConfig.arch && (
-            <div className={styles.section}>
-              <label className={styles.label}>Select Arch</label>
-              <div className={styles.archButtons}>
-                <button
-                  type="button"
-                  className={`${styles.archBtn} ${currentArch === 'Upper' ? styles.active : ''}`}
-                  onClick={() => setCurrentArch('Upper')}
-                >
-                  Upper Arch
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.archBtn} ${currentArch === 'Lower' ? styles.active : ''}`}
-                  onClick={() => setCurrentArch('Lower')}
-                >
-                  Lower Arch
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.archBtn} ${currentArch === 'Both' ? styles.active : ''}`}
-                  onClick={() => setCurrentArch('Both')}
-                >
-                  Both Arches
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Material Selection */}
-          <div className={styles.section}>
-            <label className={styles.label}>Material</label>
+          {/* Material */}
+          <div className={styles.toolbarSection}>
+            <label className={styles.toolbarLabel}>Material:</label>
             <select
               value={currentMaterial}
               onChange={(e) => setCurrentMaterial(e.target.value)}
-              className={styles.select}
+              className={styles.compactSelect}
             >
               {restorationConfig.materials.map(mat => (
                 <option key={mat} value={mat}>{mat}</option>
@@ -329,105 +488,162 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
             </select>
           </div>
 
-          {/* Shade Selection */}
-          <div className={styles.section}>
-            <label className={styles.label}>Shade</label>
-            <div className={styles.shadeRow}>
-              <select
-                value={currentShadeSystem}
-                onChange={(e) => setCurrentShadeSystem(e.target.value)}
-                className={styles.select}
-                style={{flex: '0 0 200px'}}
-              >
-                <option value="VITA_CLASSICAL">VITA Classical</option>
-                <option value="VITA_3D">VITA 3D Master</option>
-              </select>
-              <select
-                value={currentShade}
-                onChange={(e) => setCurrentShade(e.target.value)}
-                className={styles.select}
-              >
-                <option value="">Select Shade...</option>
-                {SHADE_SYSTEMS[currentShadeSystem].map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
+          {/* Shade */}
+          <div className={styles.toolbarSection}>
+            <label className={styles.toolbarLabel}>Shade:</label>
+            <select
+              value={currentShadeSystem}
+              onChange={(e) => setCurrentShadeSystem(e.target.value)}
+              className={styles.compactSelect}
+              style={{width: '120px'}}
+            >
+              <option value="VITA_CLASSICAL">VITA Classic</option>
+              <option value="VITA_3D">VITA 3D</option>
+            </select>
+            <select
+              value={currentShade}
+              onChange={(e) => setCurrentShade(e.target.value)}
+              className={styles.compactSelect}
+              style={{width: '100px'}}
+            >
+              <option value="">Select...</option>
+              {SHADE_SYSTEMS[currentShadeSystem].map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
           </div>
 
-          {/* Implant-specific fields */}
+          {/* Implant System */}
           {restorationConfig.extraFields?.includes('implantSystem') && (
             <>
-              <div className={styles.section}>
-                <label className={styles.label}>Implant System</label>
+              <div className={styles.toolbarSection}>
+                <label className={styles.toolbarLabel}>Implant:</label>
                 <select
                   value={currentImplantSystem}
                   onChange={(e) => setCurrentImplantSystem(e.target.value)}
-                  className={styles.select}
+                  className={styles.compactSelect}
                 >
-                  <option value="">Select System...</option>
+                  <option value="">Select...</option>
                   {IMPLANT_SYSTEMS.map(sys => (
                     <option key={sys} value={sys}>{sys}</option>
                   ))}
                 </select>
               </div>
 
-              <div className={styles.section}>
-                <label className={styles.label}>Abutment Type</label>
-                <div className={styles.radioGroup}>
-                  <label className={styles.radio}>
-                    <input
-                      type="radio"
-                      value="Custom Abutment"
-                      checked={currentAbutmentType === 'Custom Abutment'}
-                      onChange={(e) => setCurrentAbutmentType(e.target.value)}
-                    />
-                    Custom Abutment
-                  </label>
-                  <label className={styles.radio}>
-                    <input
-                      type="radio"
-                      value="Stock Abutment"
-                      checked={currentAbutmentType === 'Stock Abutment'}
-                      onChange={(e) => setCurrentAbutmentType(e.target.value)}
-                    />
-                    Stock Abutment
-                  </label>
-                  <label className={styles.radio}>
-                    <input
-                      type="radio"
-                      value="Screw Retained"
-                      checked={currentAbutmentType === 'Screw Retained'}
-                      onChange={(e) => setCurrentAbutmentType(e.target.value)}
-                    />
-                    Screw Retained
-                  </label>
-                </div>
+              <div className={styles.toolbarSection}>
+                <label className={styles.toolbarLabel}>Abutment:</label>
+                <select
+                  value={currentAbutmentType}
+                  onChange={(e) => setCurrentAbutmentType(e.target.value)}
+                  className={styles.compactSelect}
+                >
+                  <option value="Custom Abutment">Custom</option>
+                  <option value="Stock Abutment">Stock</option>
+                  <option value="Screw Retained">Screw Retained</option>
+                </select>
               </div>
             </>
           )}
 
-          {/* Special Instructions */}
-          <div className={styles.section}>
-            <label className={styles.label}>Special Instructions</label>
-            <textarea
+          {/* Instructions - inline compact */}
+          <div className={styles.toolbarSection} style={{flex: 1}}>
+            <label className={styles.toolbarLabel}>Notes:</label>
+            <input
+              type="text"
               value={currentInstructions}
               onChange={(e) => setCurrentInstructions(e.target.value)}
-              className={styles.textarea}
-              placeholder="Add any special instructions, shade notes, or preferences..."
-              rows="3"
+              className={styles.compactInput}
+              placeholder="Special instructions..."
             />
           </div>
+          
+        </>
+      )}
+      </div>
+
+      {/* Odontogram - Always visible */}
+      {currentRestoration && (
+        <div className={styles.odontogramSection}>
+          {/* Color Legend */}
+          {prescriptions.length > 0 && (
+            <div className={styles.colorLegend}>
+              <span className={styles.legendTitle}>Added Items:</span>
+              {[...new Set(prescriptions.map(p => p.type))].map(type => (
+                <div key={type} className={styles.legendItem}>
+                  <span 
+                    className={styles.legendColor} 
+                    style={{backgroundColor: RESTORATION_TYPES[type]?.color}}
+                  ></span>
+                  <span className={styles.legendLabel}>{RESTORATION_TYPES[type]?.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <Odontogram
+            selectedTeeth={selectedTeeth}
+            onSelectionChange={setSelectedTeeth}
+            mode={selectionMode}
+            disabledTeeth={usedTeeth}
+            highlightedTeeth={highlightedTeeth}
+            allowCrossQuadrant={currentRestoration === 'BRIDGE' || currentRestoration === 'IMPLANT_BRIDGE'}
+            archSelectionMode={currentRestoration === 'DENTURE_FULL'}
+            onArchSelect={setSelectedArchForDenture}
+            selectedArch={selectedArchForDenture}
+          />
+          
+          {/* Compact Role Assignment */}
+          {selectedTeeth.length > 0 && (currentRestoration === 'BRIDGE' || currentRestoration === 'IMPLANT_BRIDGE') && (
+            <div className={styles.compactRoles}>
+              <span className={styles.rolesLabel}>Roles:</span>
+              {selectedTeeth.sort((a, b) => a - b).map(tooth => (
+                <button
+                  key={tooth}
+                  type="button"
+                  className={`${styles.compactRoleBtn} ${styles[toothRoles[tooth] || 'pontic']}`}
+                  onClick={() => handleToothRoleToggle(tooth)}
+                  title={toothRoles[tooth] === 'retainer' ? 'Retainer (supporting crown)' : 'Pontic (suspended tooth)'}
+                >
+                  #{tooth}: {toothRoles[tooth] === 'retainer' ? 'R' : 'P'}
+                </button>
+              ))}
+              <span className={styles.helpText}>(auto: ends=R, middle=P)</span>
+            </div>
+          )}
+          
+          {selectedTeeth.length > 0 && currentRestoration === 'DENTURE_PARTIAL' && (
+            <div className={styles.compactRoles}>
+              <span className={styles.rolesLabel}>Teeth:</span>
+              {selectedTeeth.sort((a, b) => a - b).map(tooth => (
+                <button
+                  key={tooth}
+                  type="button"
+                  className={`${styles.compactRoleBtn} ${styles[toothRoles[tooth] || 'rpd_component']}`}
+                  onClick={() => handleToothRoleToggle(tooth)}
+                  title={toothRoles[tooth] === 'abutment' ? 'Abutment (supports clasps)' : 'Prosthetic component'}
+                >
+                  #{tooth}: {toothRoles[tooth] === 'abutment' ? 'A' : 'C'}
+                </button>
+              ))}
+            </div>
+          )}
 
           <button
             type="button"
             onClick={handleAddToPrescription}
             className="button primary"
-            style={{width: '100%'}}
+            style={{width: '100%', marginTop: '0.75rem'}}
           >
-            + Add to Prescription
+            + Add to Prescription {currentRestoration && `(${RESTORATION_TYPES[currentRestoration].label})`}
           </button>
-        </>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!currentRestoration && (
+        <div className={styles.emptyState}>
+          <p>👆 Select a restoration type above to begin</p>
+        </div>
       )}
 
       {/* Prescription Summary */}
@@ -437,24 +653,192 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
           <div className={styles.prescriptionList}>
             {prescriptions.map(rx => (
               <div key={rx.id} className={styles.prescriptionItem}>
-                <div className={styles.rxHeader}>
-                  <strong>{rx.label}</strong>
-                  <button
-                    type="button"
-                    onClick={() => handleRemovePrescription(rx.id)}
-                    className={styles.removeBtn}
-                  >
-                    ×
-                  </button>
-                </div>
-                <div className={styles.rxDetails}>
-                  <span>{rx.material}</span>
-                  {rx.shade && <span>• Shade: {rx.shade}</span>}
-                  {rx.implantSystem && <span>• {rx.implantSystem}</span>}
-                  <span>• {rx.units.length} unit{rx.units.length > 1 ? 's' : ''}</span>
-                </div>
-                {rx.instructions && (
-                  <div className={styles.rxInstructions}>{rx.instructions}</div>
+                {editingId === rx.id ? (
+                  // EDIT MODE
+                  <div className={styles.editMode}>
+                    <div className={styles.rxHeader}>
+                      <strong>{RESTORATION_TYPES[rx.type].label} (Editing)</strong>
+                      <div className={styles.editActions}>
+                        <button
+                          type="button"
+                          onClick={() => handleSaveEdit(rx.id)}
+                          className={styles.saveBtn}
+                          title="Save changes"
+                        >
+                          ✓
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCancelEdit}
+                          className={styles.cancelBtn}
+                          title="Cancel"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* Inline Edit Form */}
+                    <div className={styles.editFields}>
+                      <div className={styles.editRow}>
+                        <label>Material:</label>
+                        <select
+                          value={editForm.material}
+                          onChange={(e) => setEditForm({...editForm, material: e.target.value})}
+                          className={styles.editSelect}
+                        >
+                          {RESTORATION_TYPES[rx.type].materials.map(mat => (
+                            <option key={mat} value={mat}>{mat}</option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      <div className={styles.editRow}>
+                        <label>Shade:</label>
+                        <select
+                          value={editForm.shadeSystem}
+                          onChange={(e) => setEditForm({...editForm, shadeSystem: e.target.value})}
+                          className={styles.editSelect}
+                        >
+                          <option value="VITA_CLASSICAL">VITA Classic</option>
+                          <option value="VITA_3D">VITA 3D</option>
+                        </select>
+                        <select
+                          value={editForm.shade}
+                          onChange={(e) => setEditForm({...editForm, shade: e.target.value})}
+                          className={styles.editSelect}
+                        >
+                          <option value="">Select...</option>
+                          {SHADE_SYSTEMS[editForm.shadeSystem || 'VITA_CLASSICAL'].map(s => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      {RESTORATION_TYPES[rx.type].extraFields?.includes('implantSystem') && (
+                        <>
+                          <div className={styles.editRow}>
+                            <label>Implant:</label>
+                            <select
+                              value={editForm.implantSystem}
+                              onChange={(e) => setEditForm({...editForm, implantSystem: e.target.value})}
+                              className={styles.editSelect}
+                            >
+                              <option value="">Select...</option>
+                              {IMPLANT_SYSTEMS.map(sys => (
+                                <option key={sys} value={sys}>{sys}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className={styles.editRow}>
+                            <label>Abutment:</label>
+                            <select
+                              value={editForm.abutmentType}
+                              onChange={(e) => setEditForm({...editForm, abutmentType: e.target.value})}
+                              className={styles.editSelect}
+                            >
+                              <option value="Custom Abutment">Custom</option>
+                              <option value="Stock Abutment">Stock</option>
+                              <option value="Screw Retained">Screw Retained</option>
+                            </select>
+                          </div>
+                        </>
+                      )}
+                      
+                      <div className={styles.editRow}>
+                        <label>Notes:</label>
+                        <input
+                          type="text"
+                          value={editForm.instructions}
+                          onChange={(e) => setEditForm({...editForm, instructions: e.target.value})}
+                          className={styles.editInput}
+                          placeholder="Special instructions..."
+                        />
+                      </div>
+                      
+                      {/* Tooth Selection for Edit */}
+                      {!RESTORATION_TYPES[rx.type].arch && (
+                        <div className={styles.editTeeth}>
+                          <label>Teeth: (click to toggle)</label>
+                          <div className={styles.toothGrid}>
+                            {[...Array(48)].map((_, i) => {
+                              const toothNum = i + 11 > 18 && i + 11 < 21 ? null : 
+                                               i + 11 > 28 && i + 11 < 31 ? null :
+                                               i + 11 > 38 && i + 11 < 41 ? null :
+                                               i + 11 > 48 ? null : i + 11;
+                              if (!toothNum || [19, 20, 29, 30, 39, 40, 49, 50].includes(toothNum)) return null;
+                              
+                              const isUsed = usedTeeth.includes(toothNum) && !rx.teeth.includes(toothNum);
+                              const isInEdit = editForm.teeth?.includes(toothNum);
+                              
+                              return (
+                                <button
+                                  key={toothNum}
+                                  type="button"
+                                  className={`${styles.toothBtn} ${isInEdit ? styles.selected : ''} ${isUsed ? styles.disabled : ''}`}
+                                  onClick={() => !isUsed && handleToothToggleInEdit(toothNum)}
+                                  disabled={isUsed}
+                                >
+                                  {toothNum}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          
+                          {/* Role assignment in edit */}
+                          {editForm.teeth?.length > 0 && (rx.type === 'BRIDGE' || rx.type === 'IMPLANT_BRIDGE' || rx.type === 'DENTURE_PARTIAL') && (
+                            <div className={styles.editRoles}>
+                              <span className={styles.rolesLabel}>Roles:</span>
+                              {editForm.teeth.sort((a, b) => a - b).map(tooth => (
+                                <button
+                                  key={tooth}
+                                  type="button"
+                                  className={`${styles.compactRoleBtn} ${styles[editForm.toothRoles[tooth] || 'pontic']}`}
+                                  onClick={() => handleEditRoleToggle(tooth)}
+                                >
+                                  #{tooth}: {editForm.toothRoles[tooth] === 'retainer' || editForm.toothRoles[tooth] === 'abutment' ? 'R' : 'P'}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  // VIEW MODE
+                  <>
+                    <div className={styles.rxHeader}>
+                      <strong>{rx.label}</strong>
+                      <div className={styles.rxActions}>
+                        <button
+                          type="button"
+                          onClick={() => handleEditPrescription(rx)}
+                          className={styles.editBtn}
+                          title="Edit"
+                        >
+                          ✎
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePrescription(rx.id)}
+                          className={styles.removeBtn}
+                          title="Remove"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                    <div className={styles.rxDetails}>
+                      <span>{rx.material}</span>
+                      {rx.shade && <span>• Shade: {rx.shade}</span>}
+                      {rx.implantSystem && <span>• {rx.implantSystem}</span>}
+                      <span>• {rx.units.length} unit{rx.units.length > 1 ? 's' : ''}</span>
+                    </div>
+                    {rx.instructions && (
+                      <div className={styles.rxInstructions}>{rx.instructions}</div>
+                    )}
+                  </>
                 )}
               </div>
             ))}
