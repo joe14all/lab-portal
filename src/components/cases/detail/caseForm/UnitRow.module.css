@@ -78,16 +78,62 @@
 
 /* --- Inputs Grid --- */
 .unitMainGrid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 1rem;
+  align-items: end;
 }
 
-@media (min-width: 768px) {
+/* Tablet and up: 2 columns */
+@media (min-width: 640px) {
   .unitMainGrid {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: flex-end;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .productField {
+    grid-column: 1 / -1; /* Full width */
+  }
+}
+
+/* Desktop: Optimized layout */
+@media (min-width: 1024px) {
+  .unitMainGrid {
+    grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr;
+    gap: 0.75rem;
+  }
+  
+  .productField {
+    grid-column: auto; /* Reset to auto */
+  }
+}
+
+/* Field-specific styles */
+.productField {
+  min-width: 0; /* Allow grid to shrink */
+}
+
+.workflowField {
+  min-width: 0;
+}
+
+.toothField {
+  min-width: 0;
+}
+
+.archField {
+  min-width: 0;
+}
+
+.shadeField {
+  min-width: 0;
+}
+
+/* Mobile optimization for narrow fields */
+@media (max-width: 639px) {
+  .toothField,
+  .archField,
+  .shadeField {
+    max-width: 150px; /* Prevent full width on mobile for these short fields */
   }
 }
 

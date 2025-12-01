@@ -70,7 +70,7 @@ const UnitRow = ({
       <div className={styles.unitMainGrid}>
         
         {/* 1. PRODUCT SELECTOR (Always Visible) */}
-        <div className="form-group" style={{ flex: 2, minWidth: '250px' }}>
+        <div className={`form-group ${styles.productField}`}>
           <label>Product / Service</label>
           <select 
             value={unit.type} 
@@ -90,7 +90,7 @@ const UnitRow = ({
 
         {/* 2. CONDITIONAL: WORKFLOW */}
         {!isNonPhysical && validWorkflows.length > 0 && (
-          <div className="form-group" style={{ flex: 1 }}>
+          <div className={`form-group ${styles.workflowField}`}>
             <label>Workflow</label>
             <select
               value={unit.workflowId || ''}
@@ -105,7 +105,7 @@ const UnitRow = ({
 
         {/* 3. CONDITIONAL: TOOTH / ARCH */}
         {showTooth && (
-            <div className="form-group" style={{ flex: 0.5, minWidth: '80px' }}>
+            <div className={`form-group ${styles.toothField}`}>
             <label>Tooth</label>
             <select 
                 value={unit.tooth || ''} 
@@ -119,7 +119,7 @@ const UnitRow = ({
         )}
 
         {showArch && (
-            <div className="form-group" style={{ flex: 0.5, minWidth: '100px' }}>
+            <div className={`form-group ${styles.archField}`}>
             <label>Arch</label>
             <select
                 value={unit.arch || ''}
@@ -134,7 +134,7 @@ const UnitRow = ({
 
         {/* 4. CONDITIONAL: SHADE */}
         {showShade && (
-          <div className="form-group" style={{ flex: 0.5, minWidth: '80px' }}>
+          <div className={`form-group ${styles.shadeField}`}>
             <label>Shade</label>
             <input 
               type="text" 

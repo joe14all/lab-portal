@@ -1,0 +1,217 @@
+.prescriptionView {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.prescriptionGroup {
+  background: var(--card-bg, white);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+
+.prescriptionGroup:hover {
+  border-color: var(--primary-200, #bfdbfe);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.prescriptionGroup.bridge {
+  border-left: 4px solid var(--primary-500, #3b82f6);
+  background: linear-gradient(to right, rgba(59, 130, 246, 0.02), transparent);
+}
+
+.prescriptionGroup.denture {
+  border-left: 4px solid var(--purple-500, #a855f7);
+  background: linear-gradient(to right, rgba(168, 85, 247, 0.02), transparent);
+}
+
+.prescriptionGroup.single {
+  border-left: 4px solid var(--neutral-300, #d1d5db);
+}
+
+/* Header */
+.groupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.groupInfo {
+  flex: 1;
+}
+
+.groupLabel {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  margin: 0 0 8px 0;
+}
+
+.groupMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-secondary, #6b7280);
+}
+
+.teeth,
+.arch,
+.tooth,
+.material,
+.shade {
+  display: inline-flex;
+  align-items: center;
+}
+
+.teeth {
+  font-weight: 500;
+  color: var(--primary-600, #2563eb);
+}
+
+.arch {
+  font-weight: 500;
+  color: var(--purple-600, #9333ea);
+  text-transform: uppercase;
+}
+
+.tooth {
+  font-weight: 500;
+  color: var(--neutral-700, #374151);
+}
+
+/* Bridge Units Breakdown */
+.bridgeUnits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-color, #e5e7eb);
+}
+
+.unitChip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--neutral-50, #f9fafb);
+  border: 1px solid var(--neutral-200, #e5e7eb);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.unitChip:hover {
+  background: var(--primary-50, #eff6ff);
+  border-color: var(--primary-300, #93c5fd);
+  transform: translateY(-1px);
+}
+
+.unitTooth {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--primary-700, #1d4ed8);
+}
+
+.unitType {
+  font-size: 13px;
+  color: var(--text-secondary, #6b7280);
+}
+
+/* Unit Actions */
+.unitActions {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-color, #e5e7eb);
+}
+
+.detailBtn {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--primary-300, #93c5fd);
+  border-radius: 6px;
+  color: var(--primary-600, #2563eb);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.detailBtn:hover {
+  background: var(--primary-50, #eff6ff);
+  border-color: var(--primary-500, #3b82f6);
+}
+
+/* Instructions */
+.instructions {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--warning-50, #fef3c7);
+  border-left: 3px solid var(--warning-400, #fbbf24);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-primary, #111827);
+}
+
+.instructions strong {
+  color: var(--warning-700, #a16207);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .prescriptionGroup {
+    background: var(--card-bg, #1f2937);
+    border-color: var(--border-color, #374151);
+  }
+
+  .prescriptionGroup:hover {
+    border-color: var(--primary-600, #2563eb);
+  }
+
+  .groupLabel {
+    color: var(--text-primary, #f9fafb);
+  }
+
+  .groupMeta {
+    color: var(--text-secondary, #9ca3af);
+  }
+
+  .unitChip {
+    background: var(--neutral-800, #1f2937);
+    border-color: var(--neutral-600, #4b5563);
+  }
+
+  .unitChip:hover {
+    background: var(--primary-900, #1e3a8a);
+    border-color: var(--primary-600, #2563eb);
+  }
+
+  .instructions {
+    background: rgba(251, 191, 36, 0.1);
+    color: var(--text-primary, #f9fafb);
+  }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .prescriptionGroup {
+    padding: 16px;
+  }
+
+  .groupHeader {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .bridgeUnits {
+    flex-direction: column;
+  }
+
+  .unitChip {
+    width: 100%;
+  }
+}

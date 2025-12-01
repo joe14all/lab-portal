@@ -297,11 +297,13 @@ const CaseList = () => {
                     <IconClose width="24" height="24" />
                 </button>
             </div>
-            <CaseForm
-              initialData={null}
-              onSubmit={handleNewCaseSubmit}
-              onCancel={() => setShowCreateModal(false)}
-            />
+            <div className={detailStyles.modalBody}>
+              <CaseForm
+                initialData={null}
+                onSubmit={handleNewCaseSubmit}
+                onCancel={() => setShowCreateModal(false)}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -316,7 +318,7 @@ const CaseList = () => {
                 <IconClose width="24" height="24" />
               </button>
             </div>
-            <div style={{padding: '1.5rem'}}>
+            <div className={detailStyles.modalBody}>
               <p style={{marginBottom: '1rem'}}>
                 Update {selectedIds.length} selected case{selectedIds.length > 1 ? 's' : ''} to:
               </p>

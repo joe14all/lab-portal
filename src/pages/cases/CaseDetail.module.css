@@ -35,6 +35,40 @@
   gap: 1.5rem;
 }
 
+/* --- VIEW TOGGLE --- */
+.viewToggle {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  background: var(--bg-surface, #f9fafb);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.viewToggleBtn {
+  flex: 1;
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.viewToggleBtn:hover {
+  background: var(--bg-body, white);
+  border-color: var(--primary-300, #93c5fd);
+}
+
+.viewToggleBtn.active {
+  background: var(--primary-500, #3b82f6);
+  border-color: var(--primary-600, #2563eb);
+  color: white;
+}
+
 /* --- 3. GENERIC MODAL STYLES --- */
 .modalBackdrop {
     position: fixed;
@@ -55,17 +89,41 @@
     border-radius: 1rem;
     box-shadow: var(--shadow-lg);
     width: 100%;
-    max-width: 900px;
-    max-height: 95vh;
-    overflow-y: auto;
+    max-width: min(1200px, 95vw);
+    max-height: 90vh;
     animation: zoomIn 0.3s ease-out;
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* Prevent outer scroll */
 }
 
 @keyframes zoomIn {
     from { opacity: 0; transform: scale(0.9); }
     to { opacity: 1; transform: scale(1); }
+}
+
+/* Responsive modal sizing */
+@media (max-width: 1024px) {
+    .modalContent {
+        max-width: 100%;
+        max-height: 100vh;
+        margin: 0;
+        border-radius: 0;
+    }
+    
+    .modalBackdrop {
+        padding: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .modalHeader {
+        padding: 1rem;
+    }
+    
+    .modalBody {
+        padding: 1rem;
+    }
 }
 
 .modalHeader {
@@ -77,14 +135,39 @@
     background-color: var(--bg-surface);
     border-top-left-radius: 1rem;
     border-top-right-radius: 1rem;
-    position: sticky;
-    top: 0;
+    flex-shrink: 0; /* Prevent header from shrinking */
     z-index: 10;
 }
 
 .modalHeader h3 {
     margin: 0;
     font-size: 1.25rem;
+}
+
+.modalBody {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1.5rem;
+    scroll-behavior: smooth;
+}
+
+/* Smooth scroll shadow indicator */
+.modalBody::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modalBody::-webkit-scrollbar-track {
+    background: var(--bg-subtle, #f3f4f6);
+}
+
+.modalBody::-webkit-scrollbar-thumb {
+    background: var(--neutral-400, #9ca3af);
+    border-radius: 4px;
+}
+
+.modalBody::-webkit-scrollbar-thumb:hover {
+    background: var(--neutral-500, #6b7280);
 }
 
 /* --- 4. PRINT CONFIGURATION --- */

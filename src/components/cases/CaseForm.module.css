@@ -4,7 +4,152 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  padding-bottom: 1rem;
+  /* Removed padding-bottom - modalBody now handles padding */
+}
+
+/* Error Summary Component */
+.errorSummary {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 2px solid var(--danger-300, #fca5a5);
+  border-left: 4px solid var(--danger-600, #dc2626);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.errorHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  color: var(--danger-700, #b91c1c);
+}
+
+.errorHeader strong {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.errorList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.errorItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 1px solid var(--danger-200, #fecaca);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.errorItem:hover {
+  background: var(--danger-50, #fef2f2);
+  border-color: var(--danger-400, #f87171);
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);
+}
+
+.errorField {
+  font-weight: 600;
+  color: var(--danger-700, #b91c1c);
+  white-space: nowrap;
+  min-width: 120px;
+}
+
+.errorMessage {
+  color: var(--danger-600, #dc2626);
+  flex: 1;
+}
+
+/* Dark mode support */
+:global(body.dark) .errorSummary {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(220, 38, 38, 0.15) 100%);
+  border-color: var(--danger-700, #b91c1c);
+}
+
+:global(body.dark) .errorItem {
+  background: var(--neutral-900, #171717);
+  border-color: var(--danger-800, #991b1b);
+}
+
+:global(body.dark) .errorItem:hover {
+  background: rgba(220, 38, 38, 0.15);
+  border-color: var(--danger-600, #dc2626);
+}
+
+/* Responsive error summary */
+@media (max-width: 640px) {
+  .errorSummary {
+    padding: 1rem;
+  }
+
+  .errorField {
+    min-width: 80px;
+    font-size: 0.875rem;
+  }
+
+  .errorMessage {
+    font-size: 0.875rem;
+  }
+
+  .errorItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}
+
+/* Form Toggle */
+.formToggle {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--bg-subtle);
+  padding: 0.375rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.toggleBtn {
+  flex: 1;
+  padding: 0.625rem 1rem;
+  border: none;
+  background: transparent;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
+}
+
+.toggleBtn:hover {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.toggleBtn.active {
+  background: var(--primary-500);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .actions {

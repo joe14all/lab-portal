@@ -9,6 +9,7 @@ import CaseDetailHeader from '../../components/cases/detail/CaseDetailHeader';
 import CaseDetailStepper from '../../components/cases/detail/CaseDetailStepper';
 import CaseContextCard from '../../components/cases/detail/CaseContextCard';
 import CaseUnitsList from '../../components/cases/detail/CaseUnitsList';
+import PrescriptionUnitsView from '../../components/cases/detail/PrescriptionUnitsView';
 import CaseFilesCard from '../../components/cases/detail/CaseFilesCard';
 import CaseCommunicationCard from '../../components/cases/detail/CaseCommunicationCard';
 import CasePrintTicket from '../../components/cases/detail/CasePrintTicket';
@@ -27,6 +28,7 @@ const CaseDetail = () => {
   const { addToast } = useToast();
   
   const [showEditModal, setShowEditModal] = useState(false);
+  const [viewMode, setViewMode] = useState('prescription'); // 'prescription' | 'list'
 
   /**
    * Handle case edit submission with optimistic locking
@@ -136,13 +138,40 @@ const CaseDetail = () => {
           </div>
 
           <div className={styles.centerCol}>
-            <CaseUnitsList 
+            {/* View Toggle */}
+            <div className={styles.viewToggle}>
+              <button
+                className={`${styles.viewToggleBtn} ${viewMode === 'prescription' ? styles.active : ''}`}
+                onClick={() => setViewMode('prescription')}
+              >
+                📋 Prescription View
+              </button>
+              <button
+                className={`${styles.viewToggleBtn} ${viewMode === 'list' ? styles.active : ''}`}
+                onClick={() => setViewMode('list')}
+              >
+                📝 List View
+              </button>
+            </div>
+
+            {/* Conditional Rendering */}
+            {viewMode === 'prescription' ? (
+              <PrescriptionUnitsView 
+                units={activeCase.units}
+                onUnitClick={(unit) => {
+                  // Open unit detail or edit modal
+                  console.log('Unit clicked:', unit);
+                }}
+              />
+            ) : (
+              <CaseUnitsList 
                 units={activeCase.units} 
                 stages={stages}
                 caseId={activeCase.id}
                 updateUnitStatus={updateUnitStatus}
               />
-            </div>
+            )}
+          </div>
 
           <div className={styles.rightCol}>
             <CaseFilesCard files={files} caseId={activeCase.id} />
@@ -163,11 +192,13 @@ const CaseDetail = () => {
                       <IconClose width="24" height="24" />
                   </button>
               </div>
-              <CaseForm
-                initialData={activeCase}
-                onSubmit={handleCaseEditSubmit}
-                onCancel={() => setShowEditModal(false)}
-              />
+              <div className={styles.modalBody}>
+                <CaseForm
+                  initialData={activeCase}
+                  onSubmit={handleCaseEditSubmit}
+                  onCancel={() => setShowEditModal(false)}
+                />
+              </div>
             </div>
           </div>
         )}
