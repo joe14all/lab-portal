@@ -102,6 +102,11 @@
   width: fit-content;
 }
 
+.typeIcon {
+  width: 18px;
+  height: 18px;
+}
+
 /* Color Variants for Case Types */
 .typeFixed {
   background-color: var(--primary-50);

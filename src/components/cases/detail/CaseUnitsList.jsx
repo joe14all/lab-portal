@@ -140,7 +140,7 @@ const CaseUnitsList = ({ units, stages, caseId, updateUnitStatus }) => {
                         <span className={styles.typeIcon}>{getUnitIcon(unit.type)}</span>
                         <div className={styles.idText}>
                         <span className={styles.toothBadge}>
-                            {unit.tooth ? `Tooth #${unit.tooth}` : 'Full Arch'}
+                            {unit.tooth ? `Tooth #${unit.tooth}` : unit.arch ? `${unit.arch} Arch` : 'Full Arch'}
                         </span>
                         <strong>{unit.type}</strong>
                         </div>
@@ -157,11 +157,68 @@ const CaseUnitsList = ({ units, stages, caseId, updateUnitStatus }) => {
                         <span className={styles.label}>Shade</span>
                         <span>{unit.shade || '-'}</span>
                     </div>
-                    <div className={styles.detailCol}>
+                    {!unit.arch && (
+                        <div className={styles.detailCol}>
                         <span className={styles.label}>Stump</span>
                         <span>{unit.stumpShade || '-'}</span>
+                        </div>
+                    )}
                     </div>
+
+                    {/* RPD Component Summary */}
+                    {unit.rpdComponentsByTooth && Object.keys(unit.rpdComponentsByTooth).length > 0 && (
+                    <div className={styles.dentureInfo}>
+                        <div className={styles.dentureRow}>
+                        <span className={styles.label}>Components:</span>
+                        <span>{Object.keys(unit.rpdComponentsByTooth).length} teeth with components</span>
+                        </div>
+                        <div className={styles.componentPreview}>
+                        {Object.entries(unit.rpdComponentsByTooth)
+                            .sort(([a], [b]) => Number(a) - Number(b))
+                            .slice(0, 4)
+                            .map(([tooth, components]) => (
+                            <span key={tooth} className={styles.componentBadge}>
+                                #{tooth}: {components.length}
+                            </span>
+                            ))}
+                        {Object.keys(unit.rpdComponentsByTooth).length > 4 && (
+                            <span className={styles.componentBadge}>
+                            +{Object.keys(unit.rpdComponentsByTooth).length - 4}
+                            </span>
+                        )}
+                        </div>
                     </div>
+                    )}
+
+                    {/* Major Connector */}
+                    {unit.rpdMajorConnector && (
+                    <div className={styles.dentureInfo}>
+                        <div className={styles.dentureRow}>
+                        <span className={styles.label}>Major Connector:</span>
+                        <span>{unit.rpdMajorConnector}</span>
+                        </div>
+                        {unit.rpdMajorConnectorLower && (
+                        <div className={styles.dentureRow}>
+                            <span className={styles.label}>Lower Connector:</span>
+                            <span>{unit.rpdMajorConnectorLower}</span>
+                        </div>
+                        )}
+                    </div>
+                    )}
+
+                    {/* Missing Teeth */}
+                    {unit.missingTeeth && unit.missingTeeth.length > 0 && (
+                    <div className={styles.dentureInfo}>
+                        <div className={styles.dentureRow}>
+                        <span className={styles.label}>Missing Teeth:</span>
+                        <div className={styles.missingTeethList}>
+                            {unit.missingTeeth.sort((a, b) => a - b).map(tooth => (
+                            <span key={tooth} className={styles.toothBadgeSmall}>#{tooth}</span>
+                            ))}
+                        </div>
+                        </div>
+                    </div>
+                    )}
 
                     {unit.instructions && (
                     <div className={styles.instructions}>

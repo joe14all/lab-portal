@@ -197,6 +197,39 @@ export const LogisticsProvider = ({ children }) => {
           routeName: updatedRoute.name,
           timestamp: new Date().toISOString()
         });
+
+        // Update all cases in delivery manifest to stage-delivered
+        if (updatedStop?.deliveryManifest && updatedStop.deliveryManifest.length > 0) {
+          for (const delivery of updatedStop.deliveryManifest) {
+            if (delivery.caseId) {
+              try {
+                await MockService.cases.cases.update(delivery.caseId, {
+                  status: 'stage-delivered',
+                  deliveryInfo: {
+                    deliveredAt: new Date().toISOString(),
+                    routeId,
+                    routeName: updatedRoute.name,
+                    stopId,
+                    ...proofData // Include signature, photo, etc.
+                  }
+                });
+
+                // Emit event for case status change
+                LabEventBus.publish(EVENTS.CASE_STATUS_CHANGED, {
+                  caseId: delivery.caseId,
+                  oldStatus: 'stage-shipped',
+                  newStatus: 'stage-delivered',
+                  routeId,
+                  stopId,
+                  timestamp: new Date().toISOString()
+                });
+              } catch (err) {
+                console.error(`Failed to update case ${delivery.caseId} to delivered`, err);
+                // Continue processing other cases even if one fails
+              }
+            }
+          }
+        }
       }
       
       return updatedRoute;
@@ -329,6 +362,32 @@ export const LogisticsProvider = ({ children }) => {
         setPickups(prev => prev.map(p => p.id === task.id ? updatedPickup : p));
       }
 
+      // If it's a delivery, update case status from stage-shipping to stage-shipped
+      if (task.type === 'Delivery' && task.caseId) {
+        try {
+          await MockService.cases.cases.update(task.caseId, {
+            status: 'stage-shipped',
+            trackingInfo: {
+              routeId,
+              routeName: route.name,
+              assignedAt: new Date().toISOString()
+            }
+          });
+
+          // Emit event for case status change
+          LabEventBus.publish(EVENTS.CASE_STATUS_CHANGED, {
+            caseId: task.caseId,
+            oldStatus: 'stage-shipping',
+            newStatus: 'stage-shipped',
+            routeId,
+            timestamp: new Date().toISOString()
+          });
+        } catch (err) {
+          console.error("Failed to update case status to shipped", err);
+          // Don't throw - allow route assignment to complete even if case update fails
+        }
+      }
+
     } catch (err) {
       console.error("Failed to assign task", err);
       throw err;
@@ -350,6 +409,7 @@ export const LogisticsProvider = ({ children }) => {
       const pickupsToUpdate = [];
 
       // Create stops for all tasks
+      const casesToUpdate = []; // Track delivery cases to update
       for (let i = 0; i < tasks.length; i++) {
         const task = tasks[i];
         try {
@@ -366,6 +426,8 @@ export const LogisticsProvider = ({ children }) => {
           
           if (task.type === 'Pickup') {
             pickupsToUpdate.push(task.id);
+          } else if (task.type === 'Delivery' && task.caseId) {
+            casesToUpdate.push(task.caseId);
           }
           
           results.success++;
@@ -401,6 +463,33 @@ export const LogisticsProvider = ({ children }) => {
               setPickups(prev => prev.map(p => p.id === pickupId ? updatedPickup : p));
             } catch (err) {
               console.error(`Failed to update pickup ${pickupId}:`, err);
+            }
+          }
+        }
+
+        // Update case statuses from stage-shipping to stage-shipped in batch
+        if (casesToUpdate.length > 0) {
+          for (const caseId of casesToUpdate) {
+            try {
+              await MockService.cases.cases.update(caseId, {
+                status: 'stage-shipped',
+                trackingInfo: {
+                  routeId,
+                  routeName: route.name,
+                  assignedAt: new Date().toISOString()
+                }
+              });
+
+              // Emit event for case status change
+              LabEventBus.publish(EVENTS.CASE_STATUS_CHANGED, {
+                caseId,
+                oldStatus: 'stage-shipping',
+                newStatus: 'stage-shipped',
+                routeId,
+                timestamp: new Date().toISOString()
+              });
+            } catch (err) {
+              console.error(`Failed to update case ${caseId} to shipped:`, err);
             }
           }
         }

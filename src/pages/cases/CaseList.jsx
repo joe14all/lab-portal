@@ -41,22 +41,24 @@ const CaseList = () => {
       }
     },
     ON_HOLD: {
-      label: 'On Hold This Week',
-      filter: (c) => {
-        if (c.status !== 'stage-hold') return false;
-        const heldDate = new Date(c.updatedAt || c.createdAt);
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        return heldDate >= weekAgo;
-      }
+      label: 'On Hold',
+      filter: (c) => c.status === 'stage-hold'
     },
     READY_TO_SHIP: {
       label: 'Ready to Ship',
-      filter: (c) => c.status === 'stage-ready-to-ship'
+      filter: (c) => c.status === 'stage-shipping'
     },
     IN_PRODUCTION: {
       label: 'In Production',
-      filter: (c) => ['stage-design', 'stage-milling', 'stage-finishing'].includes(c.status)
+      filter: (c) => ['stage-design', 'stage-waxup', 'stage-milling', 'stage-casting', 'stage-processing', 'stage-finishing'].includes(c.status)
+    },
+    IN_TRANSIT: {
+      label: 'In Transit',
+      filter: (c) => ['stage-shipped'].includes(c.status)
+    },
+    COMPLETED: {
+      label: 'Delivered',
+      filter: (c) => c.status === 'stage-delivered'
     }
   };
 
@@ -235,34 +237,36 @@ const CaseList = () => {
             <SearchBar 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by case #, patient, or doctor..."
+              placeholder="Search cases..."
             />
           </div>
 
-          {/* Filter Presets */}
-          <div className={styles.presetButtons}>
+          <div className={styles.filterChips}>
+            {/* Status Dropdown as Chip */}
+            <div className={styles.chipWrapper}>
+              <select 
+                value={statusFilter} 
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className={styles.chipSelect}
+              >
+                <option value="All">All Status</option>
+                {stages.map(stage => (
+                  <option key={stage.id} value={stage.id}>{stage.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Quick Filter Chips */}
             {Object.entries(FILTER_PRESETS).map(([key, preset]) => (
               <button
                 key={key}
-                className={`${styles.presetBtn} ${activePreset === key ? styles.presetActive : ''}`}
+                className={`${styles.chip} ${activePreset === key ? styles.chipActive : ''}`}
                 onClick={() => handlePresetClick(key)}
+                title={preset.label}
               >
                 {preset.label}
               </button>
             ))}
-          </div>
-
-          <div className={styles.filterGroup}>
-            <select 
-              value={statusFilter} 
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className={styles.selectInput}
-            >
-              <option value="All">All Statuses</option>
-              {stages.map(stage => (
-                <option key={stage.id} value={stage.id}>{stage.label}</option>
-              ))}
-            </select>
           </div>
         </section>
       )}

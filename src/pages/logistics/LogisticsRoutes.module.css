@@ -24,6 +24,7 @@
   background-color: var(--bg-surface);
   border-bottom: 1px solid var(--border-color);
   z-index: 20;
+  margin-bottom: 1rem;
 }
 
 .titleGroup h1 {

@@ -10,9 +10,9 @@ import styles from './BatchCreationModal.module.css';
 
 const STEPS = ['Select Material', 'Select Units', 'Configure Batch'];
 
-const BatchCreationModal = ({ isOpen, onClose }) => {
+const BatchCreationModal = ({ isOpen, onClose, existingBatchId = null }) => {
   const { cases } = useLab();
-  const { equipment, materials, batches, createBatch, loading: prodLoading } = useProduction();
+  const { equipment, materials, batches, createBatch, addCasesToBatch, loading: prodLoading } = useProduction();
   const { addToast } = useToast();
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -30,13 +30,35 @@ const BatchCreationModal = ({ isOpen, onClose }) => {
 
   // 1. Group Candidates
   const groupedCandidates = useMemo(() => {
-    return BatchScheduler.getProductionCandidates(cases);
-  }, [cases]);
+    const allCandidates = BatchScheduler.getProductionCandidates(cases);
+    
+    // If adding to existing batch, filter out cases already in that batch
+    if (existingBatchId) {
+      const existingBatch = batches.find(b => b.id === existingBatchId);
+      if (existingBatch) {
+        const existingCaseIds = new Set(existingBatch.caseIds);
+        // Filter out units from cases already in batch
+        const filtered = {};
+        Object.keys(allCandidates).forEach(material => {
+          filtered[material] = allCandidates[material].filter(unit => !existingCaseIds.has(unit.caseId));
+        });
+        return filtered;
+      }
+    }
+    
+    return allCandidates;
+  }, [cases, existingBatchId, batches]);
 
   // 2. Filter Machines & Inventory
   const compatibleMachines = useMemo(() => {
     if (!selectedMaterialGroup) return [];
-    return BatchScheduler.getCompatibleMachines(selectedMaterialGroup, equipment);
+    const compatible = BatchScheduler.getCompatibleMachines(selectedMaterialGroup, equipment);
+    // Prioritize idle machines
+    return compatible.sort((a, b) => {
+      if (a.status === 'Idle' && b.status !== 'Idle') return -1;
+      if (a.status !== 'Idle' && b.status === 'Idle') return 1;
+      return 0;
+    });
   }, [selectedMaterialGroup, equipment]);
 
   const compatibleInventory = useMemo(() => {
@@ -46,6 +68,16 @@ const BatchCreationModal = ({ isOpen, onClose }) => {
   }, [selectedMaterialGroup, materials]);
 
   // --- Effects ---
+
+  // Auto-select when only one option and skip to config if smart
+  useEffect(() => {
+    if (currentStep === 1 && compatibleMachines.length === 1 && !selectedMachineId) {
+      setSelectedMachineId(compatibleMachines[0].id);
+    }
+    if (currentStep === 1 && compatibleInventory.length === 1 && !selectedMaterialId) {
+      setSelectedMaterialId(compatibleInventory[0].id);
+    }
+  }, [currentStep, compatibleMachines, compatibleInventory, selectedMachineId, selectedMaterialId]);
 
   // Run Nesting Calculation when units or material changes
   useEffect(() => {
@@ -100,25 +132,33 @@ const BatchCreationModal = ({ isOpen, onClose }) => {
     const duration = BatchScheduler.estimateDurationMinutes(selectedUnits.length, machine.type);
     const endTime = new Date(Date.now() + duration * 60000).toISOString();
 
-    const batchData = {
-      type: machine.type.includes('Mill') ? 'Milling' : 'Printing',
-      machineId: selectedMachineId,
-      materialId: selectedMaterialId,
-      caseIds: [...new Set(selectedUnits.map(u => u.caseId))],
-      estimatedEndTime: endTime,
-      materialConsumed: {
-        units: selectedUnits.length,
-        percentage: nestingLayout ? nestingLayout.efficiency : 0
-      },
-      priority: selectedUnits.some(u => u.priority === 'Rush') ? 'RUSH' : 'STANDARD'
-    };
+    const selectedCaseIds = [...new Set(selectedUnits.map(u => u.caseId))];
 
     try {
-      await createBatch(batchData);
-      addToast(`Batch created with ${selectedUnits.length} units`, 'success');
+      if (existingBatchId) {
+        // Add to existing batch
+        await addCasesToBatch(existingBatchId, selectedCaseIds);
+        addToast(`Added ${selectedCaseIds.length} case(s) to batch`, 'success');
+      } else {
+        // Create new batch
+        const batchData = {
+          type: machine.type.includes('Mill') ? 'Milling' : 'Printing',
+          machineId: selectedMachineId,
+          materialId: selectedMaterialId,
+          caseIds: selectedCaseIds,
+          estimatedEndTime: endTime,
+          materialConsumed: {
+            units: selectedUnits.length,
+            percentage: nestingLayout ? nestingLayout.efficiency : 0
+          },
+          priority: selectedUnits.some(u => u.priority === 'Rush') ? 'RUSH' : 'STANDARD'
+        };
+        await createBatch(batchData);
+        addToast(`Batch created with ${selectedUnits.length} units`, 'success');
+      }
       onClose();
     } catch (err) {
-      addToast("Failed to create batch", 'error');
+      addToast(existingBatchId ? "Failed to add to batch" : "Failed to create batch", 'error');
     }
   };
 
@@ -143,27 +183,52 @@ const BatchCreationModal = ({ isOpen, onClose }) => {
 
     if (currentStep === 1) {
       const candidates = groupedCandidates[selectedMaterialGroup] || [];
+      const allSelected = candidates.length > 0 && selectedUnits.length === candidates.length;
+      
       return (
-        <div className={styles.selectionList}>
-          {candidates.map(unit => (
-            <label key={unit.id} className={styles.unitRow}>
-              <input 
-                type="checkbox" 
-                className={styles.checkbox}
-                checked={!!selectedUnits.find(u => u.id === unit.id)}
-                onChange={() => toggleUnit(unit)}
-              />
-              <div className={styles.unitInfo}>
-                <span className={styles.unitMain}>
-                  #{unit.tooth} - {unit.type}
-                  {unit.priority === 'Rush' && <span className={styles.rushBadge}>RUSH</span>}
-                </span>
-                <span className={styles.unitSub}>
-                  {unit.patient} (Dr. {unit.doctor}) • Due: {new Date(unit.dueDate).toLocaleDateString()}
-                </span>
-              </div>
-            </label>
-          ))}
+        <div>
+          {/* Quick Actions */}
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'var(--neutral-50)', borderRadius: '0.5rem' }}>
+            <button 
+              className="button secondary small"
+              onClick={() => setSelectedUnits(candidates)}
+              disabled={allSelected}
+            >
+              Select All ({candidates.length})
+            </button>
+            <button 
+              className="button secondary small"
+              onClick={() => setSelectedUnits([])}
+              disabled={selectedUnits.length === 0}
+            >
+              Clear Selection
+            </button>
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+              <strong>{selectedUnits.length}</strong> of {candidates.length} selected
+            </div>
+          </div>
+
+          <div className={styles.selectionList}>
+            {candidates.map(unit => (
+              <label key={unit.id} className={styles.unitRow}>
+                <input 
+                  type="checkbox" 
+                  className={styles.checkbox}
+                  checked={!!selectedUnits.find(u => u.id === unit.id)}
+                  onChange={() => toggleUnit(unit)}
+                />
+                <div className={styles.unitInfo}>
+                  <span className={styles.unitMain}>
+                    #{unit.tooth} - {unit.type}
+                    {unit.priority === 'Rush' && <span className={styles.rushBadge}>RUSH</span>}
+                  </span>
+                  <span className={styles.unitSub}>
+                    {unit.patient} (Dr. {unit.doctor}) • Due: {new Date(unit.dueDate).toLocaleDateString()}
+                  </span>
+                </div>
+              </label>
+            ))}
+          </div>
         </div>
       );
     }
@@ -248,7 +313,7 @@ const BatchCreationModal = ({ isOpen, onClose }) => {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Create Production Batch"
+      title={existingBatchId ? `Add Cases to Batch ${existingBatchId.split('-').pop()}` : "Create Production Batch"}
       icon={<IconLayers width="20" />}
       width="800px" // Widened for the 2-column step 3
       footer={
@@ -260,20 +325,22 @@ const BatchCreationModal = ({ isOpen, onClose }) => {
           )}
 
           {currentStep < 2 ? (
-            <button 
-              className="button primary" 
-              onClick={() => setCurrentStep(prev => prev + 1)}
-              disabled={currentStep === 1 && selectedUnits.length === 0}
-            >
-              Next
-            </button>
+            <>
+              <button 
+                className="button primary" 
+                onClick={() => setCurrentStep(prev => prev + 1)}
+                disabled={currentStep === 1 && selectedUnits.length === 0}
+              >
+                {currentStep === 1 && selectedMachineId && selectedMaterialId ? 'Review & Create' : 'Next'}
+              </button>
+            </>
           ) : (
             <button 
               className="button primary" 
               onClick={handleCreate}
               disabled={!selectedMachineId || !selectedMaterialId || prodLoading || conflicts.length > 0}
             >
-              {prodLoading ? 'Scheduling...' : 'Start Batch'}
+              {prodLoading ? 'Processing...' : existingBatchId ? 'Add to Batch' : 'Start Batch'}
             </button>
           )}
         </div>

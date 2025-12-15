@@ -1,0 +1,360 @@
+.boardContainer {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  padding: 1.5rem;
+  height: calc(100vh - 200px);
+  overflow: hidden;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.columnHeader {
+  padding: 1rem 1.5rem;
+  background: var(--neutral-50);
+  border-bottom: 2px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.columnHeader h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 0.5rem;
+  background: var(--primary-500);
+  color: white;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.columnContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+/* Material Groups */
+.materialGroup {
+  margin-bottom: 1.5rem;
+}
+
+.materialHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: var(--neutral-100);
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.materialName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.materialCount {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: white;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+}
+
+/* Case Cards */
+.casesList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.caseCard {
+  padding: 0.75rem;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  cursor: grab;
+  transition: all 0.2s;
+}
+
+.caseCard:hover {
+  border-color: var(--primary-300);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.caseCard:active {
+  cursor: grabbing;
+  opacity: 0.8;
+}
+
+.caseCard.urgent {
+  background: #fff5f5;
+  border-color: var(--error-300);
+}
+
+.caseHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.caseNumber {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.unitCount {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--neutral-100);
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+}
+
+.casePatient {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.caseDue {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.caseDue.dueUrgent {
+  color: var(--error-500);
+  font-weight: 600;
+}
+
+.dragHint {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border-color);
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.caseCard:hover .dragHint {
+  opacity: 1;
+}
+
+/* Batch Cards */
+.batchCard {
+  padding: 1rem;
+  background: white;
+  border: 2px solid var(--primary-200);
+  border-radius: 0.75rem;
+  margin-bottom: 1rem;
+  transition: all 0.2s;
+}
+
+.batchCard:hover {
+  border-color: var(--primary-400);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.batchCard.inProgress {
+  border-color: var(--success-300);
+  background: linear-gradient(to bottom, #f0fdf4 0%, white 100%);
+}
+
+.batchHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.batchTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.batchMachine {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  background: var(--success-100);
+  color: var(--success-700);
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.batchStats {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.batchTime {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.batchCases {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.batchCaseItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background: var(--neutral-50);
+  border-radius: 0.375rem;
+  font-size: 0.8rem;
+}
+
+.batchCaseInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.batchCaseNumber {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.batchCasePatient {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.removeBtn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--error-100);
+  color: var(--error-600);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  transition: all 0.2s;
+}
+
+.removeBtn:hover {
+  background: var(--error-200);
+  color: var(--error-700);
+}
+
+.dropZone {
+  padding: 1rem;
+  border: 2px dashed var(--border-color);
+  border-radius: 0.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.batchCard:hover .dropZone {
+  border-color: var(--primary-400);
+  background: var(--primary-50);
+  color: var(--primary-600);
+}
+
+/* Empty States */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.emptyState svg {
+  color: var(--neutral-300);
+  margin-bottom: 1rem;
+}
+
+.emptyState p {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.emptyHint {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+/* Scrollbar */
+.columnContent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.columnContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.columnContent::-webkit-scrollbar-thumb {
+  background: var(--neutral-300);
+  border-radius: 3px;
+}
+
+.columnContent::-webkit-scrollbar-thumb:hover {
+  background: var(--neutral-400);
+}

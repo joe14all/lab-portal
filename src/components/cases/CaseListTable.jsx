@@ -2,13 +2,15 @@ import React from 'react';
 import StatusBadge from './StatusBadge';
 import { 
   IconChevronRight, 
-  IconTooth, 
-  IconMill, 
-  IconLayers, 
-  IconMicroscope,
   IconFire 
 } from '../../layouts/components/LabIcons';
 import styles from './CaseListTable.module.css';
+
+// Import SVG icons
+import crownIcon from '../../assets/icons/crown.svg';
+import implantCrownIcon from '../../assets/icons/implantCrown.svg';
+import partialDentureIcon from '../../assets/icons/partialDenture.svg';
+import orthoIcon from '../../assets/icons/ortho.svg';
 
 // Helper to determine icon and visual style based on case tags/units
 const getCaseTypeConfig = (c) => {
@@ -17,28 +19,28 @@ const getCaseTypeConfig = (c) => {
 
   if (tags.includes('implant') || unitTypes.includes('implant')) {
     return { 
-      icon: <IconMill width="18" height="18" />, 
+      icon: implantCrownIcon, 
       label: 'Implant', 
       className: styles.typeImplant 
     };
   }
   if (tags.includes('removable') || unitTypes.includes('denture') || unitTypes.includes('partial')) {
     return { 
-      icon: <IconLayers width="18" height="18" />, 
+      icon: partialDentureIcon, 
       label: 'Removable', 
       className: styles.typeRemovable 
     };
   }
   if (tags.includes('ortho') || unitTypes.includes('guard') || unitTypes.includes('splint')) {
     return { 
-      icon: <IconMicroscope width="18" height="18" />, 
+      icon: orthoIcon, 
       label: 'Ortho', 
       className: styles.typeOrtho 
     };
   }
   // Default to Crown & Bridge
   return { 
-    icon: <IconTooth width="18" height="18" />, 
+    icon: crownIcon, 
     label: 'Crown & Bridge', 
     className: styles.typeFixed 
   };
@@ -130,7 +132,7 @@ const CaseListTable = ({
                 </td>
                 <td>
                   <div className={`${styles.typeBadge} ${typeConfig.className}`}>
-                    {typeConfig.icon}
+                    <img src={typeConfig.icon} alt={typeConfig.label} className={styles.typeIcon} />
                     <span>{typeConfig.label}</span>
                   </div>
                 </td>

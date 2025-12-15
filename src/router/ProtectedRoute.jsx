@@ -9,8 +9,18 @@ import { useAuth } from '../contexts/AuthContext';
  * * Usage: <Route element={<ProtectedRoute requiredPermissions={['FINANCE_VIEW']} />}> ... </Route>
  */
 const ProtectedRoute = ({ requiredPermissions = [] }) => {
-  const { user, isAuthenticated, loading } = useAuth();
   const location = useLocation();
+  
+  let authContext;
+  try {
+    authContext = useAuth();
+  } catch (error) {
+    // If context is not available, redirect to login
+    console.error('AuthContext not available:', error);
+    return <Navigate to="/auth/login" state={{ from: location }} replace />;
+  }
+  
+  const { user, isAuthenticated, loading } = authContext;
 
   if (loading) {
     // Basic loading state - matches your app's style

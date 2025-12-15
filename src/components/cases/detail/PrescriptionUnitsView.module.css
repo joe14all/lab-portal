@@ -1,217 +1,454 @@
+/* Shared Title */
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
 .prescriptionView {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1rem;
 }
 
-.prescriptionGroup {
-  background: var(--card-bg, white);
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 12px;
-  padding: 20px;
-  transition: all 0.2s ease;
+/* --- UNIT CARD --- */
+.unitItem {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.prescriptionGroup:hover {
-  border-color: var(--primary-200, #bfdbfe);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+.unitItem:hover {
+  border-color: var(--primary-300);
+  box-shadow: var(--shadow-sm);
 }
 
-.prescriptionGroup.bridge {
-  border-left: 4px solid var(--primary-500, #3b82f6);
-  background: linear-gradient(to right, rgba(59, 130, 246, 0.02), transparent);
+/* Hold State Variant */
+.unitHold {
+  border-color: var(--error-500);
+  background-color: #fff5f5; /* Light red tint */
+}
+:global(body.dark) .unitHold {
+  background-color: rgba(239, 68, 68, 0.1);
 }
 
-.prescriptionGroup.denture {
-  border-left: 4px solid var(--purple-500, #a855f7);
-  background: linear-gradient(to right, rgba(168, 85, 247, 0.02), transparent);
-}
-
-.prescriptionGroup.single {
-  border-left: 4px solid var(--neutral-300, #d1d5db);
-}
-
-/* Header */
-.groupHeader {
+/* Header Row */
+.unitHeader {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
 }
 
-.groupInfo {
-  flex: 1;
-}
-
-.groupLabel {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary, #111827);
-  margin: 0 0 8px 0;
-}
-
-.groupMeta {
+.identity {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-size: 14px;
-  color: var(--text-secondary, #6b7280);
-}
-
-.teeth,
-.arch,
-.tooth,
-.material,
-.shade {
-  display: inline-flex;
+  gap: 0.75rem;
   align-items: center;
 }
 
-.teeth {
-  font-weight: 500;
-  color: var(--primary-600, #2563eb);
+.typeIcon {
+  color: var(--primary);
+  background-color: var(--primary-50);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  display: flex;
+}
+:global(body.dark) .typeIcon {
+  background-color: rgba(59, 130, 246, 0.2);
 }
 
-.arch {
-  font-weight: 500;
-  color: var(--purple-600, #9333ea);
+.idText {
+  display: flex;
+  flex-direction: column;
+}
+
+.toothBadge {
+  font-size: 0.7rem;
   text-transform: uppercase;
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 0.05em;
 }
 
-.tooth {
+.idText strong {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+/* Details Grid */
+.unitDetails {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  padding: 0.75rem;
+  background-color: var(--bg-surface-hover);
+  border-radius: 0.5rem;
+}
+
+.detailCol {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.detailCol span:last-child {
+  font-size: 0.9rem;
+  color: var(--text-primary);
   font-weight: 500;
-  color: var(--neutral-700, #374151);
 }
 
-/* Bridge Units Breakdown */
+/* Bridge Units */
 .bridgeUnits {
+  padding: 0.75rem;
+  background-color: var(--bg-surface-hover);
+  border-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.unitChips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px dashed var(--border-color, #e5e7eb);
+  gap: 0.5rem;
 }
 
 .unitChip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: var(--neutral-50, #f9fafb);
-  border: 1px solid var(--neutral-200, #e5e7eb);
-  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .unitChip:hover {
-  background: var(--primary-50, #eff6ff);
-  border-color: var(--primary-300, #93c5fd);
+  border-color: var(--primary);
+  background-color: var(--primary-50);
   transform: translateY(-1px);
-}
-
-.unitTooth {
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--primary-700, #1d4ed8);
-}
-
-.unitType {
-  font-size: 13px;
-  color: var(--text-secondary, #6b7280);
-}
-
-/* Unit Actions */
-.unitActions {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px dashed var(--border-color, #e5e7eb);
-}
-
-.detailBtn {
-  padding: 8px 16px;
-  background: transparent;
-  border: 1px solid var(--primary-300, #93c5fd);
-  border-radius: 6px;
-  color: var(--primary-600, #2563eb);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.detailBtn:hover {
-  background: var(--primary-50, #eff6ff);
-  border-color: var(--primary-500, #3b82f6);
 }
 
 /* Instructions */
 .instructions {
-  margin-top: 12px;
+  font-size: 0.85rem;
+  padding: 0.75rem;
+  background-color: var(--warning-50);
+  border-left: 3px solid var(--warning-500);
+  border-radius: 0.5rem;
+  color: var(--text-primary);
+}
+
+/* Action Row */
+.actionRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.progressTrack {
+  flex: 1;
+  height: 8px;
+  background-color: var(--neutral-200);
+  border-radius: 99px;
+  overflow: hidden;
+}
+:global(body.dark) .progressTrack {
+  background-color: var(--neutral-700);
+}
+
+.progressBar {
+  height: 100%;
+  background-color: var(--primary);
+  transition: width 0.3s ease;
+  border-radius: 99px;
+}
+
+.buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.actionBtn {
+  /* Inherits from icon-button */
+}
+
+.holdBtn {
+  color: var(--warning-600);
+  border-color: var(--warning-300);
+}
+
+.holdBtn:hover {
+  background-color: var(--warning-50);
+  border-color: var(--warning-500);
+}
+
+.detailsBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+/* Modal Content */
+.unitDetailContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 1rem;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 12px;
-  background: var(--warning-50, #fef3c7);
-  border-left: 3px solid var(--warning-400, #fbbf24);
+  background: var(--neutral-50, #f9fafb);
   border-radius: 6px;
+}
+
+.detailLabel {
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
   font-size: 14px;
+}
+
+.detailValue {
+  font-weight: 500;
   color: var(--text-primary, #111827);
-}
-
-.instructions strong {
-  color: var(--warning-700, #a16207);
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .prescriptionGroup {
-    background: var(--card-bg, #1f2937);
-    border-color: var(--border-color, #374151);
-  }
-
-  .prescriptionGroup:hover {
-    border-color: var(--primary-600, #2563eb);
-  }
-
-  .groupLabel {
-    color: var(--text-primary, #f9fafb);
-  }
-
-  .groupMeta {
-    color: var(--text-secondary, #9ca3af);
-  }
-
-  .unitChip {
-    background: var(--neutral-800, #1f2937);
-    border-color: var(--neutral-600, #4b5563);
-  }
-
-  .unitChip:hover {
-    background: var(--primary-900, #1e3a8a);
-    border-color: var(--primary-600, #2563eb);
-  }
-
-  .instructions {
-    background: rgba(251, 191, 36, 0.1);
-    color: var(--text-primary, #f9fafb);
-  }
+  font-size: 14px;
 }
 
 /* Responsive */
 @media (max-width: 640px) {
-  .prescriptionGroup {
-    padding: 16px;
+  .unitDetails {
+    grid-template-columns: 1fr;
   }
 
-  .groupHeader {
+  .actionRow {
     flex-direction: column;
-    gap: 12px;
+    align-items: stretch;
   }
 
-  .bridgeUnits {
-    flex-direction: column;
-  }
-
-  .unitChip {
+  .buttons {
     width: 100%;
+    justify-content: stretch;
   }
+
+  .buttons button {
+    flex: 1;
+  }
+}
+
+/* Denture Details */
+.dentureDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--neutral-50, #f9fafb);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.dentureRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dentureValue {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.componentSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.componentBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  background: var(--primary-100);
+  color: var(--primary-700);
+  border-radius: 0.375rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.missingTeethList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.toothBadgeSmall {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  background: var(--error-100);
+  color: var(--error-700);
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Detail Modal Sections */
+.detailSection {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+}
+
+.detailSectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--primary-200);
+  color: var(--primary-700);
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 0.75rem;
+}
+
+.rpdComponentsDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.toothComponentGroup {
+  padding: 0.75rem;
+  background: var(--neutral-50);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.toothComponentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.componentCount {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.componentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.componentItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border-color);
+}
+
+.componentType {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--primary-100);
+  color: var(--primary-700);
+  border-radius: 0.25rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.componentName {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.componentSurface {
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--neutral-100);
+  color: var(--text-secondary);
+  border-radius: 0.25rem;
+  font-weight: 600;
+}
+
+.majorConnectorDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.connectorItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: var(--neutral-50);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.connectorLabel {
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 100px;
+}
+
+.connectorValue {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.missingTeethDetail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--neutral-50);
+  border-radius: 0.5rem;
+}
+
+.instructionsDetail {
+  padding: 1rem;
+  background: var(--warning-50);
+  border-radius: 0.5rem;
+  border: 1px solid var(--warning-200);
+  color: var(--text-primary);
+  line-height: 1.6;
+  white-space: pre-wrap;
 }

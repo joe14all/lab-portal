@@ -11,6 +11,7 @@
   { "id": "stage-finishing", "label": "Finishing", "category": "PRODUCTION", "color": "pink", "order": 9, "isSystem": true },
   { "id": "stage-qc", "label": "Quality Control", "category": "POST_PRODUCTION", "color": "teal", "order": 10, "isSystem": true },
   { "id": "stage-shipping", "label": "Ready to Ship", "category": "POST_PRODUCTION", "color": "cyan", "order": 11, "isSystem": true },
-  { "id": "stage-shipped", "label": "Shipped", "category": "COMPLETED", "color": "green", "order": 12, "isSystem": true },
+  { "id": "stage-shipped", "label": "Shipped", "category": "POST_PRODUCTION", "color": "blue", "order": 12, "isSystem": true },
+  { "id": "stage-delivered", "label": "Delivered", "category": "COMPLETED", "color": "green", "order": 13, "isSystem": true },
   { "id": "stage-hold", "label": "On Hold", "category": "EXCEPTION", "color": "red", "order": 99, "isSystem": true }
 ]

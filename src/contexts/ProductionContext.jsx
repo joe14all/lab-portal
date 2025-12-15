@@ -151,6 +151,52 @@ export const ProductionProvider = ({ children }) => {
     }
   }, [activeLab]);
 
+  const addCasesToBatch = useCallback(async (batchId, caseIds) => {
+    try {
+      const batch = batches.find(b => b.id === batchId);
+      if (!batch) throw new Error("Batch not found");
+      if (batch.status !== 'Scheduled') throw new Error("Can only add cases to scheduled batches");
+      
+      const updatedCaseIds = [...new Set([...batch.caseIds, ...caseIds])];
+      const updatedBatch = await MockService.production.batches.update(batchId, {
+        caseIds: updatedCaseIds,
+        materialConsumed: {
+          ...batch.materialConsumed,
+          units: batch.materialConsumed.units + caseIds.length
+        }
+      });
+
+      setBatches(prev => prev.map(b => b.id === batchId ? updatedBatch : b));
+      return updatedBatch;
+    } catch (err) {
+      console.error("Failed to add cases to batch", err);
+      throw err;
+    }
+  }, [batches]);
+
+  const removeCaseFromBatch = useCallback(async (batchId, caseId) => {
+    try {
+      const batch = batches.find(b => b.id === batchId);
+      if (!batch) throw new Error("Batch not found");
+      if (batch.status !== 'Scheduled') throw new Error("Can only remove cases from scheduled batches");
+      
+      const updatedCaseIds = batch.caseIds.filter(id => id !== caseId);
+      const updatedBatch = await MockService.production.batches.update(batchId, {
+        caseIds: updatedCaseIds,
+        materialConsumed: {
+          ...batch.materialConsumed,
+          units: Math.max(0, batch.materialConsumed.units - 1)
+        }
+      });
+
+      setBatches(prev => prev.map(b => b.id === batchId ? updatedBatch : b));
+      return updatedBatch;
+    } catch (err) {
+      console.error("Failed to remove case from batch", err);
+      throw err;
+    }
+  }, [batches]);
+
   const startBatch = useCallback(async (batchId) => {
     try {
       const updatedBatch = await MockService.production.batches.update(batchId, {
@@ -176,6 +222,7 @@ export const ProductionProvider = ({ children }) => {
 
   const completeBatch = useCallback(async (batchId, qualityMetrics) => {
     try {
+      const batch = batches.find(b => b.id === batchId);
       const updatedBatch = await MockService.production.batches.update(batchId, {
         status: 'Completed',
         endTime: new Date().toISOString(),
@@ -188,6 +235,47 @@ export const ProductionProvider = ({ children }) => {
           currentJobId: null
         });
         setEquipment(prev => prev.map(e => e.id === updatedBatch.machineId ? updatedMachine : e));
+      }
+
+      // Update case statuses based on batch type
+      if (batch && batch.caseIds && batch.caseIds.length > 0) {
+        const stageMap = {
+          'stage-design': 'stage-milling',
+          'stage-milling': 'stage-finishing',
+          'stage-finishing': 'stage-qc'
+        };
+
+        // Update all cases in the batch to next stage
+        for (const caseId of batch.caseIds) {
+          try {
+            const caseData = await MockService.cases.cases.getById(caseId);
+            const currentStatus = caseData.status;
+            const nextStatus = stageMap[currentStatus];
+            
+            if (nextStatus) {
+              await MockService.cases.cases.update(caseId, {
+                status: nextStatus,
+                statusHistory: [
+                  ...(caseData.statusHistory || []),
+                  {
+                    status: nextStatus,
+                    timestamp: new Date().toISOString(),
+                    note: `Batch ${batchId.split('-').pop()} completed`
+                  }
+                ]
+              });
+            }
+          } catch (caseErr) {
+            console.warn(`Failed to update case ${caseId}:`, caseErr);
+          }
+        }
+
+        // Emit event to refresh cases in LabContext
+        LabEventBus.publish(EVENTS.CASE_STATUS_CHANGED, {
+          batchId,
+          caseIds: batch.caseIds,
+          timestamp: new Date().toISOString()
+        });
       }
 
       setBatches(prev => prev.map(b => b.id === batchId ? updatedBatch : b));
@@ -204,7 +292,7 @@ export const ProductionProvider = ({ children }) => {
       console.error("Failed to complete batch", err);
       throw err;
     }
-  }, [activeLab]);
+  }, [activeLab, batches]);
 
   const logMaintenance = useCallback(async (equipmentId, logData) => {
     try {
@@ -255,6 +343,8 @@ export const ProductionProvider = ({ children }) => {
     consumeMaterial,
     restockMaterial, // EXPORTED
     createBatch,
+    addCasesToBatch,
+    removeCaseFromBatch,
     startBatch,
     completeBatch,
     logMaintenance,

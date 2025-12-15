@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useCallback, useMemo, useEf
 import { MockService } from '../_mock/service';
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
+import { LabEventBus, EVENTS } from '../utils/eventBus';
 
 const LabContext = createContext(null);
 
@@ -55,6 +56,29 @@ export const LabProvider = ({ children }) => {
       }
     };
     initData();
+  }, [activeLab]);
+
+  // Listen for case status changes from production and logistics
+  useEffect(() => {
+    const handleCaseStatusChange = async (event) => {
+      if (!activeLab?.id) return;
+      try {
+        // Refresh all cases to get the latest status
+        const fetchedCases = await MockService.cases.cases.getAll({ labId: activeLab.id });
+        setCases(fetchedCases);
+      } catch (err) {
+        console.error("Failed to refresh cases after status change", err);
+      }
+    };
+
+    // Subscribe to case status change events
+    const unsubscribe = LabEventBus.subscribe(EVENTS.CASE_STATUS_CHANGED, handleCaseStatusChange);
+    
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
   }, [activeLab]);
 
   // ============================================================
@@ -244,12 +268,55 @@ export const LabProvider = ({ children }) => {
       });
 
       setCaseFiles(prev => [...prev, newFile]);
+      
+      // Auto-advance to milling stage for design uploads
+      if (category === 'PRODUCTION_DESIGN') {
+        const currentCase = cases.find(c => c.id === caseId);
+        if (currentCase && currentCase.units) {
+          // Check if any units are crown, bridge, or implant types
+          const shouldAutoAdvance = currentCase.units.some(unit => {
+            const type = (unit.type || '').toLowerCase();
+            return type.includes('crown') || 
+                   type.includes('bridge') || 
+                   type.includes('implant crown') || 
+                   type.includes('implant bridge');
+          });
+
+          // Only auto-advance if currently in design stage
+          if (shouldAutoAdvance && currentCase.status === 'stage-design') {
+            try {
+              // Update all units to milling stage
+              const updatedUnits = currentCase.units.map(u => ({
+                ...u,
+                status: 'stage-milling'
+              }));
+
+              await MockService.cases.cases.update(caseId, {
+                units: updatedUnits,
+                status: 'stage-milling',
+                version: currentCase.version
+              });
+
+              // Update local state
+              setCases(prev => prev.map(c => 
+                c.id === caseId 
+                  ? { ...c, units: updatedUnits, status: 'stage-milling' }
+                  : c
+              ));
+            } catch (err) {
+              console.error("Failed to auto-advance to milling stage", err);
+              // Don't throw - file upload was successful
+            }
+          }
+        }
+      }
+      
       return newFile;
     } catch (err) {
       console.error("Failed to upload file", err);
       throw err;
     }
-  }, [activeLab, user]);
+  }, [activeLab, user, cases]);
 
   /**
    * Bulk update status for multiple cases
@@ -496,6 +563,17 @@ export const LabProvider = ({ children }) => {
     }
   }, []);
 
+  const refreshCases = useCallback(async () => {
+    if (!activeLab?.id) return;
+    try {
+      const fetchedCases = await MockService.cases.cases.getAll({ labId: activeLab.id });
+      setCases(fetchedCases);
+    } catch (err) {
+      console.error("Failed to refresh cases", err);
+      throw err;
+    }
+  }, [activeLab]);
+
   // ============================================================
   // EXPORT VALUE
   // ============================================================
@@ -520,6 +598,7 @@ export const LabProvider = ({ children }) => {
     updateCase,
     updateCaseStatus,
     deriveCaseStatus,
+    refreshCases,
 
     createWorkflow, 
     updateWorkflow, 
@@ -529,7 +608,7 @@ export const LabProvider = ({ children }) => {
     getCaseById, getCaseFiles, getCaseMessages, getWorkflowsForCategory, calculateCasePrice, 
     checkDuplicateCase, bulkUpdateCaseStatus,
     addCaseMessage, addCaseFile, createCase, updateCase, updateCaseStatus,
-    deriveCaseStatus,
+    deriveCaseStatus, refreshCases,
     createWorkflow, updateWorkflow, deleteWorkflow
   ]);
 

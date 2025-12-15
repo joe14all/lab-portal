@@ -47,12 +47,133 @@
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: 0.75rem;
-  padding: 1rem;
+  padding: 0.625rem 0.75rem;
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.625rem;
   box-shadow: var(--shadow-sm);
   transition: background-color 0.2s ease;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Search takes available space */
+.searchWrapper {
+  flex: 1;
+  min-width: 180px;
+}
+
+/* Chip container */
+.filterChips {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+/* Chip-style Select Wrapper */
+.chipWrapper {
+  position: relative;
+}
+
+/* Status Dropdown as Chip */
+.chipSelect {
+  appearance: none;
+  background-color: var(--bg-body);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 0.375rem 1.75rem 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  
+  /* Custom dropdown arrow */
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 5L6 8L9 5' stroke='%236B7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+}
+
+.chipSelect:hover {
+  background-color: var(--primary-50);
+  border-color: var(--primary-300);
+}
+
+.chipSelect:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Filter Chips */
+.chip {
+  background-color: var(--bg-body);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.chip:hover {
+  background-color: var(--primary-50);
+  border-color: var(--primary-300);
+  color: var(--primary-700);
+  transform: translateY(-1px);
+}
+
+.chipActive {
+  background-color: var(--primary-500);
+  border-color: var(--primary-600);
+  color: white;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
+}
+
+.chipActive:hover {
+  background-color: var(--primary-600);
+  border-color: var(--primary-700);
+  color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .filterBar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.75rem;
+  }
+
+  .searchWrapper {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .filterChips {
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 0.25rem;
+  }
+
+  .chip,
+  .chipSelect {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.625rem;
+  }
+
+  .chipSelect {
+    padding-right: 1.5rem;
+  }
 }
 
 /* Batch Mode Variant */
@@ -92,81 +213,6 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-}
-
-.searchWrapper {
-  position: relative;
-  flex: 1;
-}
-
-.presetButtons {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.presetBtn {
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-surface);
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.presetBtn:hover {
-  background-color: var(--primary-50);
-  border-color: var(--primary-300);
-  color: var(--primary-700);
-}
-
-.presetActive {
-  background-color: var(--primary-500);
-  border-color: var(--primary-600);
-  color: white;
-}
-
-.presetActive:hover {
-  background-color: var(--primary-600);
-  border-color: var(--primary-700);
-  color: white;
-}
-
-.filterGroup {
-  display: flex;
-  gap: 0.75rem;
-  overflow-x: auto;
-}
-
-.selectInput {
-  padding: 0.6rem 2rem 0.6rem 1rem;
-  border-radius: 0.5rem;
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-body);
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  min-width: 160px;
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
-
-.selectInput:focus {
-  border-color: var(--primary);
-  outline: none;
-}
-
-@media (min-width: 1024px) {
-  .filterBar {
-    flex-direction: row;
-    align-items: center;
-  }
-  .filterGroup {
-    margin-left: auto;
-  }
 }
 
 .tableCard {

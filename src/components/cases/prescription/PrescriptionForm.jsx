@@ -1,11 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Odontogram from './Odontogram';
 import styles from './PrescriptionForm.module.css';
+import crownIcon from '../../../assets/icons/crown.svg';
+import bridgeIcon from '../../../assets/icons/bridge.svg';
+import implantCrownIcon from '../../../assets/icons/implantCrown.svg';
+import implantBridgeIcon from '../../../assets/icons/implantBridge.svg';
+import veneerIcon from '../../../assets/icons/veneer.svg';
+import onlayIcon from '../../../assets/icons/onlay.svg';
+import fullDentureIcon from '../../../assets/icons/fullDenture.svg';
+import partialDentureIcon from '../../../assets/icons/partialDenture.svg';
 
 /**
  * Smart Prescription Form with Clinical Intelligence
  * Handles bridges, implants, dentures with automatic unit creation
+ * Uses Universal Numbering System (1-32)
  */
+
+// FDI to Universal Numbering conversion map
+const FDI_TO_UNIVERSAL = {
+  // Upper Right (FDI 11-18 -> Universal 8-1)
+  11: 8, 12: 7, 13: 6, 14: 5, 15: 4, 16: 3, 17: 2, 18: 1,
+  // Upper Left (FDI 21-28 -> Universal 9-16)
+  21: 9, 22: 10, 23: 11, 24: 12, 25: 13, 26: 14, 27: 15, 28: 16,
+  // Lower Left (FDI 31-38 -> Universal 24-17)
+  31: 24, 32: 23, 33: 22, 34: 21, 35: 20, 36: 19, 37: 18, 38: 17,
+  // Lower Right (FDI 41-48 -> Universal 25-32)
+  41: 25, 42: 26, 43: 27, 44: 28, 45: 29, 46: 30, 47: 31, 48: 32
+};
+
+// Convert FDI tooth number to Universal (if needed)
+const toUniversal = (tooth) => {
+  if (!tooth) return null;
+  // If already in Universal range (1-32), return as is
+  if (tooth >= 1 && tooth <= 32) return tooth;
+  // Otherwise convert from FDI
+  return FDI_TO_UNIVERSAL[tooth] || tooth;
+};
 
 const RESTORATION_TYPES = {
   CROWN: {
@@ -15,7 +45,8 @@ const RESTORATION_TYPES = {
     defaultMaterial: 'Zirconia',
     materials: ['Zirconia', 'E.max', 'PFM', 'Gold', 'Acrylic Temp'],
     unitCount: 1,
-    color: '#2563eb' // Strong Blue
+    color: '#2563eb', // Strong Blue
+    icon: crownIcon
   },
   BRIDGE: {
     label: 'Bridge',
@@ -24,7 +55,8 @@ const RESTORATION_TYPES = {
     defaultMaterial: 'Zirconia',
     materials: ['Zirconia', 'E.max', 'PFM', 'Gold'],
     unitCount: 'dynamic',
-    color: '#7c3aed' // Strong Purple
+    color: '#7c3aed', // Strong Purple
+    icon: bridgeIcon
   },
   IMPLANT_CROWN: {
     label: 'Implant Crown',
@@ -34,7 +66,8 @@ const RESTORATION_TYPES = {
     materials: ['Zirconia', 'E.max', 'PFM'],
     unitCount: 1,
     extraFields: ['implantSystem', 'abutmentType'],
-    color: '#0891b2' // Strong Cyan
+    color: '#0891b2', // Strong Cyan
+    icon: implantCrownIcon
   },
   IMPLANT_BRIDGE: {
     label: 'Implant Bridge',
@@ -44,7 +77,8 @@ const RESTORATION_TYPES = {
     materials: ['Zirconia', 'E.max', 'PFM'],
     unitCount: 'dynamic',
     extraFields: ['implantSystem', 'abutmentType'],
-    color: '#0e7490' // Dark Cyan
+    color: '#0e7490', // Dark Cyan
+    icon: implantBridgeIcon
   },
   VENEER: {
     label: 'Veneer',
@@ -53,7 +87,8 @@ const RESTORATION_TYPES = {
     defaultMaterial: 'E.max',
     materials: ['E.max', 'Feldspathic Porcelain', 'Composite'],
     unitCount: 1,
-    color: '#db2777' // Strong Pink
+    color: '#db2777', // Strong Pink
+    icon: veneerIcon
   },
   INLAY_ONLAY: {
     label: 'Inlay / Onlay',
@@ -63,7 +98,8 @@ const RESTORATION_TYPES = {
     materials: ['E.max', 'Zirconia', 'Gold'],
     unitCount: 1,
     extraFields: ['surfaces'],
-    color: '#ea580c' // Strong Orange
+    color: '#ea580c', // Strong Orange
+    icon: onlayIcon
   },
   DENTURE_FULL: {
     label: 'Full Denture',
@@ -72,7 +108,8 @@ const RESTORATION_TYPES = {
     arch: true,
     materials: ['Acrylic', 'Valplast', 'TCS (Tooth Colored Base)'],
     unitCount: 1,
-    color: '#dc2626' // Strong Red
+    color: '#dc2626', // Strong Red
+    icon: fullDentureIcon
   },
   DENTURE_PARTIAL: {
     label: 'Partial Denture',
@@ -82,7 +119,8 @@ const RESTORATION_TYPES = {
     materials: ['Cast Metal Frame', 'Valplast', 'Acrylic'],
     unitCount: 1,
     extraFields: ['rpdComponents'],
-    color: '#c2410c' // Dark Orange
+    color: '#c2410c', // Dark Orange
+    icon: partialDentureIcon
   }
 };
 
@@ -102,14 +140,251 @@ const SHADE_SYSTEMS = {
   VITA_3D: ['1M1', '1M2', '2M1', '2M2', '2M3', '2R1.5', '2R2.5', '3M1', '3M2', '3M3', '3R1.5', '3R2.5', '4M1', '4M2', '4M3', '5M1', '5M2', '5M3']
 };
 
+// Helper function to detect shade system from shade value
+const detectShadeSystem = (shade) => {
+  if (!shade) return 'VITA_CLASSICAL';
+  if (SHADE_SYSTEMS.VITA_3D.includes(shade)) return 'VITA_3D';
+  if (SHADE_SYSTEMS.VITA_CLASSICAL.includes(shade)) return 'VITA_CLASSICAL';
+  return 'VITA_CLASSICAL'; // default
+};
+
+// Kennedy Classification Calculator
+const calculateKennedyClass = (missingTeeth, arch) => {
+  // Filter teeth by arch
+  const archTeeth = arch === 'upper' ? 
+    missingTeeth.filter(t => t >= 1 && t <= 16) : 
+    missingTeeth.filter(t => t >= 17 && t <= 32);
+  
+  if (archTeeth.length === 0) return null;
+  
+  // Define arch boundaries
+  const archStart = arch === 'upper' ? 1 : 17;
+  const archEnd = arch === 'upper' ? 16 : 32;
+  const thirdMolars = arch === 'upper' ? [1, 16] : [17, 32];
+  
+  // Check if third molars are present (not missing)
+  const rightThirdMolarPresent = !archTeeth.includes(thirdMolars[0]);
+  const leftThirdMolarPresent = !archTeeth.includes(thirdMolars[1]);
+  
+  // Determine the actual posterior boundaries for classification
+  const rightBoundary = rightThirdMolarPresent ? thirdMolars[0] : (arch === 'upper' ? 2 : 18);
+  const leftBoundary = leftThirdMolarPresent ? thirdMolars[1] : (arch === 'upper' ? 15 : 31);
+  
+  // Get all teeth in arch (including third molars if present)
+  const allTeeth = [];
+  for (let i = archStart; i <= archEnd; i++) {
+    if (i === thirdMolars[0] && !rightThirdMolarPresent) continue; // Skip right 3rd molar if missing
+    if (i === thirdMolars[1] && !leftThirdMolarPresent) continue; // Skip left 3rd molar if missing
+    allTeeth.push(i);
+  }
+  
+  // Filter missing teeth to exclude third molars if they're not in the arch
+  const teethForClassification = archTeeth.filter(t => allTeeth.includes(t));
+  
+  if (teethForClassification.length === 0) return null;
+  
+  // Find edentulous spaces (groups of consecutive missing teeth)
+  const spaces = [];
+  let currentSpace = [];
+  
+  for (let tooth of allTeeth) {
+    if (teethForClassification.includes(tooth)) {
+      currentSpace.push(tooth);
+    } else {
+      if (currentSpace.length > 0) {
+        spaces.push([...currentSpace]);
+        currentSpace = [];
+      }
+    }
+  }
+  if (currentSpace.length > 0) spaces.push(currentSpace);
+  
+  if (spaces.length === 0) return null;
+  
+  // Classify each space
+  const distalExtensions = [];
+  const boundedSpaces = [];
+  const anteriorSpaces = [];
+  
+  spaces.forEach(space => {
+    const firstTooth = Math.min(...space);
+    const lastTooth = Math.max(...space);
+    
+    // Check if space extends to distal end of arch
+    const isRightDistalExtension = firstTooth <= rightBoundary && space.includes(rightBoundary);
+    const isLeftDistalExtension = lastTooth >= leftBoundary && space.includes(leftBoundary);
+    
+    // Check if space is anterior (canine to canine: teeth 6-11 upper, 22-27 lower)
+    const anteriorRange = arch === 'upper' ? [6, 11] : [22, 27];
+    const isAnterior = space.some(t => t >= anteriorRange[0] && t <= anteriorRange[1]);
+    const crossesMidline = isAnterior && space.some(t => {
+      const midpoint = arch === 'upper' ? 8.5 : 24.5;
+      return (space.some(x => x < midpoint) && space.some(x => x > midpoint));
+    });
+    
+    if (isRightDistalExtension || isLeftDistalExtension) {
+      distalExtensions.push({ space, side: isRightDistalExtension ? 'right' : 'left' });
+    } else if (crossesMidline) {
+      anteriorSpaces.push({ space, type: 'crossingMidline' });
+    } else if (isAnterior) {
+      anteriorSpaces.push({ space, type: 'anterior' });
+    } else {
+      // Bounded posterior space
+      const side = (firstTooth < (arch === 'upper' ? 8.5 : 24.5)) ? 'right' : 'left';
+      boundedSpaces.push({ space, side });
+    }
+  });
+  
+  // Apply Kennedy Classification Rules
+  let kennedyClass = '';
+  let modifications = 0;
+  
+  const rightDistal = distalExtensions.filter(s => s.side === 'right').length;
+  const leftDistal = distalExtensions.filter(s => s.side === 'left').length;
+  const hasBilateralDistal = rightDistal > 0 && leftDistal > 0;
+  
+  const rightBounded = boundedSpaces.filter(s => s.side === 'right').length;
+  const leftBounded = boundedSpaces.filter(s => s.side === 'left').length;
+  const hasBilateralBounded = rightBounded > 0 && leftBounded > 0;
+  
+  const crossingMidlineSpaces = anteriorSpaces.filter(s => s.type === 'crossingMidline').length;
+  
+  if (hasBilateralDistal) {
+    // Class I: Bilateral distal extension
+    kennedyClass = 'Class I';
+    modifications = boundedSpaces.length + anteriorSpaces.length;
+  } else if (distalExtensions.length === 1) {
+    // Class II: Unilateral distal extension
+    kennedyClass = 'Class II';
+    modifications = boundedSpaces.length + anteriorSpaces.length;
+  } else if (crossingMidlineSpaces > 0) {
+    // Class IV: Anterior space crossing midline (only if no distal extensions)
+    kennedyClass = 'Class IV';
+    modifications = 0; // Class IV cannot have modifications
+  } else if (hasBilateralBounded || boundedSpaces.length > 0) {
+    // Class III: Bilateral bounded OR any bounded space without distal extension
+    kennedyClass = 'Class III';
+    // Modifications = all spaces except the primary space
+    modifications = Math.max(0, spaces.length - 1);
+  } else {
+    // Default to Class III
+    kennedyClass = 'Class III';
+    modifications = Math.max(0, spaces.length - 1);
+  }
+  
+  return {
+    classification: kennedyClass,
+    modifications: modifications,
+    display: modifications > 0 ? `${kennedyClass}, Mod ${modifications}` : kennedyClass
+  };
+};
+
 const TOOTH_SURFACES = ['M', 'O', 'D', 'I', 'B', 'L', 'F'];
 
+// Detailed RPD Components with Clinical Specificity
 const RPD_COMPONENTS = {
-  CLASPS: ['Circumferential Clasp', 'Akers Clasp', 'C-Clasp', 'I-Bar', 'Ring Clasp', 'Back Action Clasp'],
-  RESTS: ['Occlusal Rest', 'Cingulum Rest', 'Incisal Rest'],
-  CONNECTORS_MAJOR: ['Palatal Strap', 'Palatal Plate', 'Horseshoe', 'Lingual Bar', 'Lingual Plate', 'Kennedy Bar'],
-  CONNECTORS_MINOR: ['Minor Connector', 'Approach Arm'],
-  OTHER: ['Reciprocal Arm', 'Indirect Retainer', 'Denture Base', 'Artificial Teeth']
+  // Step 1: Direct Retainers (Clasps)
+  CLASPS: [
+    { id: 'circumferential', name: 'Circumferential Clasp', requiresSurface: true, icon: '⌒' },
+    { id: 'akers', name: 'Akers Clasp (Suprabulge)', requiresSurface: true, icon: 'C' },
+    { id: 'c-clasp', name: 'C-Clasp (Circumferential)', requiresSurface: true, icon: 'C' },
+    { id: 'i-bar', name: 'I-Bar (Infrabulge)', requiresSurface: true, icon: '↓' },
+    { id: 'rpi-clasp', name: 'RPI/RPA Clasp System', requiresSurface: true, icon: '⊤' },
+    { id: 'ring-clasp', name: 'Ring Clasp', requiresSurface: false, icon: '○' },
+    { id: 'back-action', name: 'Back Action Clasp', requiresSurface: true, icon: '↶' }
+  ],
+  // Step 2: Rests (Support)
+  RESTS: [
+    { id: 'occlusal-mesial', name: 'Occlusal Rest - Mesial', surface: 'M', icon: '▼' },
+    { id: 'occlusal-distal', name: 'Occlusal Rest - Distal', surface: 'D', icon: '▼' },
+    { id: 'occlusal-both', name: 'Occlusal Rest - Both (M&D)', surface: 'MD', icon: '▼▼' },
+    { id: 'cingulum', name: 'Cingulum Rest (Anterior)', surface: 'L', icon: '●' },
+    { id: 'incisal', name: 'Incisal Rest (Anterior)', surface: 'I', icon: '━' }
+  ],
+  // Step 3: Reciprocation
+  RECIPROCATION: [
+    { id: 'reciprocal-plate', name: 'Reciprocal Plate (RPI System)', requiresSurface: true, icon: '▬' },
+    { id: 'reciprocal-clasp-arm', name: 'Reciprocal Clasp Arm', requiresSurface: true, icon: '⟋' },
+    { id: 'guide-plane', name: 'Guide Plane', requiresSurface: true, icon: '║' }
+  ],
+  // Step 4: Major Connectors
+  MAJOR_CONNECTORS: [
+    { id: 'palatal-strap', name: 'Palatal Strap (Anterior-Posterior)', arch: 'upper', icon: '═' },
+    { id: 'palatal-plate-full', name: 'Full Palatal Plate', arch: 'upper', icon: '▭' },
+    { id: 'palatal-plate-partial', name: 'Partial Palatal Plate', arch: 'upper', icon: '▬' },
+    { id: 'horseshoe', name: 'Horseshoe (U-Shaped)', arch: 'upper', icon: '⊃' },
+    { id: 'lingual-bar', name: 'Lingual Bar', arch: 'lower', icon: '━' },
+    { id: 'lingual-plate', name: 'Lingual Plate', arch: 'lower', icon: '▬' },
+    { id: 'kennedy-bar', name: 'Kennedy Bar (Labial Bar)', arch: 'lower', icon: '≡' },
+    { id: 'double-lingual-bar', name: 'Double Lingual Bar', arch: 'lower', icon: '≡' }
+  ],
+  // Step 5: Minor Connectors
+  MINOR_CONNECTORS: [
+    { id: 'minor-connector-standard', name: 'Minor Connector', requiresTooth: true, icon: '┤' },
+    { id: 'approach-arm', name: 'Approach Arm', requiresTooth: true, icon: '╱' },
+    { id: 'finishing-line', name: 'Finishing Line', requiresTooth: true, icon: '┐' }
+  ],
+  // Step 6: Indirect Retention
+  INDIRECT_RETENTION: [
+    { id: 'indirect-retainer-rest', name: 'Indirect Retainer (Rest)', requiresTooth: true, icon: '□' },
+    { id: 'rugae-coverage', name: 'Rugae Area Coverage', arch: 'upper', icon: '▦' },
+    { id: 'anterior-extension', name: 'Anterior Extension', requiresTooth: false, icon: '▷' }
+  ]
+};
+
+const ADD_ONS = {
+  SERVICES: [
+    { 
+      id: 'wax-try-in', 
+      name: 'Wax Try-In', 
+      category: 'Services',
+      applicableTypes: ['DENTURE_FULL', 'DENTURE_PARTIAL'] // Only for dentures
+    },
+    { 
+      id: 'reline-hard', 
+      name: 'Denture Reline (Hard)', 
+      category: 'Services',
+      applicableTypes: ['DENTURE_FULL', 'DENTURE_PARTIAL'] // Only for dentures
+    },
+    { 
+      id: 'reline-soft', 
+      name: 'Denture Reline (Soft)', 
+      category: 'Services',
+      applicableTypes: ['DENTURE_FULL', 'DENTURE_PARTIAL'] // Only for dentures
+    },
+    { 
+      id: 'repair-denture', 
+      name: 'Denture Repair', 
+      category: 'Services',
+      applicableTypes: ['DENTURE_FULL', 'DENTURE_PARTIAL'] // Only for dentures
+    },
+    { 
+      id: 'add-tooth', 
+      name: 'Add Tooth to Denture', 
+      category: 'Services',
+      applicableTypes: ['DENTURE_FULL', 'DENTURE_PARTIAL'] // Only for dentures
+    }
+  ],
+  FEES: [
+    { 
+      id: 'rush-fee', 
+      name: 'Rush Fee', 
+      category: 'Fees',
+      applicableTypes: ['CROWN', 'BRIDGE', 'IMPLANT_CROWN', 'IMPLANT_BRIDGE', 'VENEER', 'INLAY_ONLAY', 'DENTURE_FULL', 'DENTURE_PARTIAL'] // All types
+    },
+    { 
+      id: 'pickup-fee', 
+      name: 'Pickup Fee', 
+      category: 'Fees',
+      applicableTypes: ['CROWN', 'BRIDGE', 'IMPLANT_CROWN', 'IMPLANT_BRIDGE', 'VENEER', 'INLAY_ONLAY', 'DENTURE_FULL', 'DENTURE_PARTIAL'] // All types
+    },
+    { 
+      id: 'custom-shade', 
+      name: 'Custom Shade Match', 
+      category: 'Fees',
+      applicableTypes: ['CROWN', 'BRIDGE', 'IMPLANT_CROWN', 'IMPLANT_BRIDGE', 'VENEER', 'INLAY_ONLAY'] // Only for restorations with shade
+    }
+  ]
 };
 
 const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
@@ -128,13 +403,29 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
   const [currentArch, setCurrentArch] = useState('Upper');
   const [selectedArchForDenture, setSelectedArchForDenture] = useState(null); // 'upper' | 'lower' | 'both'
   const [selectedSurfaces, setSelectedSurfaces] = useState({}); // { toothNum: ['M', 'O', 'D'] }
-  const [rpdComponents, setRpdComponents] = useState([]); // Array of selected RPD components
-  const [rpdDetails, setRpdDetails] = useState({}); // { componentType: { teeth: [], notes: '' } }
   
-  // Completed prescriptions list
+  // RPD Wizard State
+  const [rpdWizardStep, setRpdWizardStep] = useState(1); // 1: Arch, 2: Missing Teeth, 3: Clasps, 4: Rests, 5: Reciprocation, 6: Major Connector, 7: Minor Connectors, 8: Indirect Retention, 9: Review/Edit
+  const [rpdSelectedArch, setRpdSelectedArch] = useState(null); // 'upper' | 'lower' | 'both'
+  const [rpdMissingTeeth, setRpdMissingTeeth] = useState([]); // Array of tooth numbers (will be grayed out)
+  const [rpdComponentsByTooth, setRpdComponentsByTooth] = useState({}); // { toothNum: [{ type: 'clasp', component: 'akers', surface: 'B' }] }
+  const [rpdMajorConnector, setRpdMajorConnector] = useState(null); // Selected major connector for single arch or upper arch when both
+  const [rpdMajorConnectorLower, setRpdMajorConnectorLower] = useState(null); // Selected major connector for lower arch when both arches selected
+  const [rpdMajorConnectorTeeth, setRpdMajorConnectorTeeth] = useState([]); // Teeth where major connector is visualized (upper arch)
+  const [rpdMajorConnectorTeethLower, setRpdMajorConnectorTeethLower] = useState([]); // Teeth where major connector is visualized (lower arch)
+  const [currentRpdComponent, setCurrentRpdComponent] = useState(null); // Current component being added
+  const [currentComponentSurface, setCurrentComponentSurface] = useState(null); // Surface for current component
+ 
+  const [rpdReviewComplete, setRpdReviewComplete] = useState(false); // Track if user has reviewed the design
+  
+  // Add-ons (Services and Fees)
+  const [selectedAddOns, setSelectedAddOns] = useState([]); // Array of add-on IDs
+  
+  // Completed prescriptions list (will be loaded from existingUnits)
   const [prescriptions, setPrescriptions] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   const restorationConfig = currentRestoration ? RESTORATION_TYPES[currentRestoration] : null;
   // Use range selection for bridges, multiple for everything else
@@ -147,22 +438,36 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
     both: ['UR', 'UL', 'LR', 'LL']
   };
 
-  // Get already used teeth from existing units and current prescriptions
-  const usedTeeth = [
-    ...existingUnits.map(u => u.tooth).filter(Boolean),
-    ...prescriptions.flatMap(p => p.units.map(u => u.tooth).filter(Boolean))
-  ];
+  // Get already used teeth from current prescriptions only (existingUnits are converted to prescriptions)
+  const usedTeeth = prescriptions.flatMap(p => p.units.map(u => u.tooth).filter(Boolean));
   
   const highlightedTeeth = {};
-  // Show existing units in green
-  existingUnits.forEach(unit => {
-    if (unit.tooth) {
-      highlightedTeeth[unit.tooth] = {
-        color: '#10b981',
-        label: unit.type?.split(' ')[0] || 'Unit'
+  
+  // Show missing teeth in step 2 of RPD wizard (grayed out with red border)
+  if (currentRestoration === 'DENTURE_PARTIAL' && rpdWizardStep === 2) {
+    rpdMissingTeeth.forEach(tooth => {
+      highlightedTeeth[tooth] = {
+        color: '#6b7280', // Gray for missing teeth
+        label: 'X',
+        opacity: 0.4,
+        borderColor: '#dc2626',
+        borderWidth: 3
       };
-    }
-  });
+    });
+  }
+  
+  // Gray out missing teeth in steps 3-9 (with lighter opacity)
+  if (currentRestoration === 'DENTURE_PARTIAL' && rpdWizardStep >= 3) {
+    rpdMissingTeeth.forEach(tooth => {
+      highlightedTeeth[tooth] = {
+        color: '#9ca3af', // Light gray
+        label: '',
+        opacity: 0.3,
+        borderColor: '#9ca3af',
+        borderWidth: 2
+      };
+    });
+  }
   
   // Show current prescriptions with restoration-type colors
   prescriptions.forEach(p => {
@@ -184,6 +489,264 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
       }
     });
   });
+  
+  // Add RPD component annotations in steps 3-9 with colored borders
+  if (currentRestoration === 'DENTURE_PARTIAL' && rpdWizardStep >= 3) {
+    // Add major connector visual indicator to selected teeth
+    if (rpdWizardStep >= 6) {
+      // Show major connector on selected teeth or all teeth if in selection mode
+      const upperTeeth = rpdWizardStep === 6 && rpdSelectedArch !== 'lower' ? 
+        (rpdMajorConnectorTeeth.length > 0 ? rpdMajorConnectorTeeth : Array.from({length: 16}, (_, i) => i + 1).filter(t => !rpdMissingTeeth.includes(t))) : 
+        rpdMajorConnectorTeeth;
+      const lowerTeeth = rpdWizardStep === 6 && rpdSelectedArch !== 'upper' ? 
+        (rpdMajorConnectorTeethLower.length > 0 ? rpdMajorConnectorTeethLower : Array.from({length: 16}, (_, i) => i + 17).filter(t => !rpdMissingTeeth.includes(t))) : 
+        rpdMajorConnectorTeethLower;
+      
+      [...upperTeeth, ...lowerTeeth].forEach(tooth => {
+        if (highlightedTeeth[tooth]) {
+          highlightedTeeth[tooth].hasMajorConnector = true;
+        } else {
+          highlightedTeeth[tooth] = {
+            color: rpdWizardStep === 6 ? '#64748b' : 'transparent',
+            label: '',
+            hasMajorConnector: true,
+            borderColor: '#475569',
+            borderWidth: rpdWizardStep === 6 ? 2 : 1
+          };
+        }
+      });
+    }
+    
+    Object.entries(rpdComponentsByTooth).forEach(([tooth, components]) => {
+      if (components && components.length > 0) {
+        // Build annotation from components with specific codes
+        const labels = components.map(comp => {
+          // Clasp type abbreviations
+          if (comp.type === 'clasps' || comp.type === 'clasp') {
+            if (comp.component === 'akers') return `CB${comp.surface || ''}`;
+            if (comp.component === 'c-clasp') return `CC${comp.surface || ''}`;
+            if (comp.component === 'back-action') return `CH${comp.surface || ''}`;
+            if (comp.component === 'i-bar') return `CI${comp.surface || ''}`;
+            if (comp.component === 'rpi-clasp') return `CR${comp.surface || ''}`;
+            if (comp.component === 'ring-clasp') return 'CG';
+            if (comp.component === 'circumferential') return `CF${comp.surface || ''}`;
+            return `C${comp.surface || ''}`;
+          }
+          // Rest type abbreviations
+          if (comp.type === 'rests' || comp.type === 'rest') {
+            if (comp.component === 'occlusal-mesial') return 'RM';
+            if (comp.component === 'occlusal-distal') return 'RD';
+            if (comp.component === 'occlusal-both') return 'RMD';
+            if (comp.component === 'cingulum') return 'RC';
+            if (comp.component === 'incisal') return 'RI';
+            return 'R';
+          }
+          // Reciprocation abbreviations
+          if (comp.type === 'reciprocation') return `Rp${comp.surface || ''}`;
+          // Minor connector abbreviations
+          if (comp.type === 'minorconnectors' || comp.type === 'minor') return 'Mn';
+          // Indirect retention abbreviations
+          if (comp.type === 'indirectretention' || comp.type === 'indirect') return 'IR';
+          return 'C';
+        });
+        
+        // Determine border color based on component types
+        let borderColor = '#f59e0b'; // Amber default
+        const hasClassp = components.some(c => c.type === 'clasps' || c.type === 'clasp');
+        const hasRest = components.some(c => c.type === 'rests' || c.type === 'rest');
+        const hasReciprocation = components.some(c => c.type === 'reciprocation');
+        
+        if (hasClassp && hasRest && hasReciprocation) {
+          borderColor = '#16a34a'; // Green for complete retention
+        } else if (hasClassp && hasRest) {
+          borderColor = '#2563eb'; // Blue for clasp + rest
+        } else if (hasClassp) {
+          borderColor = '#dc2626'; // Red for clasp only
+        } else if (hasRest) {
+          borderColor = '#7c3aed'; // Purple for rest only
+        }
+        
+        // If tooth already has a restoration, show RPD as secondary annotation
+        if (highlightedTeeth[tooth] && highlightedTeeth[tooth].label) {
+          highlightedTeeth[tooth].secondaryLabel = labels.join('+');
+          highlightedTeeth[tooth].borderColor = borderColor;
+          highlightedTeeth[tooth].borderWidth = 4;
+        } else if (!rpdMissingTeeth.includes(parseInt(tooth))) {
+          // No existing restoration and not missing, show RPD directly
+          highlightedTeeth[tooth] = {
+            color: '#f59e0b', // Amber for RPD components
+            label: labels.join(' '),
+            borderColor: borderColor,
+            borderWidth: 4
+          };
+        }
+      }
+    });
+  }
+
+  // Convert existing units to prescriptions on initial load
+  useEffect(() => {
+    if (initialLoadDone || !existingUnits || existingUnits.length === 0) {
+      return;
+    }
+
+    const convertedPrescriptions = [];
+    const processedUnits = new Set();
+    
+    existingUnits.forEach((unit, index) => {
+      if (processedUnits.has(index)) return;
+      
+      const tooth = toUniversal(unit.tooth); // Convert to Universal numbering
+      const type = unit.type;
+      const material = unit.material;
+      const shade = unit.shade;
+      
+      // Check if this is a bridge unit
+      if (type?.includes('Bridge')) {
+        // Find all connected bridge units with same material/shade
+        const bridgeUnits = existingUnits.filter((u, i) => 
+          !processedUnits.has(i) && 
+          u.type?.includes('Bridge') && 
+          u.material === material &&
+          u.shade === shade
+        );
+        
+        // Sort by tooth number
+        bridgeUnits.sort((a, b) => a.tooth - b.tooth);
+        
+        // Mark as processed
+        existingUnits.forEach((u, i) => {
+          if (bridgeUnits.includes(u)) processedUnits.add(i);
+        });
+        
+        // Determine restoration type (regular bridge vs implant bridge)
+        const isImplantBridge = type?.toLowerCase().includes('implant');
+        const restorationType = isImplantBridge ? 'IMPLANT_BRIDGE' : 'BRIDGE';
+        
+        // Build tooth roles
+        const toothRoles = {};
+        const units = bridgeUnits.map(u => {
+          const universalTooth = toUniversal(u.tooth);
+          const role = u.type?.includes('Pontic') ? 'pontic' : 'retainer';
+          toothRoles[universalTooth] = role;
+          return {
+            tooth: universalTooth,
+            type: u.type,
+            role: role,
+            material: u.material,
+            shade: u.shade,
+            instructions: u.instructions || ''
+          };
+        });
+        
+        const teeth = bridgeUnits.map(u => toUniversal(u.tooth));
+        
+        convertedPrescriptions.push({
+          id: `rx-existing-${Date.now()}-${index}`,
+          type: restorationType,
+          label: `${RESTORATION_TYPES[restorationType].label} #${teeth.join(', ')}`,
+          teeth: teeth,
+          toothRoles: toothRoles,
+          material: material,
+          shade: shade,
+          implantSystem: unit.implantSystem || '',
+          abutmentType: unit.abutmentType || '',
+          instructions: bridgeUnits[0]?.instructions || '',
+          units: units
+        });
+      } 
+      // Check for denture units
+      else if (type?.toLowerCase().includes('denture')) {
+        processedUnits.add(index);
+        
+        const isPartial = type?.toLowerCase().includes('partial');
+        const isFull = type?.toLowerCase().includes('full') || type?.toLowerCase().includes('complete');
+        const arch = unit.arch || (tooth > 20 ? 'Lower' : 'Upper');
+        
+        if (isPartial) {
+          convertedPrescriptions.push({
+            id: `rx-existing-${Date.now()}-${index}`,
+            type: 'DENTURE_PARTIAL',
+            label: `Partial Denture - ${arch}`,
+            arch: arch,
+            material: material,
+            shade: shade,
+            teeth: tooth ? [tooth] : [],
+            toothRoles: {},
+            rpdComponents: unit.rpdComponents || [],
+            rpdDetails: unit.rpdDetails || {},
+            instructions: unit.instructions || '',
+            units: [{
+              type: type,
+              arch: arch,
+              material: material,
+              shade: shade,
+              instructions: unit.instructions || '',
+              teeth: tooth ? [tooth] : [],
+              toothRoles: {}
+            }]
+          });
+        } else if (isFull) {
+          convertedPrescriptions.push({
+            id: `rx-existing-${Date.now()}-${index}`,
+            type: 'DENTURE_FULL',
+            label: `Full Denture - ${arch}`,
+            arch: arch,
+            material: material,
+            shade: shade,
+            instructions: unit.instructions || '',
+            units: [{
+              type: type,
+              arch: arch,
+              material: material,
+              shade: shade,
+              instructions: unit.instructions || ''
+            }]
+          });
+        }
+      }
+      // Regular single-tooth restorations
+      else if (tooth) {
+        processedUnits.add(index);
+        
+        // Determine restoration type from unit type
+        let restorationType = 'CROWN'; // default
+        const lowerType = type?.toLowerCase() || '';
+        
+        if (lowerType.includes('veneer')) restorationType = 'VENEER';
+        else if (lowerType.includes('inlay') || lowerType.includes('onlay')) restorationType = 'INLAY_ONLAY';
+        else if (lowerType.includes('implant') && lowerType.includes('crown')) restorationType = 'IMPLANT_CROWN';
+        else if (lowerType.includes('crown')) restorationType = 'CROWN';
+        
+        convertedPrescriptions.push({
+          id: `rx-existing-${Date.now()}-${index}`,
+          type: restorationType,
+          label: `${RESTORATION_TYPES[restorationType].label} #${tooth}`,
+          teeth: [tooth],
+          toothRoles: {},
+          material: material,
+          shade: shade,
+          implantSystem: unit.implantSystem || '',
+          abutmentType: unit.abutmentType || '',
+          surfaces: unit.surfaces || null,
+          instructions: unit.instructions || '',
+          units: [{
+            tooth: tooth,
+            type: type,
+            material: material,
+            shade: shade,
+            instructions: unit.instructions || ''
+          }]
+        });
+      }
+    });
+    
+    if (convertedPrescriptions.length > 0) {
+      setPrescriptions(convertedPrescriptions);
+    }
+    
+    setInitialLoadDone(true);
+  }, [existingUnits, initialLoadDone]);
 
   const handleRestorationTypeSelect = (type) => {
     setCurrentRestoration(type);
@@ -195,8 +758,21 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
       setToothRoles({});
       setSelectedArchForDenture(null);
       setSelectedSurfaces({});
-      setRpdComponents([]);
-      setRpdDetails({});
+      
+      // Reset RPD wizard state
+      if (type === 'DENTURE_PARTIAL') {
+        setRpdWizardStep(1);
+        setRpdSelectedArch(null);
+        setRpdMissingTeeth([]);
+        setCurrentRpdComponent(null);
+        setCurrentComponentSurface(null);
+        setRpdComponentsByTooth({});
+        setRpdMajorConnector(null);
+        setRpdMajorConnectorLower(null);
+        setRpdMajorConnectorTeeth([]);
+        setRpdMajorConnectorTeethLower([]);
+        setRpdReviewComplete(false);
+      }
     }
   };
   
@@ -256,9 +832,21 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
         return;
       }
       
-      const archLabel = selectedArchForDenture ? 
-        selectedArchForDenture.charAt(0).toUpperCase() + selectedArchForDenture.slice(1) : 
-        currentArch;
+      // For RPD, validate that we have the required design elements
+      if (currentRestoration === 'DENTURE_PARTIAL') {
+        if (!rpdSelectedArch) {
+          alert('Please select arch for RPD');
+          return;
+        }
+        if (rpdMissingTeeth.length === 0) {
+          alert('Please mark missing teeth');
+          return;
+        }
+      }
+      
+      const archLabel = currentRestoration === 'DENTURE_PARTIAL' 
+        ? (rpdSelectedArch === 'upper' ? 'Upper' : rpdSelectedArch === 'lower' ? 'Lower' : 'Both')
+        : (selectedArchForDenture ? selectedArchForDenture.charAt(0).toUpperCase() + selectedArchForDenture.slice(1) : currentArch);
       
       const newPrescription = {
         id: `rx-${Date.now()}`,
@@ -268,20 +856,21 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
         material: currentMaterial,
         shade: restorationConfig.category === 'Removable' ? currentShade : null,
         instructions: currentInstructions,
-        teeth: currentRestoration === 'DENTURE_PARTIAL' ? selectedTeeth : [],
-        toothRoles: currentRestoration === 'DENTURE_PARTIAL' ? toothRoles : {},
-        rpdComponents: currentRestoration === 'DENTURE_PARTIAL' ? rpdComponents : null,
-        rpdDetails: currentRestoration === 'DENTURE_PARTIAL' ? rpdDetails : null,
+        teeth: currentRestoration === 'DENTURE_PARTIAL' ? rpdMissingTeeth : [],
+        rpdComponentsByTooth: currentRestoration === 'DENTURE_PARTIAL' ? rpdComponentsByTooth : null,
+        rpdMajorConnector: currentRestoration === 'DENTURE_PARTIAL' ? rpdMajorConnector?.name : null,
+        rpdMajorConnectorLower: currentRestoration === 'DENTURE_PARTIAL' && rpdSelectedArch === 'both' ? rpdMajorConnectorLower?.name : null,
+        addOns: selectedAddOns.length > 0 ? selectedAddOns : null,
         units: [{
           type: RESTORATION_TYPES[currentRestoration].label,
           arch: archLabel,
           material: currentMaterial,
           shade: currentShade,
           instructions: currentInstructions,
-          teeth: currentRestoration === 'DENTURE_PARTIAL' ? selectedTeeth : [],
-          toothRoles: currentRestoration === 'DENTURE_PARTIAL' ? toothRoles : {},
-          rpdComponents: currentRestoration === 'DENTURE_PARTIAL' ? rpdComponents : null,
-          rpdDetails: currentRestoration === 'DENTURE_PARTIAL' ? rpdDetails : null
+          missingTeeth: currentRestoration === 'DENTURE_PARTIAL' ? rpdMissingTeeth : [],
+          rpdComponentsByTooth: currentRestoration === 'DENTURE_PARTIAL' ? rpdComponentsByTooth : null,
+          rpdMajorConnector: currentRestoration === 'DENTURE_PARTIAL' ? rpdMajorConnector?.name : null,
+          rpdMajorConnectorLower: currentRestoration === 'DENTURE_PARTIAL' && rpdSelectedArch === 'both' ? rpdMajorConnectorLower?.name : null
         }]
       };
       setPrescriptions([...prescriptions, newPrescription]);
@@ -351,6 +940,7 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
         abutmentType: currentAbutmentType,
         instructions: currentInstructions,
         surfaces: currentRestoration === 'INLAY_ONLAY' ? selectedSurfaces : null,
+        addOns: selectedAddOns.length > 0 ? selectedAddOns : null,
         units
       };
 
@@ -363,8 +953,21 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
     setSelectedArchForDenture(null);
     setCurrentInstructions('');
     setSelectedSurfaces({});
-    setRpdComponents([]);
-    setRpdDetails({});
+    
+    // Reset RPD wizard state
+    if (currentRestoration === 'DENTURE_PARTIAL') {
+      setRpdWizardStep(1);
+      setRpdSelectedArch(null);
+      setRpdMissingTeeth([]);
+      setRpdComponentsByTooth({});
+      setRpdMajorConnector(null);
+      setRpdMajorConnectorLower(null);
+      setRpdMajorConnectorTeeth([]);
+      setRpdMajorConnectorTeethLower([]);
+      setCurrentRpdComponent(null);
+      setCurrentComponentSurface(null);
+      setRpdReviewComplete(false);
+    }
     // Don't reset currentRestoration - allows adding multiple of same type
   };
 
@@ -375,10 +978,12 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
   
   const handleEditPrescription = (rx) => {
     setEditingId(rx.id);
+    // Detect shade system from the shade value
+    const detectedShadeSystem = rx.shadeSystem || detectShadeSystem(rx.shade);
     setEditForm({
       material: rx.material,
       shade: rx.shade || '',
-      shadeSystem: rx.shadeSystem || 'VITA_CLASSICAL',
+      shadeSystem: detectedShadeSystem,
       implantSystem: rx.implantSystem || '',
       abutmentType: rx.abutmentType || 'Custom Abutment',
       instructions: rx.instructions || '',
@@ -386,8 +991,9 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
       toothRoles: rx.toothRoles || {},
       arch: rx.arch || 'Upper',
       surfaces: rx.surfaces || {},
-      rpdComponents: rx.rpdComponents || [],
-      rpdDetails: rx.rpdDetails || {}
+      rpdComponentsByTooth: rx.rpdComponentsByTooth || {},
+      rpdMajorConnector: rx.rpdMajorConnector || null,
+      addOns: rx.addOns || []
     });
   };
   
@@ -407,8 +1013,10 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
           toothRoles: editForm.toothRoles,
           arch: editForm.arch,
           surfaces: editForm.surfaces,
-          rpdComponents: editForm.rpdComponents,
-          rpdDetails: editForm.rpdDetails
+          rpdComponentsByTooth: editForm.rpdComponentsByTooth,
+          rpdMajorConnector: editForm.rpdMajorConnector,
+          rpdMajorConnectorLower: editForm.rpdMajorConnectorLower,
+          addOns: editForm.addOns
         };
         
         // Update label with new teeth
@@ -514,64 +1122,77 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
         <p className={styles.subtitle}>Configure restoration details, then select teeth on odontogram below</p>
       </div>
 
-      {/* Compact Inline Configuration Toolbar */}
+      {/* Modern Restoration Type Selector */}
+      <div className={styles.restorationSelector}>
+        <h3 className={styles.selectorTitle}>Select Restoration Type</h3>
+        <div className={styles.restorationGrid}>
+          {Object.entries(RESTORATION_TYPES).map(([key, resto]) => (
+            <button
+              key={key}
+              type="button"
+              className={`${styles.restorationCard} ${currentRestoration === key ? styles.active : ''}`}
+              onClick={() => handleRestorationTypeSelect(key)}
+              style={{
+                '--resto-color': resto.color,
+                borderColor: currentRestoration === key ? resto.color : 'var(--border-color)'
+              }}
+            >
+              <div className={styles.cardIcon} style={{ backgroundColor: resto.color }}>
+                <img src={resto.icon} alt={resto.label} />
+              </div>
+              <div className={styles.cardContent}>
+                <div className={styles.cardLabel}>{resto.label}</div>
+                <div className={styles.cardCategory}>{resto.category}</div>
+              </div>
+              {currentRestoration === key && (
+                <div className={styles.activeIndicator}>✓</div>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Compact Configuration Toolbar - Only shown when type selected */}
+      {currentRestoration && (
       <div className={styles.compactToolbar}>
-        {/* Restoration Type */}
+        {/* Material */}
         <div className={styles.toolbarSection}>
-          <label className={styles.toolbarLabel}>Type:</label>
+          <label className={styles.toolbarLabel}>Material:</label>
           <select
-            value={currentRestoration || ''}
-            onChange={(e) => handleRestorationTypeSelect(e.target.value)}
+            value={currentMaterial}
+            onChange={(e) => setCurrentMaterial(e.target.value)}
             className={styles.compactSelect}
           >
-            <option value="">Select Restoration...</option>
-            {Object.entries(RESTORATION_TYPES).map(([key, resto]) => (
-              <option key={key} value={key}>{resto.label}</option>
+            {restorationConfig.materials.map(mat => (
+              <option key={mat} value={mat}>{mat}</option>
             ))}
           </select>
         </div>
 
-        {/* Conditional inline details */}
-        {currentRestoration && (
-        <>
-          {/* Material */}
-          <div className={styles.toolbarSection}>
-            <label className={styles.toolbarLabel}>Material:</label>
-            <select
-              value={currentMaterial}
-              onChange={(e) => setCurrentMaterial(e.target.value)}
-              className={styles.compactSelect}
-            >
-              {restorationConfig.materials.map(mat => (
-                <option key={mat} value={mat}>{mat}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Shade */}
-          <div className={styles.toolbarSection}>
-            <label className={styles.toolbarLabel}>Shade:</label>
-            <select
-              value={currentShadeSystem}
-              onChange={(e) => setCurrentShadeSystem(e.target.value)}
-              className={styles.compactSelect}
-              style={{width: '120px'}}
-            >
-              <option value="VITA_CLASSICAL">VITA Classic</option>
-              <option value="VITA_3D">VITA 3D</option>
-            </select>
-            <select
-              value={currentShade}
-              onChange={(e) => setCurrentShade(e.target.value)}
-              className={styles.compactSelect}
-              style={{width: '100px'}}
-            >
-              <option value="">Select...</option>
-              {SHADE_SYSTEMS[currentShadeSystem].map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
+        {/* Shade */}
+        <div className={styles.toolbarSection}>
+          <label className={styles.toolbarLabel}>Shade:</label>
+          <select
+            value={currentShadeSystem}
+            onChange={(e) => setCurrentShadeSystem(e.target.value)}
+            className={styles.compactSelect}
+            style={{width: '120px'}}
+          >
+            <option value="VITA_CLASSICAL">VITA Classic</option>
+            <option value="VITA_3D">VITA 3D</option>
+          </select>
+          <select
+            value={currentShade}
+            onChange={(e) => setCurrentShade(e.target.value)}
+            className={styles.compactSelect}
+            style={{width: '100px'}}
+          >
+            <option value="">Select...</option>
+            {SHADE_SYSTEMS[currentShadeSystem].map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
 
           {/* Implant System */}
           {restorationConfig.extraFields?.includes('implantSystem') && (
@@ -616,10 +1237,8 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
               placeholder="Special instructions..."
             />
           </div>
-          
-        </>
+        </div>
       )}
-      </div>
       
       {/* Surface Selection for Inlay/Onlay */}
       {currentRestoration === 'INLAY_ONLAY' && selectedTeeth.length > 0 && (
@@ -656,35 +1275,73 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
           ))}
         </div>
       )}
-      
-      {/* RPD Components for Partial Denture */}
-      {currentRestoration === 'DENTURE_PARTIAL' && (
-        <div className={styles.rpdComponents}>
-          <h4 className={styles.sectionTitle}>Select RPD Components</h4>
+
+      {/* Add-Ons Section (Services & Fees) */}
+      {currentRestoration && (
+        <div className={styles.addOnsSection}>
+          <h4 className={styles.sectionTitle}>Add-Ons (Optional)</h4>
           
-          {Object.entries(RPD_COMPONENTS).map(([category, components]) => (
-            <div key={category} className={styles.componentCategory}>
-              <label className={styles.categoryLabel}>
-                {category.replace('_', ' ')}:
-              </label>
-              <div className={styles.componentButtons}>
-                {components.map(component => (
-                  <button
-                    key={component}
-                    type="button"
-                    className={`${styles.componentBtn} ${rpdComponents.includes(component) ? styles.active : ''}`}
-                    onClick={() => handleRpdComponentToggle(component)}
-                  >
-                    {component}
-                  </button>
-                ))}
+          {/* Services - Only show applicable ones */}
+          {ADD_ONS.SERVICES.filter(addOn => addOn.applicableTypes.includes(currentRestoration)).length > 0 && (
+            <div className={styles.addOnCategory}>
+              <label className={styles.categoryLabel}>Services:</label>
+              <div className={styles.addOnButtons}>
+                {ADD_ONS.SERVICES
+                  .filter(addOn => addOn.applicableTypes.includes(currentRestoration))
+                  .map(addOn => (
+                    <button
+                      key={addOn.id}
+                      type="button"
+                      className={`${styles.addOnBtn} ${selectedAddOns.includes(addOn.id) ? styles.active : ''}`}
+                      onClick={() => {
+                        if (selectedAddOns.includes(addOn.id)) {
+                          setSelectedAddOns(selectedAddOns.filter(id => id !== addOn.id));
+                        } else {
+                          setSelectedAddOns([...selectedAddOns, addOn.id]);
+                        }
+                      }}
+                    >
+                      {addOn.name}
+                    </button>
+                  ))}
               </div>
             </div>
-          ))}
-          
-          {rpdComponents.length > 0 && (
-            <div className={styles.selectedComponents}>
-              <strong>Selected:</strong> {rpdComponents.join(', ')}
+          )}
+
+          {/* Fees - Only show applicable ones */}
+          {ADD_ONS.FEES.filter(addOn => addOn.applicableTypes.includes(currentRestoration)).length > 0 && (
+            <div className={styles.addOnCategory}>
+              <label className={styles.categoryLabel}>Fees:</label>
+              <div className={styles.addOnButtons}>
+                {ADD_ONS.FEES
+                  .filter(addOn => addOn.applicableTypes.includes(currentRestoration))
+                  .map(addOn => (
+                    <button
+                      key={addOn.id}
+                      type="button"
+                      className={`${styles.addOnBtn} ${selectedAddOns.includes(addOn.id) ? styles.active : ''}`}
+                      onClick={() => {
+                        if (selectedAddOns.includes(addOn.id)) {
+                          setSelectedAddOns(selectedAddOns.filter(id => id !== addOn.id));
+                        } else {
+                          setSelectedAddOns([...selectedAddOns, addOn.id]);
+                        }
+                      }}
+                    >
+                      {addOn.name}
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {selectedAddOns.length > 0 && (
+            <div className={styles.selectedAddOns}>
+              <strong>Selected Add-Ons:</strong>{' '}
+              {selectedAddOns.map(id => {
+                const addOn = [...ADD_ONS.SERVICES, ...ADD_ONS.FEES].find(a => a.id === id);
+                return addOn?.name;
+              }).join(', ')}
             </div>
           )}
         </div>
@@ -693,6 +1350,762 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
       {/* Odontogram - Always visible */}
       {currentRestoration && (
         <div className={styles.odontogramSection}>
+          
+          {/* RPD Wizard (for Partial Denture only) */}
+          {currentRestoration === 'DENTURE_PARTIAL' && (
+            <div className={styles.rpdWizard}>
+              {/* Progress Steps */}
+              <div className={styles.wizardSteps}>
+                <div className={`${styles.wizardStep} ${rpdWizardStep >= 1 ? styles.active : ''} ${rpdWizardStep > 1 ? styles.completed : ''}`}>
+                  <div className={styles.stepNumber}>1</div>
+                  <div className={styles.stepLabel}>Arch</div>
+                </div>
+                <div className={styles.stepConnector}></div>
+                <div className={`${styles.wizardStep} ${rpdWizardStep >= 2 ? styles.active : ''} ${rpdWizardStep > 2 ? styles.completed : ''}`}>
+                  <div className={styles.stepNumber}>2</div>
+                  <div className={styles.stepLabel}>Missing</div>
+                </div>
+                <div className={styles.stepConnector}></div>
+                <div className={`${styles.wizardStep} ${rpdWizardStep >= 3 ? styles.active : ''} ${rpdWizardStep > 3 ? styles.completed : ''}`}>
+                  <div className={styles.stepNumber}>3</div>
+                  <div className={styles.stepLabel}>Clasps</div>
+                </div>
+                <div className={styles.stepConnector}></div>
+                <div className={`${styles.wizardStep} ${rpdWizardStep >= 4 ? styles.active : ''} ${rpdWizardStep > 4 ? styles.completed : ''}`}>
+                  <div className={styles.stepNumber}>4</div>
+                  <div className={styles.stepLabel}>Rests</div>
+                </div>
+                <div className={styles.stepConnector}></div>
+                <div className={`${styles.wizardStep} ${rpdWizardStep >= 5 ? styles.active : ''} ${rpdWizardStep > 5 ? styles.completed : ''}`}>
+                  <div className={styles.stepNumber}>5</div>
+                  <div className={styles.stepLabel}>Reciprocation</div>
+                </div>
+                <div className={styles.stepConnector}></div>
+                <div className={`${styles.wizardStep} ${rpdWizardStep >= 6 ? styles.active : ''} ${rpdWizardStep > 6 ? styles.completed : ''}`}>
+                  <div className={styles.stepNumber}>6</div>
+                  <div className={styles.stepLabel}>Major Connector</div>
+                </div>
+                <div className={styles.stepConnector}></div>
+                <div className={`${styles.wizardStep} ${rpdWizardStep >= 7 ? styles.active : ''} ${rpdWizardStep > 7 ? styles.completed : ''}`}>
+                  <div className={styles.stepNumber}>7</div>
+                  <div className={styles.stepLabel}>Minor Connectors</div>
+                </div>
+                <div className={styles.stepConnector}></div>
+                <div className={`${styles.wizardStep} ${rpdWizardStep >= 8 ? styles.active : ''} ${rpdWizardStep > 8 ? styles.completed : ''}`}>
+                  <div className={styles.stepNumber}>8</div>
+                  <div className={styles.stepLabel}>Indirect Retention</div>
+                </div>
+                <div className={styles.stepConnector}></div>
+                <div className={`${styles.wizardStep} ${rpdWizardStep >= 9 ? styles.active : ''}`}>
+                  <div className={styles.stepNumber}>9</div>
+                  <div className={styles.stepLabel}>Review</div>
+                </div>
+              </div>
+
+              {/* Step 1: Arch Selection */}
+              {rpdWizardStep === 1 && (
+                <div className={styles.wizardContent}>
+                  <h3 className={styles.wizardTitle}>Step 1: Select Arch for Partial Denture</h3>
+                  <div className={styles.archButtons} style={{flexDirection: 'column', alignItems: 'center', gap: '1rem'}}>
+                    <button
+                      type="button"
+                      className={`${styles.archBtn} ${(rpdSelectedArch === 'upper' || rpdSelectedArch === 'both') ? styles.selected : ''}`}
+                      onClick={() => {
+                        if (rpdSelectedArch === 'upper') {
+                          setRpdSelectedArch(null);
+                        } else if (rpdSelectedArch === 'both') {
+                          setRpdSelectedArch('lower');
+                        } else if (rpdSelectedArch === 'lower') {
+                          setRpdSelectedArch('both');
+                        } else {
+                          setRpdSelectedArch('upper');
+                        }
+                      }}
+                      style={{width: '280px'}}
+                    >
+                      <span className={styles.archIcon}>⬆</span>
+                      <span className={styles.archLabel}>Upper Arch</span>
+                      {(rpdSelectedArch === 'upper' || rpdSelectedArch === 'both') && <span className={styles.checkmark}>✓</span>}
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.archBtn} ${(rpdSelectedArch === 'lower' || rpdSelectedArch === 'both') ? styles.selected : ''}`}
+                      onClick={() => {
+                        if (rpdSelectedArch === 'lower') {
+                          setRpdSelectedArch(null);
+                        } else if (rpdSelectedArch === 'both') {
+                          setRpdSelectedArch('upper');
+                        } else if (rpdSelectedArch === 'upper') {
+                          setRpdSelectedArch('both');
+                        } else {
+                          setRpdSelectedArch('lower');
+                        }
+                      }}
+                      style={{width: '280px'}}
+                    >
+                      <span className={styles.archIcon}>⬇</span>
+                      <span className={styles.archLabel}>Lower Arch</span>
+                      {(rpdSelectedArch === 'lower' || rpdSelectedArch === 'both') && <span className={styles.checkmark}>✓</span>}
+                    </button>
+                  </div>
+                  {rpdSelectedArch && rpdSelectedArch !== 'both' && (
+                    <div className={styles.archNote}>
+                      <p style={{margin: 0, fontSize: '0.875rem', color: '#78350f'}}>
+                        💡 Click the other arch button to add opposing arch
+                      </p>
+                    </div>
+                  )}
+                  <div className={styles.wizardActions}>
+                    <button
+                      type="button"
+                      className={styles.wizardNextBtn}
+                      disabled={!rpdSelectedArch}
+                      onClick={() => {
+                        setRpdWizardStep(2);
+                        setSelectedTeeth([]);
+                        setRpdMissingTeeth([]);
+                      }}
+                    >
+                      Next: Identify Missing Teeth →
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Missing Teeth Selection */}
+              {rpdWizardStep === 2 && (
+                <div className={styles.wizardContent}>
+                  <h3 className={styles.wizardTitle}>
+                    Step 2: Identify Missing Teeth - {
+                      rpdSelectedArch === 'upper' ? 'Upper Arch' : 
+                      rpdSelectedArch === 'lower' ? 'Lower Arch' : 
+                      'Both Arches'
+                    }
+                  </h3>
+                  <p className={styles.wizardHint}>
+                    ⚠️ Click on MISSING tooth positions (teeth will be grayed out). These are where artificial teeth will be placed.
+                  </p>
+                  {rpdMissingTeeth.length > 0 && (
+                    <div>
+                      <div className={styles.selectedTeethDisplay}>
+                        <strong>Missing Teeth:</strong> {rpdMissingTeeth.sort((a, b) => a - b).map(t => `#${t}`).join(', ')}
+                      </div>
+                      {/* Kennedy Classification */}
+                      {(rpdSelectedArch === 'upper' || rpdSelectedArch === 'both') && (() => {
+                        const upperClass = calculateKennedyClass(rpdMissingTeeth, 'upper');
+                        return upperClass ? (
+                          <div style={{ 
+                            marginTop: '0.75rem', 
+                            padding: '0.75rem', 
+                            background: '#dbeafe', 
+                            border: '2px solid #3b82f6',
+                            borderRadius: '6px',
+                            fontWeight: '600',
+                            color: '#1e40af'
+                          }}>
+                            <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>Upper Arch:</span>{' '}
+                            <span style={{ fontSize: '1rem' }}>Kennedy {upperClass.display}</span>
+                          </div>
+                        ) : null;
+                      })()}
+                      {(rpdSelectedArch === 'lower' || rpdSelectedArch === 'both') && (() => {
+                        const lowerClass = calculateKennedyClass(rpdMissingTeeth, 'lower');
+                        return lowerClass ? (
+                          <div style={{ 
+                            marginTop: '0.5rem', 
+                            padding: '0.75rem', 
+                            background: '#fee2e2', 
+                            border: '2px solid #ef4444',
+                            borderRadius: '6px',
+                            fontWeight: '600',
+                            color: '#b91c1c'
+                          }}>
+                            <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>Lower Arch:</span>{' '}
+                            <span style={{ fontSize: '1rem' }}>Kennedy {lowerClass.display}</span>
+                          </div>
+                        ) : null;
+                      })()}
+                    </div>
+                  )}
+                  <div className={styles.wizardActions}>
+                    <button
+                      type="button"
+                      className={styles.wizardBackBtn}
+                      onClick={() => setRpdWizardStep(1)}
+                    >
+                      ← Back
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.wizardNextBtn}
+                      disabled={rpdMissingTeeth.length === 0}
+                      onClick={() => {
+                        setRpdWizardStep(3);
+                        setSelectedTeeth([]);
+                        setCurrentRpdComponent(null);
+                        setCurrentComponentSurface('B'); // Default to Buccal surface
+                      }}
+                    >
+                      Next: Add Direct Retainers (Clasps) →
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Clasps (Direct Retainers) */}
+              {rpdWizardStep === 3 && (
+                <div className={styles.wizardContent}>
+                  <h3 className={styles.wizardTitle}>Step 3: Direct Retainers (Clasps)</h3>
+                  <p className={styles.wizardHint}>
+                    Select a clasp type and surface, then click on abutment teeth to add it
+                  </p>
+                  
+                  <div className={styles.componentSelectionArea}>
+                    <div className={styles.componentButtons}>
+                      {RPD_COMPONENTS.CLASPS.map(comp => (
+                        <button
+                          key={comp.id}
+                          type="button"
+                          className={`${styles.componentBtn} ${currentRpdComponent?.id === comp.id ? styles.active : ''}`}
+                          onClick={() => {
+                            setCurrentRpdComponent(comp);
+                            if (comp.requiresSurface && !currentComponentSurface) {
+                              setCurrentComponentSurface('B'); // Default to Buccal
+                            }
+                          }}
+                        >
+                          <span className={styles.componentIcon}>{comp.icon}</span>
+                          {comp.name}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    {currentRpdComponent && currentRpdComponent.requiresSurface && (
+                      <div className={styles.surfaceSelector}>
+                        <label>Surface:</label>
+                        {['B', 'L', 'M', 'D'].map(surface => (
+                          <button
+                            key={surface}
+                            type="button"
+                            className={`${styles.surfaceBtn} ${currentComponentSurface === surface ? styles.active : ''}`}
+                            onClick={() => setCurrentComponentSurface(surface)}
+                          >
+                            {surface}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {currentRpdComponent && (
+                      <div className={styles.componentHint}>
+                      Click abutment teeth on the odontogram to add <strong>{currentRpdComponent.name}</strong>
+                        {currentRpdComponent.requiresSurface && currentComponentSurface && ` (${currentComponentSurface} surface)`}
+                        {currentRpdComponent.id === 'rpi-clasp' && (
+                          <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: '#fef3c7', borderRadius: '4px', fontSize: '0.85rem', color: '#92400e' }}>
+                            <strong>⚠️ RPI System:</strong> You must add a Rest (R) in Step 4 and Reciprocal Plate (P) in Step 5 for complete RPI system.
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className={styles.wizardActions}>
+                    <button
+                      type="button"
+                      className={styles.wizardBackBtn}
+                      onClick={() => setRpdWizardStep(2)}
+                    >
+                      ← Back
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.wizardNextBtn}
+                      onClick={() => {
+                        setRpdWizardStep(4);
+                        setCurrentRpdComponent(null);
+                        setCurrentComponentSurface(null);
+                      }}
+                    >
+                      Next: Add Rests (Support) →
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 4: Rests */}
+              {rpdWizardStep === 4 && (
+                <div className={styles.wizardContent}>
+                  <h3 className={styles.wizardTitle}>Step 4: Rests (Support Elements)</h3>
+                  <p className={styles.wizardHint}>
+                    Add rests on abutment teeth for vertical support
+                  </p>
+                  
+                  <div className={styles.componentSelectionArea}>
+                    <div className={styles.componentButtons}>
+                      {RPD_COMPONENTS.RESTS.map(comp => (
+                        <button
+                          key={comp.id}
+                          type="button"
+                          className={`${styles.componentBtn} ${currentRpdComponent?.id === comp.id ? styles.active : ''}`}
+                          onClick={() => setCurrentRpdComponent(comp)}
+                        >
+                          <span className={styles.componentIcon}>{comp.icon}</span>
+                          {comp.name}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    {currentRpdComponent && (
+                      <div className={styles.componentHint}>
+                        👆 Click abutment teeth to add <strong>{currentRpdComponent.name}</strong>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className={styles.wizardActions}>
+                    <button
+                      type="button"
+                      className={styles.wizardBackBtn}
+                      onClick={() => setRpdWizardStep(3)}
+                    >
+                      ← Back
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.wizardNextBtn}
+                      onClick={() => {
+                        setRpdWizardStep(5);
+                        setCurrentRpdComponent(null);
+                      }}
+                    >
+                      Next: Add Reciprocation →
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 5: Reciprocation */}
+              {rpdWizardStep === 5 && (
+                <div className={styles.wizardContent}>
+                  <h3 className={styles.wizardTitle}>Step 5: Reciprocation Elements</h3>
+                  <p className={styles.wizardHint}>
+                    Add reciprocal elements to counteract horizontal forces from clasps
+                  </p>
+                  
+                  <div className={styles.componentSelectionArea}>
+                    <div className={styles.componentButtons}>
+                      {RPD_COMPONENTS.RECIPROCATION.map(comp => (
+                        <button
+                          key={comp.id}
+                          type="button"
+                          className={`${styles.componentBtn} ${currentRpdComponent?.id === comp.id ? styles.active : ''}`}
+                          onClick={() => {
+                            setCurrentRpdComponent(comp);
+                            if (comp.requiresSurface && !currentComponentSurface) {
+                              setCurrentComponentSurface('B'); // Default to Buccal
+                            }
+                          }}
+                        >
+                          <span className={styles.componentIcon}>{comp.icon}</span>
+                          {comp.name}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    {currentRpdComponent && currentRpdComponent.requiresSurface && (
+                      <div className={styles.surfaceSelector}>
+                        <label>Surface:</label>
+                        {['B', 'L', 'M', 'D'].map(surface => (
+                          <button
+                            key={surface}
+                            type="button"
+                            className={`${styles.surfaceBtn} ${currentComponentSurface === surface ? styles.active : ''}`}
+                            onClick={() => setCurrentComponentSurface(surface)}
+                          >
+                            {surface}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {currentRpdComponent && (
+                      <div className={styles.componentHint}>
+                        👆 Click abutment teeth to add <strong>{currentRpdComponent.name}</strong>
+                        {currentRpdComponent.requiresSurface && currentComponentSurface && ` (${currentComponentSurface} surface)`}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className={styles.wizardActions}>
+                    <button
+                      type="button"
+                      className={styles.wizardBackBtn}
+                      onClick={() => setRpdWizardStep(4)}
+                    >
+                      ← Back
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.wizardNextBtn}
+                      onClick={() => {
+                        setRpdWizardStep(6);
+                        setCurrentRpdComponent(null);
+                        setCurrentComponentSurface(null);
+                      }}
+                    >
+                      Next: Select Major Connector →
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 6: Major Connector */}
+              {rpdWizardStep === 6 && (
+                <div className={styles.wizardContent}>
+                  <h3 className={styles.wizardTitle}>Step 6: Major Connector</h3>
+                  <p className={styles.wizardHint}>
+                    {rpdSelectedArch === 'both' 
+                      ? 'Select the major connector type for each arch, then click teeth on the odontogram to mark where the connector extends' 
+                      : 'Select the type of major connector for this RPD, then click teeth on the odontogram to mark where it extends'}
+                  </p>
+                  
+                  {rpdSelectedArch === 'both' ? (
+                    // Both arches: Show two separate sections
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                      {/* Upper Arch Section */}
+                      <div>
+                        <h4 style={{ 
+                          fontSize: '0.95rem', 
+                          fontWeight: '600', 
+                          color: '#1e40af',
+                          marginBottom: '0.75rem',
+                          paddingBottom: '0.5rem',
+                          borderBottom: '2px solid #3b82f6'
+                        }}>
+                          Upper Arch Major Connector
+                        </h4>
+                        <div className={styles.majorConnectorGrid}>
+                          {RPD_COMPONENTS.MAJOR_CONNECTORS
+                            .filter(conn => conn.arch === 'upper')
+                            .map(conn => (
+                              <button
+                                key={conn.id}
+                                type="button"
+                                className={`${styles.majorConnectorBtn} ${rpdMajorConnector?.id === conn.id ? styles.selected : ''}`}
+                                onClick={() => {
+                                  setRpdMajorConnector(conn);
+                                  // Auto-select all upper teeth if not already selected
+                                  if (rpdMajorConnectorTeeth.length === 0) {
+                                    const upperTeeth = Array.from({length: 16}, (_, i) => i + 1).filter(t => !rpdMissingTeeth.includes(t));
+                                    setRpdMajorConnectorTeeth(upperTeeth);
+                                  }
+                                }}
+                              >
+                                <span className={styles.connectorLabel}>{conn.name}</span>
+                                {rpdMajorConnector?.id === conn.id && <span className={styles.checkmark}>✓</span>}
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                      
+                      {/* Lower Arch Section */}
+                      <div>
+                        <h4 style={{ 
+                          fontSize: '0.95rem', 
+                          fontWeight: '600', 
+                          color: '#b91c1c',
+                          marginBottom: '0.75rem',
+                          paddingBottom: '0.5rem',
+                          borderBottom: '2px solid #ef4444'
+                        }}>
+                          Lower Arch Major Connector
+                        </h4>
+                        <div className={styles.majorConnectorGrid}>
+                          {RPD_COMPONENTS.MAJOR_CONNECTORS
+                            .filter(conn => conn.arch === 'lower')
+                            .map(conn => (
+                              <button
+                                key={conn.id}
+                                type="button"
+                                className={`${styles.majorConnectorBtn} ${rpdMajorConnectorLower?.id === conn.id ? styles.selected : ''}`}
+                                onClick={() => {
+                                  setRpdMajorConnectorLower(conn);
+                                  // Auto-select all lower teeth if not already selected
+                                  if (rpdMajorConnectorTeethLower.length === 0) {
+                                    const lowerTeeth = Array.from({length: 16}, (_, i) => i + 17).filter(t => !rpdMissingTeeth.includes(t));
+                                    setRpdMajorConnectorTeethLower(lowerTeeth);
+                                  }
+                                }}
+                              >
+                                <span className={styles.connectorLabel}>{conn.name}</span>
+                                {rpdMajorConnectorLower?.id === conn.id && <span className={styles.checkmark}>✓</span>}
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    // Single arch: Show original layout
+                    <div className={styles.majorConnectorGrid}>
+                      {RPD_COMPONENTS.MAJOR_CONNECTORS
+                        .filter(conn => conn.arch === rpdSelectedArch)
+                        .map(conn => (
+                          <button
+                            key={conn.id}
+                            type="button"
+                            className={`${styles.majorConnectorBtn} ${rpdMajorConnector?.id === conn.id ? styles.selected : ''}`}
+                            onClick={() => {
+                              setRpdMajorConnector(conn);
+                              // Auto-select all arch teeth if not already selected
+                              const teethList = rpdSelectedArch === 'upper' ? 
+                                Array.from({length: 16}, (_, i) => i + 1).filter(t => !rpdMissingTeeth.includes(t)) :
+                                Array.from({length: 16}, (_, i) => i + 17).filter(t => !rpdMissingTeeth.includes(t));
+                              if (rpdSelectedArch === 'upper' && rpdMajorConnectorTeeth.length === 0) {
+                                setRpdMajorConnectorTeeth(teethList);
+                              } else if (rpdSelectedArch === 'lower' && rpdMajorConnectorTeethLower.length === 0) {
+                                setRpdMajorConnectorTeethLower(teethList);
+                              }
+                            }}
+                          >
+                            <span className={styles.connectorLabel}>{conn.name}</span>
+                            {rpdMajorConnector?.id === conn.id && <span className={styles.checkmark}>✓</span>}
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                  
+                  {(rpdMajorConnector || rpdMajorConnectorLower) && (
+                    <div className={styles.componentHint} style={{ marginTop: '1rem', background: '#f1f5f9', padding: '0.75rem', borderRadius: '6px' }}>
+                      👆 Click teeth on the odontogram to customize where the major connector extends. The connector is shown as a bar on the palatal/lingual side.
+                    </div>
+                  )}
+                  
+                  <div className={styles.wizardActions}>
+                    <button
+                      type="button"
+                      className={styles.wizardBackBtn}
+                      onClick={() => setRpdWizardStep(5)}
+                    >
+                      ← Back
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.wizardNextBtn}
+                      disabled={rpdSelectedArch === 'both' ? (!rpdMajorConnector || !rpdMajorConnectorLower) : !rpdMajorConnector}
+                      onClick={() => setRpdWizardStep(7)}
+                    >
+                      Next: Add Minor Connectors →
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 7: Minor Connectors */}
+              {rpdWizardStep === 7 && (
+                <div className={styles.wizardContent}>
+                  <h3 className={styles.wizardTitle}>Step 7: Minor Connectors</h3>
+                  <p className={styles.wizardHint}>
+                    Add minor connectors to connect components to major connector
+                  </p>
+                  
+                  <div className={styles.componentSelectionArea}>
+                    <div className={styles.componentButtons}>
+                      {RPD_COMPONENTS.MINOR_CONNECTORS.map(comp => (
+                        <button
+                          key={comp.id}
+                          type="button"
+                          className={`${styles.componentBtn} ${currentRpdComponent?.id === comp.id ? styles.active : ''}`}
+                          onClick={() => setCurrentRpdComponent(comp)}
+                        >
+                          <span className={styles.componentIcon}>{comp.icon}</span>
+                          {comp.name}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    {currentRpdComponent && (
+                      <div className={styles.componentHint}>
+                        👆 Click teeth to add <strong>{currentRpdComponent.name}</strong>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className={styles.wizardActions}>
+                    <button
+                      type="button"
+                      className={styles.wizardBackBtn}
+                      onClick={() => setRpdWizardStep(6)}
+                    >
+                      ← Back
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.wizardNextBtn}
+                      onClick={() => {
+                        setRpdWizardStep(8);
+                        setCurrentRpdComponent(null);
+                      }}
+                    >
+                      Next: Add Indirect Retention →
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 8: Indirect Retention */}
+              {rpdWizardStep === 8 && (
+                <div className={styles.wizardContent}>
+                  <h3 className={styles.wizardTitle}>Step 8: Indirect Retention</h3>
+                  <p className={styles.wizardHint}>
+                    Add indirect retainers to resist rotational movement (optional)
+                  </p>
+                  
+                  <div className={styles.componentSelectionArea}>
+                    <div className={styles.componentButtons}>
+                      {RPD_COMPONENTS.INDIRECT_RETENTION.map(comp => (
+                        <button
+                          key={comp.id}
+                          type="button"
+                          className={`${styles.componentBtn} ${currentRpdComponent?.id === comp.id ? styles.active : ''}`}
+                          onClick={() => setCurrentRpdComponent(comp)}
+                        >
+                          <span className={styles.componentIcon}>{comp.icon}</span>
+                          {comp.name}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    {currentRpdComponent && currentRpdComponent.requiresTooth && (
+                      <div className={styles.componentHint}>
+                        👆 Click teeth to add <strong>{currentRpdComponent.name}</strong>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className={styles.wizardActions}>
+                    <button
+                      type="button"
+                      className={styles.wizardBackBtn}
+                      onClick={() => setRpdWizardStep(7)}
+                    >
+                      ← Back
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.wizardNextBtn}
+                      onClick={() => {
+                        setRpdWizardStep(9);
+                        setCurrentRpdComponent(null);
+                      }}
+                    >
+                      Next: Review & Edit →
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 9: Review & Edit */}
+              {rpdWizardStep === 9 && (
+                <div className={styles.wizardContent}>
+                  <h3 className={styles.wizardTitle}>Step 9: Review & Final Adjustments</h3>
+                  <p className={styles.wizardHint}>
+                    Review your RPD design. Click any component type below to add/remove additional components.
+                  </p>
+                  
+                  <div className={styles.reviewSummary}>
+                    <div className={styles.summaryItem}>
+                      <strong>Arch:</strong> {
+                        rpdSelectedArch === 'upper' ? 'Upper' :
+                        rpdSelectedArch === 'lower' ? 'Lower' : 'Both'
+                      }
+                    </div>
+                    <div className={styles.summaryItem}>
+                      <strong>Missing Teeth:</strong> {rpdMissingTeeth.sort((a, b) => a - b).map(t => `#${t}`).join(', ')}
+                    </div>
+                    <div className={styles.summaryItem}>
+                      <strong>Major Connector:</strong> {
+                        rpdSelectedArch === 'both' 
+                          ? `Upper: ${rpdMajorConnector?.name || 'None'} | Lower: ${rpdMajorConnectorLower?.name || 'None'}`
+                          : rpdMajorConnector?.name || 'None'
+                      }
+                    </div>
+                    <div className={styles.summaryItem}>
+                      <strong>Components:</strong> {Object.keys(rpdComponentsByTooth).length} teeth with components
+                    </div>
+                  </div>
+                  
+                  <div className={styles.editComponentsArea}>
+                    <h4>Add/Remove Components:</h4>
+                    <div className={styles.componentCategories}>
+                      {Object.entries(RPD_COMPONENTS).map(([category, components]) => {
+                        if (category === 'MAJOR_CONNECTORS') return null;
+                        return (
+                          <div key={category} className={styles.componentCategory}>
+                            <h5>{category.replace(/_/g, ' ')}</h5>
+                            <div className={styles.componentButtons}>
+                              {components.map(comp => (
+                                <button
+                                  key={comp.id}
+                                  type="button"
+                                  className={`${styles.componentBtn} ${styles.small} ${currentRpdComponent?.id === comp.id ? styles.active : ''}`}
+                                  onClick={() => {
+                                    setCurrentRpdComponent(currentRpdComponent?.id === comp.id ? null : comp);
+                                    setCurrentComponentSurface(null);
+                                  }}
+                                >
+                                  {comp.name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                    {currentRpdComponent && currentRpdComponent.requiresSurface && (
+                      <div className={styles.surfaceSelector}>
+                        <label>Surface:</label>
+                        {['B', 'L', 'M', 'D'].map(surface => (
+                          <button
+                            key={surface}
+                            type="button"
+                            className={`${styles.surfaceBtn} ${currentComponentSurface === surface ? styles.active : ''}`}
+                            onClick={() => setCurrentComponentSurface(surface)}
+                          >
+                            {surface}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {currentRpdComponent && (
+                      <div className={styles.componentHint}>
+                        👆 Click teeth on the odontogram to add/remove <strong>{currentRpdComponent.name}</strong>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className={styles.wizardActions}>
+                    <button
+                      type="button"
+                      className={styles.wizardBackBtn}
+                      onClick={() => setRpdWizardStep(8)}
+                    >
+                      ← Back
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.wizardNextBtn} ${rpdReviewComplete ? styles.completed : ''}`}
+                      onClick={() => setRpdReviewComplete(true)}
+                    >
+                      {rpdReviewComplete ? '✓ Reviewed' : 'Review Design →'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
           {/* Color Legend */}
           {prescriptions.length > 0 && (
             <div className={styles.colorLegend}>
@@ -710,16 +2123,229 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
           )}
           
           <Odontogram
-            selectedTeeth={selectedTeeth}
-            onSelectionChange={setSelectedTeeth}
-            mode={selectionMode}
-            disabledTeeth={usedTeeth}
+            selectedTeeth={rpdWizardStep === 2 ? rpdMissingTeeth : rpdWizardStep === 6 ? [...rpdMajorConnectorTeeth, ...rpdMajorConnectorTeethLower] : selectedTeeth}
+            onSelectionChange={(teeth) => {
+              // Step 2: Selecting missing teeth (will be grayed out)
+              if (currentRestoration === 'DENTURE_PARTIAL' && rpdWizardStep === 2) {
+                setRpdMissingTeeth(teeth);
+                return;
+              }
+              
+              // Step 6: Selecting teeth for major connector visualization
+              if (currentRestoration === 'DENTURE_PARTIAL' && rpdWizardStep === 6) {
+                const upperTeeth = teeth.filter(t => t <= 16);
+                const lowerTeeth = teeth.filter(t => t > 16);
+                if (rpdSelectedArch === 'upper' || rpdSelectedArch === 'both') {
+                  setRpdMajorConnectorTeeth(upperTeeth);
+                }
+                if (rpdSelectedArch === 'lower' || rpdSelectedArch === 'both') {
+                  setRpdMajorConnectorTeethLower(lowerTeeth);
+                }
+                return;
+              }
+              
+              // Steps 3-9: If RPD component mode is active, add component to tooth
+              if (currentRestoration === 'DENTURE_PARTIAL' && rpdWizardStep >= 3 && currentRpdComponent) {
+                // Don't allow components on missing teeth
+                let validTeeth = teeth.filter(t => !rpdMissingTeeth.includes(t));
+                
+                // Tooth type validation for specific components
+                const isAnterior = (tooth) => {
+                  const num = Number(tooth);
+                  return (num >= 6 && num <= 11) || (num >= 22 && num <= 27);
+                };
+                const isPosterior = (tooth) => !isAnterior(tooth);
+                
+                // Filter teeth based on component restrictions
+                if (currentRpdComponent.id === 'occlusal-mesial' || currentRpdComponent.id === 'occlusal-distal' || currentRpdComponent.id === 'occlusal-both') {
+                  validTeeth = validTeeth.filter(isPosterior);
+                  if (validTeeth.length === 0) {
+                    alert('Occlusal rests can only be placed on posterior teeth (premolars and molars)');
+                    return;
+                  }
+                } else if (currentRpdComponent.id === 'cingulum') {
+                  validTeeth = validTeeth.filter(isAnterior);
+                  if (validTeeth.length === 0) {
+                    alert('Cingulum rests can only be placed on anterior teeth (incisors and canines)');
+                    return;
+                  }
+                } else if (currentRpdComponent.id === 'incisal') {
+                  validTeeth = validTeeth.filter(isAnterior);
+                  if (validTeeth.length === 0) {
+                    alert('Incisal rests can only be placed on anterior teeth');
+                    return;
+                  }
+                }
+                
+                const newComponents = { ...rpdComponentsByTooth };
+                validTeeth.forEach(tooth => {
+                  if (!newComponents[tooth]) {
+                    newComponents[tooth] = [];
+                  }
+                  
+                  // Determine component type based on current step
+                  let componentType = 'other';
+                  if (rpdWizardStep === 3) componentType = 'clasps';
+                  else if (rpdWizardStep === 4) componentType = 'rests';
+                  else if (rpdWizardStep === 5) componentType = 'reciprocation';
+                  else if (rpdWizardStep === 7) componentType = 'minorconnectors';
+                  else if (rpdWizardStep === 8) componentType = 'indirectretention';
+                  else if (rpdWizardStep === 9) {
+                    // In review mode, determine from component
+                    if (RPD_COMPONENTS.CLASPS.some(c => c.id === currentRpdComponent.id)) componentType = 'clasps';
+                    else if (RPD_COMPONENTS.RESTS.some(c => c.id === currentRpdComponent.id)) componentType = 'rests';
+                    else if (RPD_COMPONENTS.RECIPROCATION.some(c => c.id === currentRpdComponent.id)) componentType = 'reciprocation';
+                    else if (RPD_COMPONENTS.MINOR_CONNECTORS.some(c => c.id === currentRpdComponent.id)) componentType = 'minorconnectors';
+                    else if (RPD_COMPONENTS.INDIRECT_RETENTION.some(c => c.id === currentRpdComponent.id)) componentType = 'indirectretention';
+                  }
+                  
+                  const componentData = {
+                    type: componentType,
+                    component: currentRpdComponent.id,
+                    name: currentRpdComponent.name,
+                    surface: currentComponentSurface
+                  };
+                  
+                  // Check if component already exists (by id and surface)
+                  const existingIndex = newComponents[tooth].findIndex(c => c.component === componentData.component && c.surface === componentData.surface);
+                  if (existingIndex >= 0) {
+                    // Remove if clicking again (toggle off)
+                    newComponents[tooth].splice(existingIndex, 1);
+                  } else {
+                    // Validation: prevent multiple clasps of same type on same tooth
+                    if (componentType === 'clasps') {
+                      const existingClaspIndex = newComponents[tooth].findIndex(c => c.type === 'clasps');
+                      if (existingClaspIndex >= 0) {
+                        // Replace existing clasp with new one
+                        const existingName = newComponents[tooth][existingClaspIndex].name;
+                        if (window.confirm(`This tooth already has ${existingName}. Replace it with ${componentData.name}?`)) {
+                          newComponents[tooth].splice(existingClaspIndex, 1);
+                        } else {
+                          return; // User cancelled, don't add new clasp
+                        }
+                      }
+                    }
+                    
+                    // RPI System: If adding RPI clasp, warn if missing rest or reciprocation
+                    if (currentRpdComponent.id === 'rpi-clasp') {
+                      const hasRest = newComponents[tooth].some(c => c.type === 'rests');
+                      const hasReciprocation = newComponents[tooth].some(c => c.type === 'reciprocation');
+                      if (!hasRest) {
+                        alert('⚠️ RPI system incomplete: Add a Rest in Step 4 for this tooth.');
+                      }
+                      if (!hasReciprocation) {
+                        alert('⚠️ RPI system incomplete: Add Reciprocal Plate in Step 5 for this tooth.');
+                      }
+                    }
+                    
+                    newComponents[tooth].push(componentData);
+                  }
+                  
+                  // Clean up empty arrays
+                  if (newComponents[tooth].length === 0) {
+                    delete newComponents[tooth];
+                  }
+                });
+                setRpdComponentsByTooth(newComponents);
+                // Don't actually select the tooth for RPD mode
+              } else {
+                // Normal selection mode
+                setSelectedTeeth(teeth);
+              }
+            }}
+            mode={
+              (currentRestoration === 'DENTURE_PARTIAL' && (rpdWizardStep === 2 || (rpdWizardStep === 6 && (rpdMajorConnector || rpdMajorConnectorLower)) || (rpdWizardStep >= 3 && currentRpdComponent))) 
+                ? 'multiple' 
+                : selectionMode
+            }
+            disabledTeeth={
+              currentRestoration === 'DENTURE_PARTIAL' && rpdWizardStep >= 2
+                ? (() => {
+                    // Disable non-selected arches
+                    const disabledByArch = [];
+                    if (rpdSelectedArch === 'upper') {
+                      // Disable lower arch teeth (17-32)
+                      for (let i = 17; i <= 32; i++) disabledByArch.push(i);
+                    } else if (rpdSelectedArch === 'lower') {
+                      // Disable upper arch teeth (1-16)
+                      for (let i = 1; i <= 16; i++) disabledByArch.push(i);
+                    }
+                    // Both arches: no arch restriction
+                    
+                    // In step 2, only disable by arch
+                    if (rpdWizardStep === 2) {
+                      return disabledByArch;
+                    }
+                    
+                    // In steps 3+, also allow clicking on all available teeth for components
+                    return rpdWizardStep >= 3 && currentRpdComponent ? disabledByArch : [...usedTeeth, ...disabledByArch];
+                  })()
+                : usedTeeth
+            }
             highlightedTeeth={highlightedTeeth}
             allowCrossQuadrant={currentRestoration === 'BRIDGE' || currentRestoration === 'IMPLANT_BRIDGE'}
             archSelectionMode={currentRestoration === 'DENTURE_FULL'}
             onArchSelect={setSelectedArchForDenture}
             selectedArch={selectedArchForDenture}
           />
+          
+          {/* Show RPD Components by Tooth */}
+          {currentRestoration === 'DENTURE_PARTIAL' && rpdWizardStep >= 3 && Object.keys(rpdComponentsByTooth).length > 0 && (
+            <>
+              <div className={styles.rpdComponentsLegend}>
+                <strong>Component Markings:</strong>
+                <div className={styles.legendItems}>
+                  <div className={styles.legendItem}>
+                    <span className={styles.legendBorder} style={{borderColor: '#dc2626'}}></span>
+                    <span>Clasp Only</span>
+                  </div>
+                  <div className={styles.legendItem}>
+                    <span className={styles.legendBorder} style={{borderColor: '#7c3aed'}}></span>
+                    <span>Rest Only</span>
+                  </div>
+                  <div className={styles.legendItem}>
+                    <span className={styles.legendBorder} style={{borderColor: '#2563eb'}}></span>
+                    <span>Clasp + Rest</span>
+                  </div>
+                  <div className={styles.legendItem}>
+                    <span className={styles.legendBorder} style={{borderColor: '#16a34a'}}></span>
+                    <span>Complete (Clasp + Rest + Reciprocation)</span>
+                  </div>
+                  <div className={styles.legendItem}>
+                    <span className={styles.legendBorder} style={{borderColor: '#f59e0b'}}></span>
+                    <span>Other Components</span>
+                  </div>
+                </div>
+              </div>
+              <div className={styles.rpdComponentsList}>
+                <strong>Components Added:</strong>
+              {Object.entries(rpdComponentsByTooth)
+                .sort(([a], [b]) => parseInt(a) - parseInt(b))
+                .map(([tooth, components]) => (
+                  components.length > 0 && (
+                    <div key={tooth} className={styles.toothComponentItem}>
+                      <span className={styles.toothNumber}>#{tooth}:</span>
+                      <span className={styles.componentList}>
+                        {components.map(c => `${c.name}${c.surface ? ` (${c.surface})` : ''}`).join(', ')}
+                      </span>
+                      <button
+                        type="button"
+                        className={styles.removeComponentBtn}
+                        onClick={() => {
+                          const newComponents = { ...rpdComponentsByTooth };
+                          delete newComponents[tooth];
+                          setRpdComponentsByTooth(newComponents);
+                        }}
+                        title="Remove all components from this tooth"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )
+                ))}
+              </div>
+            </>
+          )}
           
           {/* Compact Role Assignment */}
           {selectedTeeth.length > 0 && (currentRestoration === 'BRIDGE' || currentRestoration === 'IMPLANT_BRIDGE') && (
@@ -757,21 +2383,16 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
             </div>
           )}
 
-          <button
-            type="button"
-            onClick={handleAddToPrescription}
-            className="button primary"
-            style={{width: '100%', marginTop: '0.75rem'}}
-          >
-            + Add to Prescription {currentRestoration && `(${RESTORATION_TYPES[currentRestoration].label})`}
-          </button>
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!currentRestoration && (
-        <div className={styles.emptyState}>
-          <p>👆 Select a restoration type above to begin</p>
+          {(!currentRestoration || currentRestoration !== 'DENTURE_PARTIAL' || rpdReviewComplete) && (
+            <button
+              type="button"
+              onClick={handleAddToPrescription}
+              className="button primary"
+              style={{width: '100%', marginTop: '0.75rem'}}
+            >
+              + Add to Prescription {currentRestoration && `(${RESTORATION_TYPES[currentRestoration].label})`}
+            </button>
+          )}
         </div>
       )}
 
@@ -890,12 +2511,8 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
                         <div className={styles.editTeeth}>
                           <label>Teeth: (click to toggle)</label>
                           <div className={styles.toothGrid}>
-                            {[...Array(48)].map((_, i) => {
-                              const toothNum = i + 11 > 18 && i + 11 < 21 ? null : 
-                                               i + 11 > 28 && i + 11 < 31 ? null :
-                                               i + 11 > 38 && i + 11 < 41 ? null :
-                                               i + 11 > 48 ? null : i + 11;
-                              if (!toothNum || [19, 20, 29, 30, 39, 40, 49, 50].includes(toothNum)) return null;
+                            {[...Array(32)].map((_, i) => {
+                              const toothNum = i + 1; // Universal numbering 1-32
                               
                               const isUsed = usedTeeth.includes(toothNum) && !rx.teeth.includes(toothNum);
                               const isInEdit = editForm.teeth?.includes(toothNum);
@@ -972,37 +2589,316 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
                       {/* RPD Components in Edit Mode */}
                       {rx.type === 'DENTURE_PARTIAL' && (
                         <div className={styles.editRpd}>
-                          <label>RPD Components:</label>
-                          {Object.entries(RPD_COMPONENTS).map(([category, components]) => (
-                            <div key={category} className={styles.componentCategory}>
-                              <label className={styles.categoryLabel}>
-                                {category.replace('_', ' ')}:
-                              </label>
-                              <div className={styles.componentButtons}>
-                                {components.map(component => (
-                                  <button
-                                    key={component}
-                                    type="button"
-                                    className={`${styles.componentBtn} ${editForm.rpdComponents?.includes(component) ? styles.active : ''}`}
-                                    onClick={() => {
-                                      const current = editForm.rpdComponents || [];
-                                      const updated = current.includes(component)
-                                        ? current.filter(c => c !== component)
-                                        : [...current, component];
+                          <label>RPD Components by Tooth:</label>
+                          
+                          {/* Major Connector(s) */}
+                          {rx.arch === 'Both' ? (
+                            <div>
+                              <div className={styles.editRow}>
+                                <label style={{ color: '#1e40af' }}>Major Connector (Upper):</label>
+                                <select
+                                  value={editForm.rpdMajorConnector?.id || ''}
+                                  onChange={(e) => {
+                                    const selected = RPD_COMPONENTS.MAJOR_CONNECTORS.find(c => c.id === e.target.value);
+                                    setEditForm({
+                                      ...editForm,
+                                      rpdMajorConnector: selected || null
+                                    });
+                                  }}
+                                  className={styles.editSelect}
+                                >
+                                  <option value="">Select...</option>
+                                  {RPD_COMPONENTS.MAJOR_CONNECTORS
+                                    .filter(conn => conn.arch === 'upper')
+                                    .map(conn => (
+                                      <option key={conn.id} value={conn.id}>{conn.name}</option>
+                                    ))}
+                                </select>
+                              </div>
+                              <div className={styles.editRow}>
+                                <label style={{ color: '#b91c1c' }}>Major Connector (Lower):</label>
+                                <select
+                                  value={editForm.rpdMajorConnectorLower?.id || ''}
+                                  onChange={(e) => {
+                                    const selected = RPD_COMPONENTS.MAJOR_CONNECTORS.find(c => c.id === e.target.value);
+                                    setEditForm({
+                                      ...editForm,
+                                      rpdMajorConnectorLower: selected || null
+                                    });
+                                  }}
+                                  className={styles.editSelect}
+                                >
+                                  <option value="">Select...</option>
+                                  {RPD_COMPONENTS.MAJOR_CONNECTORS
+                                    .filter(conn => conn.arch === 'lower')
+                                    .map(conn => (
+                                      <option key={conn.id} value={conn.id}>{conn.name}</option>
+                                    ))}
+                                </select>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className={styles.editRow}>
+                              <label>Major Connector:</label>
+                              <select
+                                value={editForm.rpdMajorConnector?.id || ''}
+                                onChange={(e) => {
+                                  const selected = RPD_COMPONENTS.MAJOR_CONNECTORS.find(c => c.id === e.target.value);
+                                  setEditForm({
+                                    ...editForm,
+                                    rpdMajorConnector: selected || null
+                                  });
+                                }}
+                                className={styles.editSelect}
+                              >
+                                <option value="">Select...</option>
+                                {RPD_COMPONENTS.MAJOR_CONNECTORS.map(conn => (
+                                  <option key={conn.id} value={conn.id}>{conn.name}</option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+                          
+                          {/* Components by Tooth */}
+                          <div className={styles.rpdTeethList}>
+                            {Object.keys(editForm.rpdComponentsByTooth || {})
+                              .sort((a, b) => Number(a) - Number(b))
+                              .map(toothNum => {
+                                const components = editForm.rpdComponentsByTooth[toothNum];
+                                return (
+                                  <div key={toothNum} className={styles.rpdToothItem}>
+                                    <div className={styles.rpdToothHeader}>
+                                      <strong>Tooth #{toothNum}</strong>
+                                      <button
+                                        type="button"
+                                        className={styles.removeToothBtn}
+                                        onClick={() => {
+                                          const updated = { ...editForm.rpdComponentsByTooth };
+                                          delete updated[toothNum];
+                                          setEditForm({
+                                            ...editForm,
+                                            rpdComponentsByTooth: updated
+                                          });
+                                        }}
+                                        title="Remove all components from this tooth"
+                                      >
+                                        × Remove All
+                                      </button>
+                                    </div>
+                                    <div className={styles.rpdComponentsList}>
+                                      {components.map((comp, idx) => (
+                                        <div key={idx} className={styles.rpdComponentTag}>
+                                          <span>{comp.name}</span>
+                                          {comp.surface && <span className={styles.surface}>({comp.surface})</span>}
+                                          <button
+                                            type="button"
+                                            className={styles.removeCompBtn}
+                                            onClick={() => {
+                                              const updated = { ...editForm.rpdComponentsByTooth };
+                                              updated[toothNum] = updated[toothNum].filter((_, i) => i !== idx);
+                                              if (updated[toothNum].length === 0) {
+                                                delete updated[toothNum];
+                                              }
+                                              setEditForm({
+                                                ...editForm,
+                                                rpdComponentsByTooth: updated
+                                              });
+                                            }}
+                                            title="Remove this component"
+                                          >
+                                            ×
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            
+                            {(!editForm.rpdComponentsByTooth || Object.keys(editForm.rpdComponentsByTooth).length === 0) && (
+                              <div className={styles.noComponents}>No components added</div>
+                            )}
+                          </div>
+                          
+                          {/* Add Component Interface */}
+                          <div className={styles.addComponentInterface}>
+                            <label>Add New Component:</label>
+                            <div className={styles.addComponentForm}>
+                              <select
+                                className={styles.editSelect}
+                                onChange={(e) => {
+                                  const toothNum = e.target.value;
+                                  if (toothNum) {
+                                    setEditForm({
+                                      ...editForm,
+                                      _selectedTooth: toothNum,
+                                      _selectedComponent: null,
+                                      _selectedSurface: null
+                                    });
+                                  }
+                                }}
+                                value={editForm._selectedTooth || ''}
+                              >
+                                <option value="">1. Select Tooth...</option>
+                                {[...Array(32)].map((_, i) => (
+                                  <option key={i + 1} value={i + 1}>Tooth #{i + 1}</option>
+                                ))}
+                              </select>
+                              
+                              {editForm._selectedTooth && (
+                                <select
+                                  className={styles.editSelect}
+                                  onChange={(e) => {
+                                    const [category, componentId] = e.target.value.split('|');
+                                    if (componentId) {
+                                      const component = RPD_COMPONENTS[category]?.find(c => c.id === componentId);
                                       setEditForm({
                                         ...editForm,
-                                        rpdComponents: updated
+                                        _selectedComponent: component,
+                                        _selectedComponentCategory: category,
+                                        _selectedSurface: null
+                                      });
+                                    }
+                                  }}
+                                  value={editForm._selectedComponent ? `${editForm._selectedComponentCategory}|${editForm._selectedComponent.id}` : ''}
+                                >
+                                  <option value="">2. Select Component...</option>
+                                  {Object.entries(RPD_COMPONENTS).map(([category, components]) => {
+                                    if (category === 'MAJOR_CONNECTORS') return null;
+                                    return (
+                                      <optgroup key={category} label={category.replace(/_/g, ' ')}>
+                                        {components.map(comp => (
+                                          <option key={comp.id} value={`${category}|${comp.id}`}>
+                                            {comp.name}
+                                          </option>
+                                        ))}
+                                      </optgroup>
+                                    );
+                                  })}
+                                </select>
+                              )}
+                              
+                              {editForm._selectedComponent?.requiresSurface && (
+                                <select
+                                  className={styles.editSelect}
+                                  onChange={(e) => {
+                                    setEditForm({
+                                      ...editForm,
+                                      _selectedSurface: e.target.value
+                                    });
+                                  }}
+                                  value={editForm._selectedSurface || ''}
+                                >
+                                  <option value="">3. Select Surface...</option>
+                                  <option value="B">Buccal (B)</option>
+                                  <option value="L">Lingual (L)</option>
+                                  <option value="M">Mesial (M)</option>
+                                  <option value="D">Distal (D)</option>
+                                </select>
+                              )}
+                              
+                              <button
+                                type="button"
+                                className="button primary"
+                                disabled={!editForm._selectedTooth || !editForm._selectedComponent || (editForm._selectedComponent?.requiresSurface && !editForm._selectedSurface)}
+                                onClick={() => {
+                                  const toothNum = editForm._selectedTooth;
+                                  const component = editForm._selectedComponent;
+                                  const surface = editForm._selectedSurface;
+                                  
+                                  const updated = { ...editForm.rpdComponentsByTooth };
+                                  if (!updated[toothNum]) {
+                                    updated[toothNum] = [];
+                                  }
+                                  
+                                  updated[toothNum].push({
+                                    type: editForm._selectedComponentCategory.toLowerCase().replace(/_/g, ''),
+                                    component: component.id,
+                                    name: component.name,
+                                    surface: surface || null
+                                  });
+                                  
+                                  setEditForm({
+                                    ...editForm,
+                                    rpdComponentsByTooth: updated,
+                                    _selectedTooth: null,
+                                    _selectedComponent: null,
+                                    _selectedSurface: null,
+                                    _selectedComponentCategory: null
+                                  });
+                                }}
+                              >
+                                + Add Component
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Add-Ons in Edit Mode */}
+                      <div className={styles.editAddOns}>
+                        <label>Add-Ons (Optional):</label>
+                        
+                        {/* Services - Only show applicable ones */}
+                        {ADD_ONS.SERVICES.filter(addOn => addOn.applicableTypes.includes(rx.type)).length > 0 && (
+                          <div className={styles.addOnCategory}>
+                            <span className={styles.categoryLabel}>Services:</span>
+                            <div className={styles.addOnButtons}>
+                              {ADD_ONS.SERVICES
+                                .filter(addOn => addOn.applicableTypes.includes(rx.type))
+                                .map(addOn => (
+                                  <button
+                                    key={addOn.id}
+                                    type="button"
+                                    className={`${styles.addOnBtn} ${editForm.addOns?.includes(addOn.id) ? styles.active : ''}`}
+                                    onClick={() => {
+                                      const current = editForm.addOns || [];
+                                      const updated = current.includes(addOn.id)
+                                        ? current.filter(id => id !== addOn.id)
+                                        : [...current, addOn.id];
+                                      setEditForm({
+                                        ...editForm,
+                                        addOns: updated
                                       });
                                     }}
                                   >
-                                    {component}
+                                    {addOn.name}
                                   </button>
                                 ))}
-                              </div>
                             </div>
-                          ))}
-                        </div>
-                      )}
+                          </div>
+                        )}
+                        
+                        {/* Fees - Only show applicable ones */}
+                        {ADD_ONS.FEES.filter(addOn => addOn.applicableTypes.includes(rx.type)).length > 0 && (
+                          <div className={styles.addOnCategory}>
+                            <span className={styles.categoryLabel}>Fees:</span>
+                            <div className={styles.addOnButtons}>
+                              {ADD_ONS.FEES
+                                .filter(addOn => addOn.applicableTypes.includes(rx.type))
+                                .map(addOn => (
+                                  <button
+                                    key={addOn.id}
+                                    type="button"
+                                    className={`${styles.addOnBtn} ${editForm.addOns?.includes(addOn.id) ? styles.active : ''}`}
+                                    onClick={() => {
+                                      const current = editForm.addOns || [];
+                                      const updated = current.includes(addOn.id)
+                                        ? current.filter(id => id !== addOn.id)
+                                        : [...current, addOn.id];
+                                      setEditForm({
+                                        ...editForm,
+                                        addOns: updated
+                                      });
+                                    }}
+                                  >
+                                    {addOn.name}
+                                  </button>
+                                ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -1039,8 +2935,20 @@ const PrescriptionForm = ({ onSubmit, onCancel, existingUnits = [] }) => {
                           `#${tooth}(${surfs.join('')})`
                         ).join(', ')}</span>
                       )}
-                      {rx.rpdComponents && rx.rpdComponents.length > 0 && (
-                        <span>• Components: {rx.rpdComponents.join(', ')}</span>
+                      {rx.rpdComponentsByTooth && Object.keys(rx.rpdComponentsByTooth).length > 0 && (
+                        <span>• RPD Components: {Object.keys(rx.rpdComponentsByTooth).length} teeth</span>
+                      )}
+                      {rx.rpdMajorConnector && (
+                        <span>• Major Connector: {
+                          rx.arch === 'Both' && rx.rpdMajorConnectorLower
+                            ? `Upper: ${rx.rpdMajorConnector.name}, Lower: ${rx.rpdMajorConnectorLower.name}`
+                            : rx.rpdMajorConnector.name
+                        }</span>
+                      )}
+                      {rx.addOns && rx.addOns.length > 0 && (
+                        <span className={styles.addOnsTag}>
+                          + {rx.addOns.length} Add-on{rx.addOns.length > 1 ? 's' : ''}
+                        </span>
                       )}
                     </div>
                     {rx.instructions && (

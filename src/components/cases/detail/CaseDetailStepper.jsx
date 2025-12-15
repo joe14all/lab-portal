@@ -35,11 +35,11 @@ const getStageIcon = (stageId) => {
 
 // --- FALLBACK WORKFLOW DEFINITIONS ---
 const WORKFLOWS = {
-  REMOVABLE: ['stage-new', 'stage-received', 'stage-model', 'stage-waxup', 'stage-processing', 'stage-finishing', 'stage-qc', 'stage-shipping'],
-  CASTING: ['stage-new', 'stage-received', 'stage-model', 'stage-waxup', 'stage-casting', 'stage-finishing', 'stage-qc', 'stage-shipping'],
-  ORTHO: ['stage-new', 'stage-received', 'stage-model', 'stage-processing', 'stage-finishing', 'stage-qc', 'stage-shipping'],
-  IMPLANT: ['stage-new', 'stage-received', 'stage-model', 'stage-design', 'stage-milling', 'stage-finishing', 'stage-qc', 'stage-shipping'],
-  FIXED_DIGITAL: ['stage-new', 'stage-received', 'stage-design', 'stage-milling', 'stage-finishing', 'stage-qc', 'stage-shipping']
+  REMOVABLE: ['stage-new', 'stage-received', 'stage-model', 'stage-waxup', 'stage-processing', 'stage-finishing', 'stage-qc', 'stage-shipping', 'stage-shipped', 'stage-delivered'],
+  CASTING: ['stage-new', 'stage-received', 'stage-model', 'stage-waxup', 'stage-casting', 'stage-finishing', 'stage-qc', 'stage-shipping', 'stage-shipped', 'stage-delivered'],
+  ORTHO: ['stage-new', 'stage-received', 'stage-model', 'stage-processing', 'stage-finishing', 'stage-qc', 'stage-shipping', 'stage-shipped', 'stage-delivered'],
+  IMPLANT: ['stage-new', 'stage-received', 'stage-model', 'stage-design', 'stage-milling', 'stage-finishing', 'stage-qc', 'stage-shipping', 'stage-shipped', 'stage-delivered'],
+  FIXED_DIGITAL: ['stage-new', 'stage-received', 'stage-design', 'stage-milling', 'stage-finishing', 'stage-qc', 'stage-shipping', 'stage-shipped', 'stage-delivered']
 };
 
 const detectWorkflow = (activeCase) => {
@@ -116,8 +116,29 @@ const CaseDetailStepper = ({ activeCase, stages }) => {
     if (!canEditStatus) return;
     if (stage.id === currentStatus) return;
 
+    // Rolling back - show confirmation
     if (index < safeActiveIndex && !isHold) {
-      if (!window.confirm(`Roll back to ${stage.label}?`)) return;
+      // Enhanced warning for rolling back from milling or later stages
+      const currentStage = displayStages[safeActiveIndex];
+      const isRollingBackFromProduction = currentStage && (
+        currentStage.id.includes('milling') || 
+        currentStage.id.includes('casting') ||
+        currentStage.id.includes('processing') ||
+        currentStage.id.includes('finishing') ||
+        currentStage.id.includes('qc') ||
+        currentStage.id.includes('shipping')
+      );
+
+      if (isRollingBackFromProduction) {
+        const confirmed = window.confirm(
+          `⚠️ WARNING: Rolling back from ${currentStage.label} to ${stage.label}.\n\n` +
+          `This will move the case back in production. Any completed work at the current stage may need to be redone.\n\n` +
+          `Are you sure you want to proceed?`
+        );
+        if (!confirmed) return;
+      } else {
+        if (!window.confirm(`Roll back to ${stage.label}?`)) return;
+      }
     }
     
     // Point 3: Catch shipment prevention errors

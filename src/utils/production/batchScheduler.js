@@ -23,23 +23,30 @@ export const BatchScheduler = {
     const candidates = [];
 
     cases.forEach((c) => {
-      // Filter for cases in pre-production stages
-      const isReady = c.status === "stage-design" || c.status === "stage-model";
+      // Filter for cases in production stages
+      const isReady = [
+        "stage-design",
+        "stage-model",
+        "stage-milling",
+        "stage-finishing",
+      ].includes(c.status);
 
       if (isReady && c.units) {
         c.units.forEach((unit) => {
           // Exclude units already in a batch or completed
           if (
             !unit.batchId &&
-            !["stage-shipped", "stage-cancelled"].includes(unit.status)
+            !["stage-shipped", "stage-cancelled", "stage-delivered"].includes(
+              unit.status
+            )
           ) {
             candidates.push({
               ...unit,
               caseNumber: c.caseNumber,
-              patient: c.patient.name,
+              patient: c.patient?.name || "Unknown Patient",
               caseId: c.id,
               doctor: c.doctorName,
-              dueDate: c.dates.due,
+              dueDate: c.dates?.due,
               // Propagate rush tag from case to unit for sorting
               priority: (c.tags || []).includes("Rush") ? "Rush" : "Standard",
             });

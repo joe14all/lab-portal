@@ -31,7 +31,8 @@ const STATUS_CONFIG = {
   
   // Post-Production
   'stage-qc':         { color: 'teal',   icon: <IconCheck />,   label: 'QC' },
-  'stage-shipped':    { color: 'green',  icon: <IconTruck />,   label: 'Shipped' },
+  'stage-shipping':   { color: 'cyan',   icon: <IconBox />,     label: 'Ready to Ship' },
+  'stage-shipped':    { color: 'blue',   icon: <IconTruck />,   label: 'Shipped' },
   'stage-delivered':  { color: 'green',  icon: <IconCheck />,   label: 'Delivered' },
   
   // Exceptions

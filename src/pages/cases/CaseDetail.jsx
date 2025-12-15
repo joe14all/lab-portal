@@ -30,6 +30,34 @@ const CaseDetail = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [viewMode, setViewMode] = useState('prescription'); // 'prescription' | 'list'
 
+  // --- 1. Resolve Data (must come before callbacks that use it) ---
+  const activeCase = useMemo(() => {
+    if (labLoading || crmLoading) return null;
+
+    const foundCase = cases.find(c => c.id === caseId);
+    if (!foundCase) return null;
+
+    const clinic = clinics.find(cl => cl.id === foundCase.clinicId);
+    const doctor = doctors.find(doc => doc.id === foundCase.doctorId);
+    
+    return {
+      ...foundCase,
+      clinicName: clinic ? clinic.name : 'Unknown Clinic',
+      doctorName: doctor ? `Dr. ${doctor.lastName}` : (foundCase.doctorId || 'Unknown Doctor'),
+      units: foundCase.units || foundCase.items || [] 
+    };
+  }, [cases, caseId, clinics, doctors, labLoading, crmLoading]);
+
+  const allFiles = useMemo(() => getCaseFiles(caseId), [getCaseFiles, caseId]);
+  const messages = useMemo(() => getCaseMessages(caseId), [getCaseMessages, caseId]);
+
+  const files = useMemo(() => {
+    return {
+      inputs: allFiles.filter(f => f.category?.includes('INPUT') || f.category?.includes('REFERENCE')),
+      designs: allFiles.filter(f => f.category?.includes('PRODUCTION_DESIGN'))
+    };
+  }, [allFiles]);
+
   /**
    * Handle case edit submission with optimistic locking
    * If a concurrency error occurs, LabContext will:
@@ -49,33 +77,27 @@ const CaseDetail = () => {
     }
   }, [caseId, updateCase]);
 
-  // --- 1. Resolve Data ---
-  const activeCase = useMemo(() => {
-    if (labLoading || crmLoading) return null;
+  /**
+   * Update unit status with error handling for Point 3 business rule
+   * Catches shipment prevention errors and displays user-friendly toast
+   */
+  const updateUnitStatus = useCallback(async (unitId, newStatus, holdReason = null) => {
+    if (!activeCase) return;
+    try {
+      await updateCaseStatus(activeCase.id, newStatus, unitId, holdReason);
+    } catch (error) {
+      // Point 3: Show user-friendly error when shipment blocked due to held units
+      if (error.message && error.message.includes('Cannot ship case')) {
+        addToast(error.message, 'error', 6000);
+      } else {
+        addToast('Failed to update case status', 'error', 4000);
+      }
+      console.error('Failed to update unit status:', error);
+    }
+  }, [activeCase, updateCaseStatus, addToast]);
 
-    const foundCase = cases.find(c => c.id === caseId);
-    if (!foundCase) return null;
+  const handleEditClick = useCallback(() => setShowEditModal(true), []);
 
-    const clinic = clinics.find(cl => cl.id === foundCase.clinicId);
-    const doctor = doctors.find(doc => doc.id === foundCase.doctorId);
-    
-    return {
-      ...foundCase,
-      clinicName: clinic ? clinic.name : 'Unknown Clinic',
-      doctorName: doctor ? `Dr. ${doctor.lastName}` : (foundCase.doctorId || 'Unknown Doctor'),
-      units: foundCase.units || foundCase.items || [] 
-    };
-  }, [cases, caseId, clinics, doctors, labLoading, crmLoading]);
-
-  const allFiles = getCaseFiles(caseId);
-  const messages = getCaseMessages(caseId);
-
-  const files = useMemo(() => {
-    return {
-      inputs: allFiles.filter(f => f.category?.includes('INPUT') || f.category?.includes('REFERENCE')),
-      designs: allFiles.filter(f => f.category?.includes('PRODUCTION_DESIGN'))
-    };
-  }, [allFiles]);
 
   if (labLoading || crmLoading || !activeCase) {
     if (labLoading || crmLoading) {
@@ -93,26 +115,6 @@ const CaseDetail = () => {
       </div>
     );
   }
-
-  const handleEditClick = () => setShowEditModal(true);
-  
-  /**
-   * Update unit status with error handling for Point 3 business rule
-   * Catches shipment prevention errors and displays user-friendly toast
-   */
-  const updateUnitStatus = useCallback(async (unitId, newStatus, holdReason = null) => {
-    try {
-      await updateCaseStatus(activeCase.id, newStatus, unitId, holdReason);
-    } catch (error) {
-      // Point 3: Show user-friendly error when shipment blocked due to held units
-      if (error.message && error.message.includes('Cannot ship case')) {
-        addToast(error.message, 'error', 6000);
-      } else {
-        addToast('Failed to update case status', 'error', 4000);
-      }
-      console.error('Failed to update unit status:', error);
-    }
-  }, [activeCase, updateCaseStatus, addToast]);
 
   return (
     <>
@@ -158,6 +160,9 @@ const CaseDetail = () => {
             {viewMode === 'prescription' ? (
               <PrescriptionUnitsView 
                 units={activeCase.units}
+                stages={stages}
+                caseId={activeCase.id}
+                updateUnitStatus={updateUnitStatus}
                 onUnitClick={(unit) => {
                   // Open unit detail or edit modal
                   console.log('Unit clicked:', unit);

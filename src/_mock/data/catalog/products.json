@@ -9,6 +9,24 @@
     "turnaroundDays": 5
   },
   {
+    "id": "prod-zirc-layered",
+    "labId": "lab-001",
+    "sku": "ZIRC-LAY",
+    "name": "Zirconia Crown (Layered)",
+    "category": "Crown & Bridge",
+    "materialId": "mat-zirc-disk",
+    "turnaroundDays": 7
+  },
+  {
+    "id": "prod-emax-crn",
+    "labId": "lab-001",
+    "sku": "EMAX-CRN",
+    "name": "E.max Crown",
+    "category": "Crown & Bridge",
+    "materialId": "mat-emax-ingot",
+    "turnaroundDays": 6
+  },
+  {
     "id": "prod-emax-ven",
     "labId": "lab-001",
     "sku": "EMAX-VEN",
@@ -18,30 +36,219 @@
     "turnaroundDays": 7
   },
   {
+    "id": "prod-porcelain-ven",
+    "labId": "lab-001",
+    "sku": "PORC-VEN",
+    "name": "Porcelain Veneer",
+    "category": "Crown & Bridge",
+    "materialId": "mat-porcelain",
+    "turnaroundDays": 7
+  },
+  {
+    "id": "prod-pfm-high-noble",
+    "labId": "lab-001",
+    "sku": "PFM-HN",
+    "name": "PFM (High Noble)",
+    "category": "Crown & Bridge",
+    "materialId": "mat-alloy-high-noble",
+    "turnaroundDays": 7
+  },
+  {
+    "id": "prod-pfm-noble",
+    "labId": "lab-001",
+    "sku": "PFM-N",
+    "name": "PFM (Noble)",
+    "category": "Crown & Bridge",
+    "materialId": "mat-alloy-noble",
+    "turnaroundDays": 7
+  },
+  {
     "id": "prod-pfm",
     "labId": "lab-001",
     "sku": "PFM-STD",
-    "name": "Porcelain Fused to Metal",
+    "name": "PFM (Non-Precious)",
     "category": "Crown & Bridge",
     "materialId": "mat-alloy-base",
     "turnaroundDays": 7
   },
   {
-    "id": "prod-denture-comp",
+    "id": "prod-gold-crn",
     "labId": "lab-001",
-    "sku": "REM-DENT-COMP",
-    "name": "Complete Denture (Upper/Lower)",
-    "category": "Removables",
-    "materialId": "mat-acrylic-base",
+    "sku": "GOLD-CRN",
+    "name": "Gold Crown",
+    "category": "Crown & Bridge",
+    "materialId": "mat-gold-alloy",
+    "turnaroundDays": 7
+  },
+  {
+    "id": "prod-bridge-zirc",
+    "labId": "lab-001",
+    "sku": "BRG-ZIRC",
+    "name": "Zirconia Bridge (per unit)",
+    "category": "Crown & Bridge",
+    "materialId": "mat-zirc-disk",
+    "turnaroundDays": 7
+  },
+  {
+    "id": "prod-bridge-pfm",
+    "labId": "lab-001",
+    "sku": "BRG-PFM",
+    "name": "PFM Bridge (per unit)",
+    "category": "Crown & Bridge",
+    "materialId": "mat-alloy-high-noble",
+    "turnaroundDays": 8
+  },
+  {
+    "id": "prod-bridge-emax",
+    "labId": "lab-001",
+    "sku": "BRG-EMAX",
+    "name": "E.max Bridge (per unit)",
+    "category": "Crown & Bridge",
+    "materialId": "mat-emax-ingot",
+    "turnaroundDays": 8
+  },
+  {
+    "id": "prod-inlay-emax",
+    "labId": "lab-001",
+    "sku": "INLAY-EMAX",
+    "name": "E.max Inlay",
+    "category": "Crown & Bridge",
+    "materialId": "mat-emax-ingot",
+    "turnaroundDays": 6
+  },
+  {
+    "id": "prod-onlay-emax",
+    "labId": "lab-001",
+    "sku": "ONLAY-EMAX",
+    "name": "E.max Onlay",
+    "category": "Crown & Bridge",
+    "materialId": "mat-emax-ingot",
+    "turnaroundDays": 6
+  },
+  {
+    "id": "prod-inlay-zirc",
+    "labId": "lab-001",
+    "sku": "INLAY-ZIRC",
+    "name": "Zirconia Inlay",
+    "category": "Crown & Bridge",
+    "materialId": "mat-zirc-disk",
+    "turnaroundDays": 5
+  },
+  {
+    "id": "prod-onlay-zirc",
+    "labId": "lab-001",
+    "sku": "ONLAY-ZIRC",
+    "name": "Zirconia Onlay",
+    "category": "Crown & Bridge",
+    "materialId": "mat-zirc-disk",
+    "turnaroundDays": 5
+  },
+  {
+    "id": "prod-inlay-gold",
+    "labId": "lab-001",
+    "sku": "INLAY-GOLD",
+    "name": "Gold Inlay",
+    "category": "Crown & Bridge",
+    "materialId": "mat-gold-alloy",
+    "turnaroundDays": 7
+  },
+  {
+    "id": "prod-onlay-gold",
+    "labId": "lab-001",
+    "sku": "ONLAY-GOLD",
+    "name": "Gold Onlay",
+    "category": "Crown & Bridge",
+    "materialId": "mat-gold-alloy",
+    "turnaroundDays": 7
+  },
+  {
+    "id": "prod-imp-screw-zirc",
+    "labId": "lab-001",
+    "sku": "IMP-SCR-ZIRC",
+    "name": "Implant Crown Screw-Retained (Zirconia)",
+    "category": "Implants",
+    "materialId": "mat-zirc-disk",
     "turnaroundDays": 10
   },
   {
     "id": "prod-imp-screw",
     "labId": "lab-002",
     "sku": "IMP-SCREW-RET",
-    "name": "Implant Crown (Screw-Retained)",
+    "name": "Implant Crown Screw-Retained (PFM)",
+    "category": "Implants",
+    "materialId": "mat-alloy-base",
+    "turnaroundDays": 10
+  },
+  {
+    "id": "prod-imp-cement-zirc",
+    "labId": "lab-001",
+    "sku": "IMP-CEM-ZIRC",
+    "name": "Implant Crown Cement-Retained (Zirconia)",
     "category": "Implants",
     "materialId": "mat-zirc-disk",
+    "turnaroundDays": 10
+  },
+  {
+    "id": "prod-imp-cement-pfm",
+    "labId": "lab-001",
+    "sku": "IMP-CEM-PFM",
+    "name": "Implant Crown Cement-Retained (PFM)",
+    "category": "Implants",
+    "materialId": "mat-alloy-base",
+    "turnaroundDays": 10
+  },
+  {
+    "id": "prod-imp-abutment-custom",
+    "labId": "lab-001",
+    "sku": "IMP-ABUT-CUST",
+    "name": "Custom Implant Abutment",
+    "category": "Implants",
+    "materialId": "mat-titanium",
+    "turnaroundDays": 8
+  },
+  {
+    "id": "prod-imp-bridge-zirc",
+    "labId": "lab-001",
+    "sku": "IMP-BRG-ZIRC",
+    "name": "Implant Bridge (Zirconia, per unit)",
+    "category": "Implants",
+    "materialId": "mat-zirc-disk",
+    "turnaroundDays": 12
+  },
+  {
+    "id": "prod-imp-bridge-pfm",
+    "labId": "lab-001",
+    "sku": "IMP-BRG-PFM",
+    "name": "Implant Bridge (PFM, per unit)",
+    "category": "Implants",
+    "materialId": "mat-alloy-high-noble",
+    "turnaroundDays": 12
+  },
+  {
+    "id": "prod-denture-comp-upper",
+    "labId": "lab-001",
+    "sku": "REM-DENT-UP",
+    "name": "Complete Denture (Upper)",
+    "category": "Removables",
+    "materialId": "mat-acrylic-base",
+    "turnaroundDays": 10
+  },
+  {
+    "id": "prod-denture-comp-lower",
+    "labId": "lab-001",
+    "sku": "REM-DENT-LOW",
+    "name": "Complete Denture (Lower)",
+    "category": "Removables",
+    "materialId": "mat-acrylic-base",
+    "turnaroundDays": 10
+  },
+  {
+    "id": "prod-denture-comp",
+    "labId": "lab-001",
+    "sku": "REM-DENT-COMP",
+    "name": "Complete Denture Set (Upper & Lower)",
+    "category": "Removables",
+    "materialId": "mat-acrylic-base",
     "turnaroundDays": 10
   },
   {
@@ -54,6 +261,33 @@
     "turnaroundDays": 12
   },
   {
+    "id": "prod-partial-flexible",
+    "labId": "lab-001",
+    "sku": "REM-PART-FLEX",
+    "name": "Flexible Partial Denture (Valplast)",
+    "category": "Removables",
+    "materialId": "mat-flexible-nylon",
+    "turnaroundDays": 10
+  },
+  {
+    "id": "prod-partial-acrylic",
+    "labId": "lab-001",
+    "sku": "REM-PART-ACRYL",
+    "name": "Acrylic Partial Denture",
+    "category": "Removables",
+    "materialId": "mat-acrylic-base",
+    "turnaroundDays": 8
+  },
+  {
+    "id": "prod-immediate-denture",
+    "labId": "lab-001",
+    "sku": "REM-IMM-DENT",
+    "name": "Immediate Denture",
+    "category": "Removables",
+    "materialId": "mat-acrylic-base",
+    "turnaroundDays": 7
+  },
+  {
     "id": "prod-nightguard",
     "labId": "lab-002",
     "sku": "SPL-HARD-SOFT",
@@ -63,10 +297,129 @@
     "turnaroundDays": 5
   },
   {
+    "id": "prod-nightguard-hard",
+    "labId": "lab-001",
+    "sku": "SPL-HARD",
+    "name": "Nightguard (Hard)",
+    "category": "Orthodontics",
+    "materialId": "mat-acrylic-hard",
+    "turnaroundDays": 5
+  },
+  {
+    "id": "prod-sports-guard",
+    "labId": "lab-001",
+    "sku": "SPL-SPORT",
+    "name": "Sports Guard",
+    "category": "Orthodontics",
+    "materialId": "mat-eva-soft",
+    "turnaroundDays": 5
+  },
+  {
+    "id": "prod-bleaching-tray",
+    "labId": "lab-001",
+    "sku": "SPL-BLEACH",
+    "name": "Bleaching Tray",
+    "category": "Orthodontics",
+    "materialId": "mat-soft-vinyl",
+    "turnaroundDays": 3
+  },
+  {
+    "id": "prod-retainer-hawley",
+    "labId": "lab-001",
+    "sku": "ORTH-HAW",
+    "name": "Hawley Retainer",
+    "category": "Orthodontics",
+    "materialId": "mat-acrylic-base",
+    "turnaroundDays": 7
+  },
+  {
+    "id": "prod-retainer-essix",
+    "labId": "lab-001",
+    "sku": "ORTH-ESS",
+    "name": "Essix Retainer",
+    "category": "Orthodontics",
+    "materialId": "mat-thermo-disk",
+    "turnaroundDays": 5
+  },
+  {
+    "id": "prod-temp-crown",
+    "labId": "lab-001",
+    "sku": "TEMP-CRN",
+    "name": "Temporary Crown",
+    "category": "Crown & Bridge",
+    "materialId": "mat-pmma-disk",
+    "turnaroundDays": 2
+  },
+  {
+    "id": "prod-temp-bridge",
+    "labId": "lab-001",
+    "sku": "TEMP-BRG",
+    "name": "Temporary Bridge (per unit)",
+    "category": "Crown & Bridge",
+    "materialId": "mat-pmma-disk",
+    "turnaroundDays": 3
+  },
+  {
+    "id": "prod-wax-try-in",
+    "labId": "lab-001",
+    "sku": "SRV-WAX-TRY",
+    "name": "Wax Try-In",
+    "category": "Services",
+    "turnaroundDays": 5
+  },
+  {
+    "id": "prod-reline-hard",
+    "labId": "lab-001",
+    "sku": "SRV-RELINE-H",
+    "name": "Denture Reline (Hard)",
+    "category": "Services",
+    "turnaroundDays": 3
+  },
+  {
+    "id": "prod-reline-soft",
+    "labId": "lab-001",
+    "sku": "SRV-RELINE-S",
+    "name": "Denture Reline (Soft)",
+    "category": "Services",
+    "turnaroundDays": 3
+  },
+  {
+    "id": "prod-repair-denture",
+    "labId": "lab-001",
+    "sku": "SRV-REPAIR-D",
+    "name": "Denture Repair",
+    "category": "Services",
+    "turnaroundDays": 2
+  },
+  {
+    "id": "prod-add-tooth",
+    "labId": "lab-001",
+    "sku": "SRV-ADD-TOOTH",
+    "name": "Add Tooth to Denture",
+    "category": "Services",
+    "turnaroundDays": 3
+  },
+  {
     "id": "fee-rush",
     "labId": "lab-001",
     "sku": "FEE-RUSH",
     "name": "Rush Fee",
+    "category": "Fees",
+    "turnaroundDays": 0
+  },
+  {
+    "id": "fee-pickup",
+    "labId": "lab-001",
+    "sku": "FEE-PICKUP",
+    "name": "Pickup Fee",
+    "category": "Fees",
+    "turnaroundDays": 0
+  },
+  {
+    "id": "fee-custom-shade",
+    "labId": "lab-001",
+    "sku": "FEE-SHADE",
+    "name": "Custom Shade Match",
     "category": "Fees",
     "turnaroundDays": 0
   }

@@ -1,12 +1,13 @@
 /* eslint-disable no-unused-vars */
-import React, { useState } from 'react'; // Added useState
+import React, { useState, useMemo } from 'react';
 import { useProduction, useLab, useToast } from '../../contexts';
 import EquipmentDetailModal from '../../components/production/EquipmentDetailModal';
 import MaterialDetailModal from '../../components/production/MaterialDetailModal';
 import BatchCreationModal from '../../components/production/BatchCreationModal';
 import QualityCheckModal from '../../components/production/QualityCheckModal';
 import MaintenanceModal from '../../components/production/MaintenanceModal';
-import ProductionMetrics from '../../components/production/analytics/ProductionMetrics'; // NEW IMPORT
+import ProductionMetrics from '../../components/production/analytics/ProductionMetrics';
+import BatchBoard from '../../components/production/BatchBoard';
 import { 
   IconMill, 
   IconLayers, 
@@ -28,18 +29,25 @@ const ProductionQueue = () => {
   const { 
     equipment, batches, materials, loading, 
     activeBatches, lowStockMaterials, equipmentStats,
-    startBatch, completeBatch, logMaintenance, updateEquipmentStatus
+    startBatch, completeBatch, logMaintenance, updateEquipmentStatus, addCasesToBatch
   } = useProduction();
   
   const { addToast } = useToast();
+  const { cases } = useLab();
 
   // --- View State ---
-  const [activeTab, setActiveTab] = useState('queue'); // 'queue' | 'analytics'
+  const [activeTab, setActiveTab] = useState('batches'); // 'batches' | 'floor' | 'analytics' | 'cases'
+  
+  // Count cases ready for production
+  const readyForProductionCount = cases?.filter(c => 
+    ['stage-design', 'stage-milling', 'stage-finishing'].includes(c.status)
+  ).length || 0;
 
   // --- Modal State ---
   const [selectedMachine, setSelectedMachine] = useState(null);
   const [selectedMaterial, setSelectedMaterial] = useState(null);
   const [showBatchModal, setShowBatchModal] = useState(false);
+  const [addToBatchId, setAddToBatchId] = useState(null); // For adding to existing batch
   const [qcBatch, setQcBatch] = useState(null);
   const [maintenanceMachine, setMaintenanceMachine] = useState(null);
 
@@ -86,6 +94,45 @@ const ProductionQueue = () => {
     }
   };
 
+  const handleAddToBatch = (batchId) => {
+    setAddToBatchId(batchId);
+    setShowBatchModal(true);
+  };
+
+  const getCaseBatchInfo = (caseId) => {
+    return batches.find(b => b.caseIds.includes(caseId));
+  };
+
+
+
+
+  const handleQuickBatchByMaterial = (materialGroup, caseIds) => {
+    // Pre-select material and cases, then open modal
+    setShowBatchModal(true);
+  };
+
+  // Group cases by material for quick batching
+  const casesByMaterial = useMemo(() => {
+    const productionCases = cases?.filter(c => 
+      ['stage-design', 'stage-milling', 'stage-finishing'].includes(c.status)
+    ) || [];
+    
+    const grouped = {};
+    productionCases.forEach(caseItem => {
+      caseItem.units?.forEach(unit => {
+        const material = unit.material || 'Unknown Material';
+        if (!grouped[material]) {
+          grouped[material] = [];
+        }
+        if (!grouped[material].some(c => c.id === caseItem.id)) {
+          grouped[material].push(caseItem);
+        }
+      });
+    });
+    
+    return grouped;
+  }, [cases]);
+
   if (loading) {
     return <div style={{ padding: '2rem' }}>Loading production floor...</div>;
   }
@@ -104,11 +151,24 @@ const ProductionQueue = () => {
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <div style={{ display: 'flex', backgroundColor: 'var(--bg-surface)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
             <button 
-              onClick={() => setActiveTab('queue')}
+              onClick={() => setActiveTab('batches')}
               style={{ 
                 border: 'none', 
-                backgroundColor: activeTab === 'queue' ? 'var(--neutral-100)' : 'transparent',
-                color: activeTab === 'queue' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                backgroundColor: activeTab === 'batches' ? 'var(--neutral-100)' : 'transparent',
+                color: activeTab === 'batches' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '0.5rem'
+              }}
+            >
+              <IconLayers width="16" />
+              Batch Board
+            </button>
+            <button 
+              onClick={() => setActiveTab('floor')}
+              style={{ 
+                border: 'none', 
+                backgroundColor: activeTab === 'floor' ? 'var(--neutral-100)' : 'transparent',
+                color: activeTab === 'floor' ? 'var(--text-primary)' : 'var(--text-secondary)',
                 padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer'
               }}
             >
@@ -125,6 +185,30 @@ const ProductionQueue = () => {
             >
               Analytics
             </button>
+            <button 
+              onClick={() => setActiveTab('cases')}
+              style={{ 
+                border: 'none', 
+                backgroundColor: activeTab === 'cases' ? 'var(--neutral-100)' : 'transparent',
+                color: activeTab === 'cases' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '0.5rem'
+              }}
+            >
+              Cases Queue
+              {readyForProductionCount > 0 && (
+                <span style={{
+                  backgroundColor: 'var(--primary)',
+                  color: 'white',
+                  borderRadius: '99px',
+                  padding: '0.125rem 0.5rem',
+                  fontSize: '0.75rem',
+                  fontWeight: 700
+                }}>
+                  {readyForProductionCount}
+                </span>
+              )}
+            </button>
           </div>
 
           <button className="button primary" onClick={() => setShowBatchModal(true)}>
@@ -134,9 +218,191 @@ const ProductionQueue = () => {
       </header>
 
       {/* --- CONDITIONAL RENDER --- */}
-      {activeTab === 'analytics' ? (
+      {activeTab === 'batches' ? (
+        <BatchBoard />
+      ) : activeTab === 'analytics' ? (
         <ProductionMetrics />
-      ) : (
+      ) : activeTab === 'cases' ? (
+        <div style={{ padding: '2rem' }}>
+          <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ margin: 0, marginBottom: '0.25rem', fontSize: '1.5rem' }}>Cases Ready for Production</h2>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                Organize and batch cases by material type
+              </p>
+            </div>
+            <button 
+              className="button primary"
+              onClick={() => {
+                setAddToBatchId(null);
+                setShowBatchModal(true);
+              }}
+            >
+              + Create New Batch
+            </button>
+          </div>
+
+          {/* Group by Material */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {Object.keys(casesByMaterial).length > 0 ? (
+              Object.entries(casesByMaterial).map(([material, materialCases]) => {
+                const unbatchedCases = materialCases.filter(c => !getCaseBatchInfo(c.id));
+                
+                return (
+                  <div key={material} style={{
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '0.75rem',
+                    overflow: 'hidden',
+                    backgroundColor: 'var(--bg-surface)'
+                  }}>
+                    {/* Material Header */}
+                    <div style={{
+                      padding: '1rem 1.5rem',
+                      backgroundColor: 'var(--neutral-50)',
+                      borderBottom: '1px solid var(--border-color)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>{material}</h3>
+                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                          {materialCases.length} case{materialCases.length !== 1 ? 's' : ''} 
+                          {unbatchedCases.length > 0 && (
+                            <span> • {unbatchedCases.length} unbatched</span>
+                          )}
+                        </p>
+                      </div>
+                      {unbatchedCases.length > 0 && (
+                        <button
+                          className="button success"
+                          onClick={() => handleQuickBatchByMaterial(material, unbatchedCases.map(c => c.id))}
+                        >
+                          Batch All ({unbatchedCases.length})
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Cases List */}
+                    <div style={{ padding: '0.75rem' }}>
+                      {materialCases.map(caseItem => {
+                        const dueDate = caseItem.dates?.due ? new Date(caseItem.dates.due) : null;
+                        const isUrgent = dueDate && (dueDate - new Date()) < 2 * 24 * 60 * 60 * 1000;
+                        const batchInfo = getCaseBatchInfo(caseItem.id);
+
+                        return (
+                          <div
+                            key={caseItem.id}
+                            style={{
+                              padding: '1rem',
+                              marginBottom: '0.5rem',
+                              border: '1px solid var(--border-color)',
+                              borderRadius: '0.5rem',
+                              backgroundColor: isUrgent ? '#fff5f5' : 'white',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center'
+                            }}
+                            onClick={() => window.location.href = `/cases/${caseItem.id}`}
+                            onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--primary-300)'}
+                            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                              <div>
+                                <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+                                  {caseItem.caseNumber}
+                                </div>
+                                <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                  {caseItem.patient?.name || 'Unknown Patient'}
+                                </div>
+                              </div>
+                              <div style={{ 
+                                padding: '0.25rem 0.75rem', 
+                                borderRadius: '99px', 
+                                fontSize: '0.75rem', 
+                                fontWeight: 600,
+                                backgroundColor: 
+                                  caseItem.status === 'stage-design' ? 'var(--primary-100)' :
+                                  caseItem.status === 'stage-milling' ? 'var(--warning-100)' : 'var(--success-100)',
+                                color:
+                                  caseItem.status === 'stage-design' ? 'var(--primary-700)' :
+                                  caseItem.status === 'stage-milling' ? 'var(--warning-700)' : 'var(--success-700)'
+                              }}>
+                                {caseItem.status === 'stage-design' ? 'Design' :
+                                 caseItem.status === 'stage-milling' ? 'Milling' : 'Finishing'}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                              <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                  {caseItem.units?.length || 0} units
+                                </div>
+                                {dueDate && (
+                                  <div style={{ 
+                                    fontSize: '0.75rem', 
+                                    color: isUrgent ? 'var(--error-500)' : 'var(--text-secondary)',
+                                    fontWeight: isUrgent ? 600 : 400
+                                  }}>
+                                    {isUrgent && '⚠️ '} Due: {dueDate.toLocaleDateString()}
+                                  </div>
+                                )}
+                              </div>
+                              {batchInfo ? (
+                                <div style={{
+                                  padding: '0.5rem 1rem',
+                                  borderRadius: '0.5rem',
+                                  backgroundColor: batchInfo.status === 'Scheduled' ? 'var(--warning-100)' : 'var(--success-100)',
+                                  color: batchInfo.status === 'Scheduled' ? 'var(--warning-700)' : 'var(--success-700)',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.5rem',
+                                  whiteSpace: 'nowrap'
+                                }}>
+                                  <IconLayers width="14" height="14" />
+                                  Batch {batchInfo.id.split('-').pop()}
+                                </div>
+                              ) : (
+                                <button 
+                                  className="button secondary"
+                                  style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setAddToBatchId(null);
+                                    setShowBatchModal(true);
+                                  }}
+                                >
+                                  Add to Batch
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div style={{ 
+                padding: '3rem', 
+                textAlign: 'center', 
+                color: 'var(--text-secondary)',
+                backgroundColor: 'var(--bg-surface)',
+                borderRadius: '0.75rem',
+                border: '1px solid var(--border-color)'
+              }}>
+                <IconCheck width="48" height="48" style={{ color: 'var(--success-500)', marginBottom: '1rem' }} />
+                <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.125rem' }}>All Clear</h3>
+                <p style={{ margin: 0 }}>No cases ready for production at this time</p>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : activeTab === 'floor' ? (
         <>
           {/* KPI STATS (Queue View Only) */}
           <div className={styles.statsGrid}>
@@ -257,7 +523,21 @@ const ProductionQueue = () => {
                           </td>
                           <td style={{textAlign:'right'}}>
                             {batch.status === 'Scheduled' && (
-                              <button className="button secondary small" onClick={() => handleStartBatch(batch.id)}>Start</button>
+                              <>
+                                <button 
+                                  className="button secondary small" 
+                                  onClick={() => handleAddToBatch(batch.id)}
+                                  style={{ marginRight: '0.5rem' }}
+                                >
+                                  Add More Cases
+                                </button>
+                                <button 
+                                  className="button success small" 
+                                  onClick={() => handleStartBatch(batch.id)}
+                                >
+                                  Start Production
+                                </button>
+                              </>
                             )}
                             {batch.status === 'InProgress' && (
                               <button className="button primary small" onClick={() => handleCompleteClick(batch)}>Complete</button>
@@ -305,7 +585,7 @@ const ProductionQueue = () => {
             </section>
           </div>
         </>
-      )}
+      ) : null}
 
       {/* --- MODALS (Shared across views) --- */}
       <EquipmentDetailModal 
@@ -321,7 +601,11 @@ const ProductionQueue = () => {
       />
       <BatchCreationModal 
         isOpen={showBatchModal}
-        onClose={() => setShowBatchModal(false)}
+        onClose={() => {
+          setShowBatchModal(false);
+          setAddToBatchId(null);
+        }}
+        existingBatchId={addToBatchId}
       />
       <QualityCheckModal 
         batch={qcBatch}

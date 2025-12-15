@@ -7,7 +7,6 @@ import styles from './CaseForm.module.css';
 // Sub-components
 import PatientInfoSection from './detail/caseForm/PatientInfoSection';
 import TimelineSection from './detail/caseForm/TimelineSection';
-import UnitsSection from './detail/caseForm/UnitsSection';
 import PrescriptionForm from './prescription/PrescriptionForm';
 
 const DEFAULT_FORM_VALUES = {
@@ -62,7 +61,6 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel, onSaveDraft }) => {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState(null);
   const [isDraft, setIsDraft] = useState(initialData?.isDraft || false);
-  const [useLegacyForm, setUseLegacyForm] = useState(false); // Toggle between new/old forms
   const formRef = useRef(null);
 
   // Map field names to user-friendly labels
@@ -79,30 +77,6 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel, onSaveDraft }) => {
   const getProductDetails = (productName) => {
     return products?.find(p => p.name === productName);
   };
-
-  const productCategories = useMemo(() => {
-    if (!products) return {};
-    return products.reduce((acc, prod) => {
-      const cat = prod.category || 'Other';
-      if (!acc[cat]) acc[cat] = [];
-      acc[cat].push(prod);
-      return acc;
-    }, {});
-  }, [products]);
-
-  const requiresArch = (productName) => {
-    const product = products.find(p => p.name === productName);
-    if (!product) return false;
-    const cat = (product.category || '').toLowerCase();
-    return cat.includes('removable') || cat.includes('ortho') || cat.includes('implant');
-  };
-
-  const getProductCategory = (productName) => {
-    const p = products.find(prod => prod.name === productName);
-    return p ? p.category : 'Other';
-  };
-
-  const helpers = { requiresArch, getProductCategory };
 
   // Scroll to field with error
   const scrollToField = (fieldName) => {
@@ -160,80 +134,6 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel, onSaveDraft }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
     if (formError) setFormError(null);
-  };
-
-  const handleAddUnit = () => {
-    setFormData(prev => ({
-      ...prev,
-      units: [
-        ...prev.units,
-        { 
-          type: '', 
-          tooth: null, 
-          arch: null, 
-          shade: '', 
-          instructions: '', 
-          workflowId: '',
-          addonIds: []
-        }
-      ]
-    }));
-    if (errors.units) setErrors(prev => ({ ...prev, units: null }));
-  };
-
-  const handleRemoveUnit = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      units: prev.units.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleUnitChange = (index, field, value) => {
-    setFormData(prev => {
-      const newUnits = [...prev.units];
-      let unit = { ...newUnits[index] };
-
-      if (field === 'type') {
-        unit.type = value;
-        
-        // Get Product Metadata
-        const product = getProductDetails(value);
-        const category = product?.category || 'Other';
-
-        // RESET FIELDS BASED ON TYPE
-        // If it's a Fee/Service, clear tooth/arch/shade
-        if (category === 'Fees' || category === 'Services') {
-          unit.tooth = null;
-          unit.arch = null;
-          unit.shade = '';
-          unit.material = '';
-        } 
-        // If it's Ortho/Removable/Implant, default to Arch (mostly) or handle specifically
-        else if (category === 'Orthodontics' || category === 'Removables' || category === 'Implants') {
-           unit.tooth = null;
-           unit.arch = unit.arch || 'Upper';
-        } 
-        // If it's Crown/Bridge, default to Tooth
-        else {
-           unit.arch = null;
-           unit.tooth = unit.tooth || 1;
-        }
-
-        // Reset Add-ons when product changes
-        unit.addonIds = [];
-
-        // Auto-Select Workflow
-        const validWorkflows = getWorkflowsForCategory(category);
-        const defaultWf = validWorkflows.find(w => w.isDefault) || validWorkflows[0];
-        unit.workflowId = defaultWf ? defaultWf.id : '';
-      } else {
-        // Standard field update
-        unit[field] = value;
-      }
-      
-      newUnits[index] = unit;
-      return { ...prev, units: newUnits };
-    });
   };
 
   const handleSaveDraft = (e) => {
@@ -390,24 +290,6 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel, onSaveDraft }) => {
         </div>
       )}
 
-      {/* Toggle between prescription and legacy form */}
-      <div className={styles.formToggle}>
-        <button
-          type="button"
-          className={`${styles.toggleBtn} ${!useLegacyForm ? styles.active : ''}`}
-          onClick={() => setUseLegacyForm(false)}
-        >
-          📋 Prescription Form
-        </button>
-        <button
-          type="button"
-          className={`${styles.toggleBtn} ${useLegacyForm ? styles.active : ''}`}
-          onClick={() => setUseLegacyForm(true)}
-        >
-          📝 Manual Entry
-        </button>
-      </div>
-
       <PatientInfoSection 
         formData={formData} 
         handleChange={handleChange} 
@@ -422,52 +304,11 @@ const CaseForm = ({ initialData = null, onSubmit, onCancel, onSaveDraft }) => {
         errors={errors} 
       />
 
-      {useLegacyForm ? (
-        <>
-          <UnitsSection 
-            units={formData.units}
-            onAddUnit={handleAddUnit}
-            onRemoveUnit={handleRemoveUnit}
-            onUnitChange={handleUnitChange}
-            productCategories={productCategories}
-            products={products}
-            addons={addons}
-            getWorkflowsForCategory={getWorkflowsForCategory}
-            helpers={helpers}
-            error={errors.units}
-          />
-
-          {/* ACTIONS */}
-          <div className={styles.actions}>
-            {formError && (
-              <span className="error-text" style={{ marginRight: 'auto', alignSelf: 'center' }}>
-                {formError}
-              </span>
-            )}
-            {isDraft && (
-              <span className={styles.draftBadge}>Draft Mode</span>
-            )}
-            
-            <button type="button" className="button secondary" onClick={onCancel}>
-              Cancel
-            </button>
-            {onSaveDraft && (
-              <button type="button" className="button secondary" onClick={handleSaveDraft}>
-                Save as Draft
-              </button>
-            )}
-            <button type="submit" className="button primary">
-              {initialData ? 'Save Changes' : 'Create Case'}
-            </button>
-          </div>
-        </>
-      ) : (
-        <PrescriptionForm
-          onSubmit={handlePrescriptionSubmit}
-          onCancel={onCancel}
-          existingUnits={formData.units}
-        />
-      )}
+      <PrescriptionForm
+        onSubmit={handlePrescriptionSubmit}
+        onCancel={onCancel}
+        existingUnits={formData.units}
+      />
     </form>
   );
 };
