@@ -16,6 +16,7 @@ import ProcurementDashboard from '../pages/production/procurement/ProcurementDas
 import Invoices from '../pages/finance/Invoices';
 import Payments from '../pages/finance/Payments'; 
 import LogisticsRoutes from '../pages/logistics/LogisticsRoutes';
+import DeliveryScheduler from '../pages/logistics/DeliveryScheduler';
 import NotFound from '../pages/NotFound';
 
 // --- User Settings Pages ---
@@ -67,6 +68,7 @@ export const AppRouter = () => {
                  <Route index element={<Navigate to="planner" replace />} />
                  <Route path="planner" element={<LogisticsRoutes view="planner" />} />
                  <Route path="driver" element={<LogisticsRoutes view="driver" />} />
+                 <Route path="scheduler" element={<DeliveryScheduler />} />
                </Route>
             </Route>
 

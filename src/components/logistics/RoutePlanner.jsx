@@ -312,6 +312,8 @@ const RoutePlanner = () => {
   const [newRouteName, setNewRouteName] = useState('');
   const [newRouteDriver, setNewRouteDriver] = useState('');
   const [newRouteVehicle, setNewRouteVehicle] = useState('van-01');
+  const [newRouteDate, setNewRouteDate] = useState(new Date().toISOString().split('T')[0]);
+  const [routeDateFilter, setRouteDateFilter] = useState('');
   const searchInputRef = useRef(null);
   const containerRef = useRef(null);
   
@@ -430,11 +432,11 @@ const RoutePlanner = () => {
       stop.deliveryManifest.forEach(delivery => {
         const caseData = cases?.find(c => c.id === delivery.caseId);
         if (caseData) {
-          const doctorInfo = doctors?.find(d => d.id === caseData.dentistId);
+          const doctorInfo = doctors?.find(d => d.id === caseData.doctorId);
           enrichedItems.push({
             caseNumber: caseData.caseNumber,
             patientName: caseData.patient?.name || 'Unknown Patient',
-            doctorName: doctorInfo?.name || 'Unknown Doctor'
+            doctorName: doctorInfo ? `${doctorInfo.firstName} ${doctorInfo.lastName}` : 'Unknown Doctor'
           });
         }
       });
@@ -447,11 +449,11 @@ const RoutePlanner = () => {
           pickup.associatedCaseIds.forEach(caseId => {
             const caseData = cases?.find(c => c.id === caseId);
             if (caseData) {
-              const doctorInfo = doctors?.find(d => d.id === caseData.dentistId);
+              const doctorInfo = doctors?.find(d => d.id === caseData.doctorId);
               enrichedItems.push({
                 caseNumber: caseData.caseNumber,
                 patientName: caseData.patient?.name || 'Unknown Patient',
-                doctorName: doctorInfo?.name || 'Unknown Doctor'
+                doctorName: doctorInfo ? `${doctorInfo.firstName} ${doctorInfo.lastName}` : 'Unknown Doctor'
               });
             }
           });
@@ -476,11 +478,11 @@ const RoutePlanner = () => {
     if (task.type === 'Delivery' && task.caseId) {
       const caseData = cases?.find(c => c.id === task.caseId);
       if (caseData) {
-        const doctorInfo = doctors?.find(d => d.id === caseData.dentistId);
+        const doctorInfo = doctors?.find(d => d.id === caseData.doctorId);
         enrichedItems.push({
           caseNumber: caseData.caseNumber,
           patientName: caseData.patient?.name || 'Unknown Patient',
-          doctorName: doctorInfo?.name || 'Unknown Doctor'
+          doctorName: doctorInfo ? `${doctorInfo.firstName} ${doctorInfo.lastName}` : 'Unknown Doctor'
         });
       }
     }
@@ -490,11 +492,11 @@ const RoutePlanner = () => {
       task.associatedCaseIds.forEach(caseId => {
         const caseData = cases?.find(c => c.id === caseId);
         if (caseData) {
-          const doctorInfo = doctors?.find(d => d.id === caseData.dentistId);
+          const doctorInfo = doctors?.find(d => d.id === caseData.doctorId);
           enrichedItems.push({
             caseNumber: caseData.caseNumber,
             patientName: caseData.patient?.name || 'Unknown Patient',
-            doctorName: doctorInfo?.name || 'Unknown Doctor'
+            doctorName: doctorInfo ? `${doctorInfo.firstName} ${doctorInfo.lastName}` : 'Unknown Doctor'
           });
         }
       });
@@ -586,6 +588,7 @@ const RoutePlanner = () => {
     setNewRouteName(`Route ${routes.length + 1}`);
     setNewRouteDriver('');
     setNewRouteVehicle('van-01');
+    setNewRouteDate(new Date().toISOString().split('T')[0]);
     setShowCreateRouteModal(true);
   }, [routes.length]);
 
@@ -599,12 +602,14 @@ const RoutePlanner = () => {
       await createRoute({
         name: newRouteName.trim() || `Route ${routes.length + 1}`,
         driverId: newRouteDriver.trim(),
-        vehicleId: newRouteVehicle
+        vehicleId: newRouteVehicle,
+        date: newRouteDate
       });
       
       setShowCreateRouteModal(false);
       setNewRouteName('');
       setNewRouteDriver('');
+      setNewRouteDate(new Date().toISOString().split('T')[0]);
       addToast(`Route "${newRouteName}" created successfully`, 'success');
     } catch (err) {
       console.error('Failed to create route:', err);
@@ -733,6 +738,65 @@ const RoutePlanner = () => {
     setShowOptimizationModal(false);
     setOptimizationData(null);
   };
+
+  // Batch group deliveries by clinic and day
+  const handleBatchGroupByClinic = useCallback(async () => {
+    if (deliveries.length === 0) {
+      addToast('No deliveries available to group', 'warning');
+      return;
+    }
+
+    try {
+      // Group deliveries by clinic and requested date
+      const grouped = deliveries.reduce((acc, delivery) => {
+        const clinicId = delivery.clinicId;
+        const date = delivery.requestedTime ? new Date(delivery.requestedTime).toISOString().split('T')[0] : 'unscheduled';
+        const key = `${clinicId}-${date}`;
+        
+        if (!acc[key]) {
+          acc[key] = {
+            clinicId,
+            date,
+            deliveries: []
+          };
+        }
+        acc[key].deliveries.push(delivery);
+        return acc;
+      }, {});
+
+      // Assign grouped deliveries to routes
+      let assignedCount = 0;
+      for (const group of Object.values(grouped)) {
+        if (group.deliveries.length > 0) {
+          // Find existing route for this clinic and date, or create new one
+          let targetRoute = routes.find(r => 
+            r.date === group.date && 
+            r.stops.some(s => s.clinicId === group.clinicId)
+          );
+
+          if (!targetRoute) {
+            // Create new route for this clinic/date combination
+            const clinicInfo = clinics?.find(c => c.id === group.clinicId);
+            targetRoute = await createRoute({
+              name: `${clinicInfo?.name || group.clinicId} - ${group.date}`,
+              date: group.date,
+              driverId: null,
+              vehicleId: 'van-01'
+            });
+          }
+
+          // Assign all deliveries in this group to the route
+          await assignMultipleTasks(targetRoute.id, group.deliveries);
+          assignedCount += group.deliveries.length;
+        }
+      }
+
+      addToast(`Successfully grouped and assigned ${assignedCount} deliveries to routes`, 'success');
+    } catch (error) {
+      console.error('Batch grouping failed:', error);
+      addToast('Failed to group deliveries', 'error');
+    }
+  }, [deliveries, routes, clinics, assignMultipleTasks, createRoute, addToast]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -1056,6 +1120,18 @@ const RoutePlanner = () => {
                 </div>
               )}
               
+              {/* Batch Actions */}
+              <div style={{display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap'}}>
+                <button 
+                  className="button secondary small"
+                  onClick={handleBatchGroupByClinic}
+                  disabled={deliveries.length === 0}
+                  title="Group all deliveries by clinic and date into routes"
+                >
+                  📦 Batch Group by Clinic
+                </button>
+              </div>
+              
               {/* Search Bar */}
               <div ref={searchInputRef}>
                 <SearchBar
@@ -1268,6 +1344,20 @@ const RoutePlanner = () => {
             <div className={styles.routesHeader}>
               <h2 className={styles.routesTitle}>Active Routes ({routes.length})</h2>
               <div className={styles.routesActions}>
+                <div className={styles.formGroup} style={{ marginBottom: 0, minWidth: '160px' }}>
+                  <select
+                    className={styles.formSelect}
+                    value={routeDateFilter}
+                    onChange={(e) => setRouteDateFilter(e.target.value)}
+                    aria-label="Filter routes by date"
+                    title="Filter routes by date"
+                  >
+                    <option value="">All Dates</option>
+                    <option value={new Date().toISOString().split('T')[0]}>Today</option>
+                    <option value={new Date(Date.now() + 86400000).toISOString().split('T')[0]}>Tomorrow</option>
+                    <option value="this-week">This Week</option>
+                  </select>
+                </div>
                 <button 
                   className={styles.mapToggle}
                   onClick={() => setShowMap(!showMap)}
@@ -1317,7 +1407,19 @@ const RoutePlanner = () => {
             )}
             
             <div className={styles.routesGrid} role="region" aria-label="Active routes">
-              {routes.map(route => {
+              {routes.filter(route => {
+                if (!routeDateFilter) return true;
+                
+                if (routeDateFilter === 'this-week') {
+                  const routeDate = new Date(route.date || route.createdAt);
+                  const today = new Date();
+                  const weekEnd = new Date(today);
+                  weekEnd.setDate(today.getDate() + 7);
+                  return routeDate >= today && routeDate <= weekEnd;
+                }
+                
+                return route.date === routeDateFilter;
+              }).map(route => {
                 const routeColor = getRouteColor(route.id);
                 const isCollapsed = collapsedRoutes.has(route.id);
                 return (
@@ -1465,6 +1567,21 @@ const RoutePlanner = () => {
                 <option value="truck-01">Truck 01</option>
                 <option value="sedan-01">Sedan 01</option>
               </select>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label htmlFor="route-date">
+                Route Date <span style={{color: 'var(--error-color)'}}>*</span>
+              </label>
+              <input
+                id="route-date"
+                type="date"
+                className={styles.formInput}
+                value={newRouteDate}
+                onChange={(e) => setNewRouteDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                required
+              />
             </div>
 
             <div className={styles.modalActions}>

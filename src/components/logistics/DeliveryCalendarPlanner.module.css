@@ -1,0 +1,299 @@
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 1200px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeBtn:hover {
+  color: #111827;
+}
+
+.body {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.calendarSection {
+  flex: 2;
+}
+
+.calendarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.calendarHeader h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.navBtn {
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  width: 36px;
+  height: 36px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navBtn:hover {
+  background: #f3f4f6;
+}
+
+.calendar {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.weekDays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.weekDay {
+  padding: 0.75rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: #e5e7eb;
+}
+
+.day {
+  background: white;
+  min-height: 80px;
+  padding: 0.5rem;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.day:not(.empty):not(.past):hover {
+  background: #f3f4f6;
+}
+
+.day.empty {
+  cursor: default;
+  background: #fafafa;
+}
+
+.day.past {
+  background: #f9fafb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.day.selected {
+  background: #dbeafe;
+  border: 2px solid #3b82f6;
+}
+
+.dayNumber {
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.badge {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  background: #3b82f6;
+  color: white;
+  border-radius: 10px;
+  padding: 0.125rem 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.casesSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #e5e7eb;
+  padding-left: 1.5rem;
+}
+
+.casesSection h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.casesList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.caseItem {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  align-items: flex-start;
+}
+
+.caseItem:hover {
+  background: #f9fafb;
+}
+
+.caseItem input[type="checkbox"] {
+  margin-top: 0.25rem;
+}
+
+.caseInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.caseNumber {
+  font-weight: 600;
+  color: #111827;
+}
+
+.patientName {
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+.clinicId {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.scheduled {
+  font-size: 0.75rem;
+  color: #059669;
+  font-weight: 500;
+}
+
+.emptyMessage {
+  text-align: center;
+  color: #9ca3af;
+  padding: 2rem;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.selectionInfo {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btnSecondary {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btnSecondary:hover {
+  background: #f9fafb;
+}
+
+.btnPrimary {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: #3b82f6;
+  color: white;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btnPrimary:hover {
+  background: #2563eb;
+}
+
+.btnPrimary:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}

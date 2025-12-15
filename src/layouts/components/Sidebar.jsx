@@ -45,6 +45,7 @@ const Sidebar = () => {
       permission: "LOGISTICS_VIEW",
       children: [
         { to: "/logistics/planner", label: "Route Planning" },
+        { to: "/logistics/scheduler", label: "Delivery Scheduler" },
         { to: "/logistics/driver", label: "Driver View" }
       ]
     },
