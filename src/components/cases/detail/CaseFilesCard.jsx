@@ -99,9 +99,21 @@ const CaseFilesCard = ({ files, caseId }) => {
   const [viewingFile, setViewingFile] = useState(null); // Passed to UniversalViewer
   const [pendingFile, setPendingFile] = useState(null);
 
-  // --- Unified List (Input + Output) ---
+  // --- Unified List (Input + Output) with simplified category mapping ---
   const allFiles = useMemo(() => {
-    return [...files.inputs, ...files.designs];
+    const mapSimplifiedCategory = (file) => {
+      const cat = file.category || '';
+      if (cat.includes('INPUT') || cat.includes('REFERENCE')) return 'input';
+      if (cat.includes('PRODUCTION_DESIGN') || cat.includes('DESIGN')) return 'design';
+      if (cat.includes('PRODUCTION') || cat.includes('MILLING') || cat.includes('FINISHING')) return 'production';
+      if (cat.includes('SHIPPING') || cat.includes('QC')) return 'shipping';
+      return 'input'; // default fallback
+    };
+
+    return [...files.inputs, ...files.designs].map(file => ({
+      ...file,
+      simplifiedCategory: mapSimplifiedCategory(file)
+    }));
   }, [files]);
 
   // --- Filter by simplified category ---

@@ -13,7 +13,7 @@
       "stage-milling",
       "stage-finishing",
       "stage-qc",
-      "stage-shipped"
+      "stage-shipping"
     ]
   },
   {
@@ -31,7 +31,7 @@
       "stage-milling",
       "stage-finishing",
       "stage-qc",
-      "stage-shipped"
+      "stage-shipping"
     ]
   },
   {
@@ -49,7 +49,7 @@
       "stage-casting",
       "stage-finishing",
       "stage-qc",
-      "stage-shipped"
+      "stage-shipping"
     ]
   },
   {
@@ -68,7 +68,7 @@
       "stage-tryin",
       "stage-finishing",
       "stage-qc",
-      "stage-shipped"
+      "stage-shipping"
     ]
   },
   {
@@ -87,7 +87,7 @@
       "stage-processing",
       "stage-finishing",
       "stage-qc",
-      "stage-shipped"
+      "stage-shipping"
     ]
   },
   {
@@ -104,7 +104,7 @@
       "stage-processing",
       "stage-finishing",
       "stage-qc",
-      "stage-shipped"
+      "stage-shipping"
     ]
   },
   {
@@ -126,7 +126,7 @@
       "stage-processing",
       "stage-finishing",
       "stage-qc",
-      "stage-shipped"
+      "stage-shipping"
     ]
   },
   {
@@ -145,7 +145,7 @@
       "stage-processing",
       "stage-finishing",
       "stage-qc",
-      "stage-shipped"
+      "stage-shipping"
     ]
   },
   {
@@ -163,7 +163,7 @@
       "stage-milling",
       "stage-finishing",
       "stage-qc",
-      "stage-shipped"
+      "stage-shipping"
     ]
   },
   {
@@ -181,7 +181,7 @@
       "stage-milling",
       "stage-finishing",
       "stage-qc",
-      "stage-shipped"
+      "stage-shipping"
     ]
   },
   {
@@ -198,7 +198,7 @@
       "stage-milling",
       "stage-finishing",
       "stage-qc",
-      "stage-shipped"
+      "stage-shipping"
     ]
   },
   {
@@ -215,7 +215,7 @@
       "stage-processing",
       "stage-finishing",
       "stage-qc",
-      "stage-shipped"
+      "stage-shipping"
     ]
   },
   {
@@ -231,7 +231,7 @@
       "stage-processing",
       "stage-finishing",
       "stage-qc",
-      "stage-shipped"
+      "stage-shipping"
     ]
   }
 ]

@@ -252,6 +252,7 @@ export const LabProvider = ({ children }) => {
 
   const addCaseFile = useCallback(async (caseId, fileObj, category) => {
     if (!activeLab) return;
+    
     try {
       const newFile = await MockService.cases.files.create({
         labId: activeLab.id,
@@ -269,10 +270,53 @@ export const LabProvider = ({ children }) => {
 
       setCaseFiles(prev => [...prev, newFile]);
       
-      // Auto-advance to milling stage for design uploads
+      // Get current case
+      const currentCase = cases.find(c => c.id === caseId);
+
+      // Auto-advance to CAD Design stage for input scan uploads
+      if (category === 'INPUT_SCAN' || category === 'REFERENCE') {
+        if (currentCase) {
+          // Move to design stage if currently in received or new stage
+          if (currentCase.status === 'stage-received' || currentCase.status === 'stage-new') {
+            try {
+              const updatedUnits = currentCase.units.map(u => ({
+                ...u,
+                status: 'stage-design'
+              }));
+
+              await MockService.cases.cases.update(caseId, {
+                units: updatedUnits,
+                status: 'stage-design',
+                version: currentCase.version
+              });
+
+              // Update local state
+              setCases(prev => prev.map(c => 
+                c.id === caseId 
+                  ? { ...c, units: updatedUnits, status: 'stage-design', version: c.version + 1 }
+                  : c
+              ));
+
+              // Publish event
+              LabEventBus.publish(EVENTS.CASE_STATUS_CHANGED, {
+                caseId: caseId,
+                oldStatus: currentCase.status,
+                newStatus: 'stage-design',
+                autoAdvanced: true,
+                reason: 'Input scan uploaded',
+                timestamp: new Date().toISOString()
+              });
+            } catch (err) {
+              console.error("Failed to auto-advance to design stage", err);
+            }
+          }
+        }
+      }
+      
+      // Auto-advance to milling stage for design uploads and trigger production batch
       if (category === 'PRODUCTION_DESIGN') {
-        const currentCase = cases.find(c => c.id === caseId);
         if (currentCase && currentCase.units) {
+          
           // Check if any units are crown, bridge, or implant types
           const shouldAutoAdvance = currentCase.units.some(unit => {
             const type = (unit.type || '').toLowerCase();
@@ -300,9 +344,19 @@ export const LabProvider = ({ children }) => {
               // Update local state
               setCases(prev => prev.map(c => 
                 c.id === caseId 
-                  ? { ...c, units: updatedUnits, status: 'stage-milling' }
+                  ? { ...c, units: updatedUnits, status: 'stage-milling', version: c.version + 1 }
                   : c
               ));
+
+              // Publish event for production system to pick up
+              LabEventBus.publish(EVENTS.CASE_STATUS_CHANGED, {
+                caseId: caseId,
+                oldStatus: 'stage-design',
+                newStatus: 'stage-milling',
+                autoAdvanced: true,
+                reason: 'Design file uploaded',
+                timestamp: new Date().toISOString()
+              });
             } catch (err) {
               console.error("Failed to auto-advance to milling stage", err);
               // Don't throw - file upload was successful
@@ -310,7 +364,7 @@ export const LabProvider = ({ children }) => {
           }
         }
       }
-      
+
       return newFile;
     } catch (err) {
       console.error("Failed to upload file", err);

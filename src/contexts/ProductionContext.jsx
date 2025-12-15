@@ -45,6 +45,79 @@ export const ProductionProvider = ({ children }) => {
     initData();
   }, [activeLab]);
 
+  // Listen for case status changes to auto-create/assign batches
+  useEffect(() => {
+    const handleCaseStatusChange = async (event) => {
+      // Only handle auto-advanced milling cases
+      if (event.newStatus === 'stage-milling' && event.autoAdvanced) {
+        
+        try {
+          const caseId = event.caseId;
+          
+          // Check if case is already in a batch
+          const existingBatch = batches.find(b => b.caseIds?.includes(caseId));
+          if (existingBatch) {
+            return;
+          }
+
+          // Find or create a scheduled milling batch for today
+          const today = new Date().toISOString().split('T')[0];
+          let millingBatch = batches.find(b => 
+            b.status === 'Scheduled' && 
+            b.equipmentType === 'Mill' &&
+            b.scheduledDate?.startsWith(today)
+          );
+
+          if (!millingBatch) {
+            
+            // Create new batch
+            millingBatch = await MockService.production.batches.create({
+              labId: activeLab.id,
+              equipmentType: 'Mill',
+              equipmentId: equipment.find(e => e.type === 'Mill' && e.status === 'Idle')?.id || 'mill-001',
+              materialType: 'Zirconia',
+              status: 'Scheduled',
+              caseIds: [caseId],
+              scheduledDate: new Date().toISOString(),
+              estimatedDuration: 45,
+              operatorId: 'system',
+              materialConsumed: { type: 'Zirconia', units: 1 }
+            });
+            
+            setBatches(prev => [millingBatch, ...prev]);
+          } else {
+            
+            // Add case to existing batch
+            const updatedCaseIds = [...new Set([...millingBatch.caseIds, caseId])];
+            millingBatch = await MockService.production.batches.update(millingBatch.id, {
+              caseIds: updatedCaseIds,
+              materialConsumed: {
+                ...millingBatch.materialConsumed,
+                units: updatedCaseIds.length
+              }
+            });
+            
+            setBatches(prev => prev.map(b => b.id === millingBatch.id ? millingBatch : b));
+          }
+        } catch (err) {
+          console.error("Failed to auto-assign case to batch:", err);
+        }
+      } else {
+        console.log('Event does not match criteria for auto-batch creation');
+        console.log('- New Status:', event.newStatus);
+        console.log('- Auto Advanced:', event.autoAdvanced);
+      }
+    };
+
+    const unsubscribe = LabEventBus.subscribe(EVENTS.CASE_STATUS_CHANGED, handleCaseStatusChange);
+    
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
+  }, [activeLab, batches, equipment]);
+
   // ============================================================
   // DERIVED STATE
   // ============================================================
@@ -242,7 +315,8 @@ export const ProductionProvider = ({ children }) => {
         const stageMap = {
           'stage-design': 'stage-milling',
           'stage-milling': 'stage-finishing',
-          'stage-finishing': 'stage-qc'
+          'stage-finishing': 'stage-qc',
+          'stage-qc': 'stage-shipping' // QC complete → Ready to Ship
         };
 
         // Update all cases in the batch to next stage

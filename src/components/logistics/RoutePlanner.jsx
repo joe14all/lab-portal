@@ -4,7 +4,7 @@ import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { List } from 'react-window';
-import { useLogistics, useCrm, useToast } from '../../contexts';
+import { useLogistics, useCrm, useToast, useLab } from '../../contexts';
 import { IconTruck, IconBox, IconChevronRight } from '../../layouts/components/LabIcons';
 import StatusBadge from '../cases/StatusBadge';
 import MapView from './MapView';
@@ -44,7 +44,7 @@ const getRouteColor = (routeId) => {
 };
 
 // Draggable Stop Component for reordering
-const DraggableStop = React.memo(({ stop, index, routeId, onDrop, isCompleted, onMoveToRoute }) => {
+const DraggableStop = React.memo(({ stop, index, routeId, onDrop, isCompleted, onMoveToRoute, enrichedData }) => {
   const ref = useRef(null);
   
   const [{ isDragging }, drag] = useDrag({
@@ -87,10 +87,21 @@ const DraggableStop = React.memo(({ stop, index, routeId, onDrop, isCompleted, o
       <div className={styles.seqBadge} aria-label={`Sequence number ${index + 1}`}>{index + 1}</div>
       <div className={styles.stopContent}>
         <div style={{fontWeight:600, fontSize:'0.9rem', display:'flex', alignItems:'center', gap:'0.5rem'}}>
-          {stop.clinicId}
+          {enrichedData?.clinicName || stop.clinicId}
           {stop.type === 'Pickup' ? <IconBox width="14" /> : <IconTruck width="14" />}
         </div>
-        <div style={{fontSize:'0.8rem', display:'flex', alignItems:'center', gap:'0.5rem'}}>
+        {enrichedData?.items && enrichedData.items.length > 0 ? (
+          <div style={{fontSize:'0.75rem', color:'#64748b', marginTop:'0.25rem'}}>
+            {enrichedData.items.map((item, idx) => (
+              <div key={idx} style={{marginBottom:'0.15rem'}}>
+                {item.caseNumber && <span style={{fontWeight:500}}>Case #{item.caseNumber}</span>}
+                {item.patientName && <span> | {item.patientName}</span>}
+                {item.doctorName && <span> | Dr. {item.doctorName}</span>}
+              </div>
+            ))}
+          </div>
+        ) : null}
+        <div style={{fontSize:'0.8rem', display:'flex', alignItems:'center', gap:'0.5rem', marginTop:'0.25rem'}}>
           <StatusBadge 
             status={stop.status === 'Pending' ? 'stage-new' : 
                     stop.status === 'InProgress' ? 'stage-processing' : 
@@ -104,7 +115,7 @@ const DraggableStop = React.memo(({ stop, index, routeId, onDrop, isCompleted, o
 });
 
 // Draggable Task Card Component
-const DraggableTaskCard = React.memo(({ task, isSelected, onSelect, selectedCount, onHover }) => {
+const DraggableTaskCard = React.memo(({ task, isSelected, onSelect, selectedCount, onHover, enrichedData }) => {
   const [{ isDragging }, drag] = useDrag({
     type: ItemTypes.TASK,
     item: { task, isSelected, selectedCount },
@@ -133,7 +144,7 @@ const DraggableTaskCard = React.memo(({ task, isSelected, onSelect, selectedCoun
       onMouseLeave={() => onHover && onHover(null)}
       role="button"
       tabIndex={0}
-      aria-label={`${task.type} task for ${task.clinicId}. ${task.isRush ? 'Rush priority. ' : ''}${task.notes}`}
+      aria-label={`${task.type} task for ${enrichedData?.clinicName || task.clinicId}. ${task.isRush ? 'Rush priority. ' : ''}${task.notes}`}
       onKeyDown={(e) => e.key === 'Enter' && onSelect(task, false)}
     >
       {isSelected && selectedCount > 1 && (
@@ -149,12 +160,23 @@ const DraggableTaskCard = React.memo(({ task, isSelected, onSelect, selectedCoun
               <span>RUSH</span>
             </span>
           )}
-          {task.clinicId}
+          {enrichedData?.clinicName || task.clinicId}
         </div>
         <span className={styles.taskType}>
           {task.type === 'Pickup' ? '📦' : '🚚'} {task.type}
         </span>
       </div>
+      {enrichedData?.items && enrichedData.items.length > 0 && (
+        <div style={{fontSize:'0.75rem', color:'#64748b', marginTop:'0.25rem', marginBottom:'0.25rem'}}>
+          {enrichedData.items.map((item, idx) => (
+            <div key={idx} style={{marginBottom:'0.15rem'}}>
+              {item.caseNumber && <span style={{fontWeight:500}}>Case #{item.caseNumber}</span>}
+              {item.patientName && <span> | {item.patientName}</span>}
+              {item.doctorName && <span> | Dr. {item.doctorName}</span>}
+            </div>
+          ))}
+        </div>
+      )}
       <div className={styles.taskMeta}>
         <div className={styles.taskMetaRow}>
           {task.notes && (
@@ -268,7 +290,8 @@ const DroppableRouteColumn = React.memo(({ route, selectedTask, onAssign, onOpti
 
 const RoutePlanner = () => {
   const { routes, pickups, deliveries, assignToRoute, assignMultipleTasks, createRoute, optimizeRouteStops, reorderStops, moveStopBetweenRoutes } = useLogistics();
-  const { clinics } = useCrm();
+  const { clinics, doctors } = useCrm();
+  const { cases } = useLab();
   const { addToast } = useToast();
   const [selectedTasks, setSelectedTasks] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -394,6 +417,94 @@ const RoutePlanner = () => {
     
     return { 'All Tasks': pool };
   }, [pool, groupBy]);
+
+  // Enrich stop data with case/patient/doctor/clinic information
+  const enrichStopData = useCallback((stop) => {
+    if (!stop) return null;
+    
+    const clinicInfo = clinics?.find(c => c.id === stop.clinicId);
+    const enrichedItems = [];
+    
+    // Process delivery manifest for deliveries
+    if (stop.type === 'Delivery' && stop.deliveryManifest) {
+      stop.deliveryManifest.forEach(delivery => {
+        const caseData = cases?.find(c => c.id === delivery.caseId);
+        if (caseData) {
+          const doctorInfo = doctors?.find(d => d.id === caseData.dentistId);
+          enrichedItems.push({
+            caseNumber: caseData.caseNumber,
+            patientName: caseData.patient?.name || 'Unknown Patient',
+            doctorName: doctorInfo?.name || 'Unknown Doctor'
+          });
+        }
+      });
+    }
+    
+    // Process pickup tasks for pickups
+    if (stop.type === 'Pickup' && stop.pickupTasks) {
+      stop.pickupTasks.forEach(pickup => {
+        if (pickup.associatedCaseIds) {
+          pickup.associatedCaseIds.forEach(caseId => {
+            const caseData = cases?.find(c => c.id === caseId);
+            if (caseData) {
+              const doctorInfo = doctors?.find(d => d.id === caseData.dentistId);
+              enrichedItems.push({
+                caseNumber: caseData.caseNumber,
+                patientName: caseData.patient?.name || 'Unknown Patient',
+                doctorName: doctorInfo?.name || 'Unknown Doctor'
+              });
+            }
+          });
+        }
+      });
+    }
+    
+    return {
+      clinicName: clinicInfo?.name || stop.clinicId,
+      items: enrichedItems
+    };
+  }, [cases, clinics, doctors]);
+
+  // Enrich task data with case/patient/doctor/clinic information
+  const enrichTaskData = useCallback((task) => {
+    if (!task) return null;
+    
+    const clinicInfo = clinics?.find(c => c.id === task.clinicId);
+    const enrichedItems = [];
+    
+    // For delivery tasks, get case info from caseId
+    if (task.type === 'Delivery' && task.caseId) {
+      const caseData = cases?.find(c => c.id === task.caseId);
+      if (caseData) {
+        const doctorInfo = doctors?.find(d => d.id === caseData.dentistId);
+        enrichedItems.push({
+          caseNumber: caseData.caseNumber,
+          patientName: caseData.patient?.name || 'Unknown Patient',
+          doctorName: doctorInfo?.name || 'Unknown Doctor'
+        });
+      }
+    }
+    
+    // For pickup tasks, get case info from associatedCaseIds (if available)
+    if (task.type === 'Pickup' && task.associatedCaseIds) {
+      task.associatedCaseIds.forEach(caseId => {
+        const caseData = cases?.find(c => c.id === caseId);
+        if (caseData) {
+          const doctorInfo = doctors?.find(d => d.id === caseData.dentistId);
+          enrichedItems.push({
+            caseNumber: caseData.caseNumber,
+            patientName: caseData.patient?.name || 'Unknown Patient',
+            doctorName: doctorInfo?.name || 'Unknown Doctor'
+          });
+        }
+      });
+    }
+    
+    return {
+      clinicName: clinicInfo?.name || task.clinicId,
+      items: enrichedItems
+    };
+  }, [cases, clinics, doctors]);
 
   // 2. Handlers
   const handleTaskSelect = (task, isShiftClick) => {
@@ -1090,6 +1201,7 @@ const RoutePlanner = () => {
                             onSelect={handleTaskSelect}
                             selectedCount={selectedTasks.length}
                             onHover={handleTaskHover}
+                            enrichedData={enrichTaskData(task)}
                           />
                         ))}
                       </div>
@@ -1112,6 +1224,7 @@ const RoutePlanner = () => {
                         onSelect={handleTaskSelect}
                         selectedCount={selectedTasks.length}
                         onHover={handleTaskHover}
+                        enrichedData={enrichTaskData(pool[index])}
                       />
                     </div>
                   )}
@@ -1126,6 +1239,7 @@ const RoutePlanner = () => {
                     onSelect={handleTaskSelect}
                     selectedCount={selectedTasks.length}
                     onHover={handleTaskHover}
+                    enrichedData={enrichTaskData(task)}
                   />
                 ))
               )}
@@ -1241,20 +1355,32 @@ const RoutePlanner = () => {
                       {({ index, style }) => {
                         const stop = route.stops[index];
                         const idx = index;
+                        const enrichedData = enrichStopData(stop);
                         return (
                           <div style={style}>
                             <div 
                               className={styles.stopItem}
                               role="listitem"
-                              aria-label={`Stop ${idx + 1} of ${route.stops.length}: ${stop.type} at ${stop.clinicId}, ${stop.status}`}
+                              aria-label={`Stop ${idx + 1} of ${route.stops.length}: ${stop.type} at ${enrichedData?.clinicName || stop.clinicId}, ${stop.status}`}
                             >
                               <div className={styles.seqBadge} aria-label={`Sequence number ${idx + 1}`}>{idx + 1}</div>
                               <div className={styles.stopContent}>
                                 <div style={{fontWeight:600, fontSize:'0.9rem', display:'flex', alignItems:'center', gap:'0.5rem'}}>
-                                  {stop.clinicId}
+                                  {enrichedData?.clinicName || stop.clinicId}
                                   {stop.type === 'Pickup' ? <IconBox width="14" /> : <IconTruck width="14" />}
                                 </div>
-                                <div style={{fontSize:'0.8rem', display:'flex', alignItems:'center', gap:'0.5rem'}}>
+                                {enrichedData?.items && enrichedData.items.length > 0 ? (
+                                  <div style={{fontSize:'0.75rem', color:'#64748b', marginTop:'0.25rem'}}>
+                                    {enrichedData.items.map((item, itemIdx) => (
+                                      <div key={itemIdx} style={{marginBottom:'0.15rem'}}>
+                                        {item.caseNumber && <span style={{fontWeight:500}}>Case #{item.caseNumber}</span>}
+                                        {item.patientName && <span> | {item.patientName}</span>}
+                                        {item.doctorName && <span> | Dr. {item.doctorName}</span>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : null}
+                                <div style={{fontSize:'0.8rem', display:'flex', alignItems:'center', gap:'0.5rem', marginTop:'0.25rem'}}>
                                   <StatusBadge 
                                     status={stop.status === 'Pending' ? 'stage-new' : 
                                             stop.status === 'InProgress' ? 'stage-processing' : 
@@ -1277,6 +1403,7 @@ const RoutePlanner = () => {
                         routeId={route.id}
                         onDrop={handleReorderStops}
                         isCompleted={stop.status === 'Completed' || stop.status === 'Delivered'}
+                        enrichedData={enrichStopData(stop)}
                       />
                     ))
                   )}
