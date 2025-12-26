@@ -291,7 +291,8 @@ const CaseFilesCard = ({ files, caseId }) => {
       <UniversalFileViewer 
         file={viewingFile} 
         isOpen={!!viewingFile} 
-        onClose={() => setViewingFile(null)} 
+        onClose={() => setViewingFile(null)}
+        allFiles={allFiles}
       />
     </>
   );
