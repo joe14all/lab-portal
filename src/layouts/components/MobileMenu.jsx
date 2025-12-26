@@ -11,7 +11,7 @@ import {
   IconUser,
   IconChevronRight,
   IconChevronDown,
-  IconTruck // Added IconTruck
+  IconTruck
 } from './LabIcons';
 import styles from './MobileMenu.module.css';
 
@@ -57,6 +57,7 @@ const MobileMenu = ({ isOpen, onClose }) => {
       permission: "CASE_MANAGE",
       children: [
         { to: "/lab-settings/general", label: "General Info" },
+        { to: "/lab-settings/practices", label: "Practices" }, // Added Practices
         { to: "/lab-settings/catalog", label: "Product Catalog" },
         { to: "/lab-settings/financials", label: "Financial Config" },
         { to: "/lab-settings/price-lists", label: "Price Lists" },

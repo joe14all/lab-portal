@@ -98,7 +98,9 @@ export const CrmProvider = ({ children }) => {
   // ============================================================
 
   const getDoctorsByClinic = useCallback((clinicId) => {
-    return doctors.filter(d => d.clinicId === clinicId);
+    return doctors.filter(d => 
+      d.clinicId === clinicId || d.clinicIds?.includes(clinicId)
+    );
   }, [doctors]);
 
   const addDoctor = useCallback(async (clinicId, doctorData) => {
@@ -108,6 +110,7 @@ export const CrmProvider = ({ children }) => {
         ...doctorData,
         labId: activeLab.id,
         clinicId: clinicId,
+        clinicIds: clinicId ? [clinicId] : [], // Initialize with array
         isActive: true
       });
       setDoctors(prev => [newDoctor, ...prev]);
@@ -139,6 +142,76 @@ export const CrmProvider = ({ children }) => {
       throw err;
     }
   }, []);
+
+  // Link doctor to a practice (supports multiple practices)
+  const linkDoctorToClinic = useCallback(async (doctorId, clinicId) => {
+    try {
+      const doctor = doctors.find(d => d.id === doctorId);
+      if (!doctor) throw new Error('Doctor not found');
+
+      // Initialize clinicIds array if it doesn't exist
+      const currentClinicIds = doctor.clinicIds || (doctor.clinicId ? [doctor.clinicId] : []);
+      
+      // Check if already linked
+      if (currentClinicIds.includes(clinicId)) {
+        console.log('Doctor already linked to this clinic');
+        return doctor;
+      }
+
+      // Add new clinic to the array
+      const updatedClinicIds = [...currentClinicIds, clinicId];
+      
+      const updatedDoctor = await MockService.crm.doctors.update(doctorId, {
+        clinicIds: updatedClinicIds,
+        // Keep first clinic as primary for backward compatibility
+        clinicId: doctor.clinicId || clinicId
+      });
+
+      setDoctors(prev => prev.map(d => d.id === doctorId ? updatedDoctor : d));
+      return updatedDoctor;
+    } catch (err) {
+      console.error("Failed to link doctor to clinic", err);
+      throw err;
+    }
+  }, [doctors]);
+
+  // Unlink doctor from a practice
+  const unlinkDoctorFromClinic = useCallback(async (doctorId, clinicId) => {
+    try {
+      const doctor = doctors.find(d => d.id === doctorId);
+      if (!doctor) throw new Error('Doctor not found');
+
+      const currentClinicIds = doctor.clinicIds || (doctor.clinicId ? [doctor.clinicId] : []);
+      
+      // Remove clinic from array
+      const updatedClinicIds = currentClinicIds.filter(id => id !== clinicId);
+      
+      // If removing the primary clinic, set a new primary or null
+      const newPrimaryClinic = doctor.clinicId === clinicId 
+        ? (updatedClinicIds[0] || null) 
+        : doctor.clinicId;
+
+      const updatedDoctor = await MockService.crm.doctors.update(doctorId, {
+        clinicIds: updatedClinicIds,
+        clinicId: newPrimaryClinic
+      });
+
+      setDoctors(prev => prev.map(d => d.id === doctorId ? updatedDoctor : d));
+      return updatedDoctor;
+    } catch (err) {
+      console.error("Failed to unlink doctor from clinic", err);
+      throw err;
+    }
+  }, [doctors]);
+
+  // Get all practices a doctor is linked to
+  const getClinicsByDoctor = useCallback((doctorId) => {
+    const doctor = doctors.find(d => d.id === doctorId);
+    if (!doctor) return [];
+    
+    const linkedClinicIds = doctor.clinicIds || (doctor.clinicId ? [doctor.clinicId] : []);
+    return clinics.filter(c => linkedClinicIds.includes(c.id));
+  }, [doctors, clinics]);
 
   // ============================================================
   // 3. PRICE LIST HANDLERS
@@ -288,6 +361,9 @@ export const CrmProvider = ({ children }) => {
     addDoctor,
     updateDoctor,
     removeDoctor,
+    linkDoctorToClinic,
+    unlinkDoctorFromClinic,
+    getClinicsByDoctor,
 
     getPriceListById,
     createPriceList,
@@ -300,6 +376,7 @@ export const CrmProvider = ({ children }) => {
     clinics, doctors, priceLists, products, addons, loading, error,
     getClinicById, addClinic, updateClinic,
     getDoctorsByClinic, addDoctor, updateDoctor, removeDoctor,
+    linkDoctorToClinic, unlinkDoctorFromClinic, getClinicsByDoctor,
     getPriceListById, createPriceList, updatePriceList,
      createProduct, updateProduct, deleteProduct,
     createAddon, updateAddon, deleteAddon,

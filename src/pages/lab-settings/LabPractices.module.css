@@ -1,0 +1,517 @@
+/* ========================================
+   APPLE-LEVEL DESIGN SYSTEM
+   Practice Management Page
+   ======================================== */
+
+/* ========================================
+   LAYOUT & CONTAINER
+   ======================================== */
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0;
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   PAGE HEADER
+   ======================================== */
+.pageHeader {
+  background: var(--bg-surface, #ffffff);
+  border-radius: 1rem;
+  padding: 1.75rem 2rem;
+  border: 1px solid var(--neutral-200, #e2e8f0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.headerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.titleSection {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.titleIcon {
+  width: 40px;
+  height: 40px;
+  padding: 0.625rem;
+  background: linear-gradient(135deg, var(--primary, #2563eb) 0%, var(--primary-hover, #1d4ed8) 100%);
+  color: var(--text-inverted, #ffffff);
+  border-radius: 0.75rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+}
+
+.pageTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.pageSubtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #64748b);
+  margin: 0.25rem 0 0;
+  font-weight: 400;
+}
+
+/* ========================================
+   TOOLBAR
+   ======================================== */
+.toolbar {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  background: var(--bg-surface, #ffffff);
+  padding: 1.25rem 1.5rem;
+  border-radius: 1rem;
+  border: 1px solid var(--neutral-200, #e2e8f0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.searchWrapper {
+  flex: 1;
+  max-width: 500px;
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--primary, #2563eb);
+  color: var(--text-inverted, #ffffff);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.625rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btnPrimary:hover {
+  background: var(--primary-hover, #1d4ed8);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.btnPrimary:active {
+  transform: translateY(0);
+}
+
+.btnAction {
+  background: transparent;
+  color: var(--primary, #2563eb);
+  border: 1.5px solid var(--primary, #2563eb);
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btnAction:hover {
+  background: var(--primary, #2563eb);
+  color: var(--text-inverted, #ffffff);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+.btnAction:active {
+  transform: translateY(0);
+}
+
+/* ========================================
+   TABLE CARD
+   ======================================== */
+.tableCard {
+  background: var(--bg-surface, #ffffff);
+  border-radius: 1rem;
+  border: 1px solid var(--neutral-200, #e2e8f0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.tableWrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.tableWrapper::-webkit-scrollbar-track {
+  background: var(--neutral-50, #f8fafc);
+}
+
+.tableWrapper::-webkit-scrollbar-thumb {
+  background: var(--neutral-300, #cbd5e1);
+  border-radius: 4px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1100px;
+}
+
+/* ========================================
+   TABLE HEADER
+   ======================================== */
+.table thead {
+  background: var(--neutral-50, #f8fafc);
+  border-bottom: 2px solid var(--neutral-200, #e2e8f0);
+}
+
+.table th {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--text-secondary, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.alignRight {
+  text-align: right;
+}
+
+/* ========================================
+   TABLE ROWS
+   ======================================== */
+.tableRow {
+  border-bottom: 1px solid var(--neutral-200, #e2e8f0);
+  transition: background-color 0.15s ease;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableRow:hover {
+  background: var(--neutral-50, #f8fafc);
+}
+
+.table td {
+  padding: 1rem 1.5rem;
+  vertical-align: middle;
+}
+
+/* ========================================
+   PRACTICE CELL
+   ======================================== */
+.practiceCell {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.practiceAvatar {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, var(--primary, #2563eb) 0%, var(--primary-hover, #1d4ed8) 100%);
+  color: var(--text-inverted, #ffffff);
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
+}
+
+.practiceInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.practiceName {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.practiceAddress {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #64748b);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 0.125rem;
+}
+
+/* ========================================
+   CONTACT CELL
+   ======================================== */
+.contactCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.contactItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--text-primary, #0f172a);
+}
+
+.contactIcon {
+  color: var(--text-secondary, #64748b);
+  flex-shrink: 0;
+}
+
+.noData {
+  font-size: 0.8125rem;
+  color: var(--neutral-400, #94a3b8);
+  font-style: italic;
+}
+
+/* ========================================
+   LOCATION CELL
+   ======================================== */
+.locationCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.locationPrimary {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+}
+
+.locationSecondary {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #64748b);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 250px;
+}
+
+/* ========================================
+   FINANCIAL CELL
+   ======================================== */
+.financialCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.priceListBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  background: var(--primary-50, #eff6ff);
+  color: var(--primary, #2563eb);
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--primary-100, #dbeafe);
+  width: fit-content;
+}
+
+.billingCycle {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #64748b);
+  font-weight: 500;
+}
+
+/* ========================================
+   STAFF BADGE
+   ======================================== */
+.staffBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: var(--neutral-100, #f1f5f9);
+  color: var(--text-primary, #0f172a);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid var(--neutral-200, #e2e8f0);
+}
+
+/* ========================================
+   STATUS BADGE
+   ======================================== */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.statusActive {
+  background: var(--success-bg, #d1fae5);
+  color: var(--success, #10b981);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.statusInactive {
+  background: var(--neutral-100, #f1f5f9);
+  color: var(--neutral-500, #64748b);
+  border: 1px solid var(--neutral-200, #e2e8f0);
+}
+
+.statusPending {
+  background: var(--warning-bg, #fef3c7);
+  color: var(--warning, #f59e0b);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+/* ========================================
+   EMPTY STATE
+   ======================================== */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 64px;
+  height: 64px;
+  padding: 1rem;
+  background: var(--neutral-100, #f1f5f9);
+  color: var(--neutral-400, #94a3b8);
+  border-radius: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.emptyTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+  margin: 0 0 0.5rem;
+}
+
+.emptyText {
+  font-size: 0.9375rem;
+  color: var(--text-secondary, #64748b);
+  margin: 0 0 1.5rem;
+  max-width: 400px;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+@media (max-width: 1024px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchWrapper {
+    max-width: none;
+  }
+
+  .btnPrimary {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .pageHeader {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .titleSection {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .pageTitle {
+    font-size: 1.5rem;
+  }
+
+  .toolbar {
+    padding: 1rem;
+  }
+
+  .tableCard {
+    border-radius: 0.75rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.875rem 1rem;
+  }
+
+  .practiceCell {
+    gap: 0.625rem;
+  }
+
+  .practiceAvatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .emptyState {
+    padding: 3rem 1.5rem;
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+.btnPrimary:focus-visible,
+.btnAction:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
+
+/* Screen reader only */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

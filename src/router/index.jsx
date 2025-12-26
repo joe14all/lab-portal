@@ -32,6 +32,8 @@ import LabFinancialSettings from '../pages/lab-settings/LabFinancialSettings';
 import LabPriceLists from '../pages/lab-settings/LabPriceLists';
 import LabPriceListDetail from '../pages/lab-settings/LabPriceListDetail';
 import LabWorkflows from '../pages/lab-settings/LabWorkflows';
+import LabPractices from '../pages/lab-settings/LabPractices'; // New Page
+
 
 export const AppRouter = () => {
   return (
@@ -93,6 +95,7 @@ export const AppRouter = () => {
               <Route path="lab-settings" element={<LabSettingsLayout />}>
                 <Route index element={<Navigate to="general" replace />} />
                 <Route path="general" element={<LabGeneralSettings />} />
+                <Route path="practices" element={<LabPractices />} />
                 <Route path="catalog" element={<LabCatalogSettings />} />
                 <Route path="price-lists" element={<LabPriceLists />} />
                 <Route path="price-lists/:id" element={<LabPriceListDetail />} />

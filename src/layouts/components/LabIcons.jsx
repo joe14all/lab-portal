@@ -53,10 +53,55 @@ export const IconSearch = (props) => (
   </svg>
 );
 
+export const IconPlus = (props) => (
+  <svg {...defaultProps} {...props}>
+    <line x1="12" y1="5" x2="12" y2="19"></line>
+    <line x1="5" y1="12" x2="19" y2="12"></line>
+  </svg>
+);
+
 export const IconUser = (props) => (
   <svg {...defaultProps} {...props}>
     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
     <circle cx="12" cy="7" r="4"></circle>
+  </svg>
+);
+
+export const IconUsers = (props) => (
+  <svg {...defaultProps} {...props}>
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+    <circle cx="9" cy="7" r="4"></circle>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+  </svg>
+);
+
+export const IconBuilding = (props) => (
+  <svg {...defaultProps} {...props}>
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+    <path d="M9 22v-4h6v4"></path>
+    <path d="M8 6h.01"></path>
+    <path d="M16 6h.01"></path>
+    <path d="M12 6h.01"></path>
+    <path d="M12 10h.01"></path>
+    <path d="M12 14h.01"></path>
+    <path d="M16 10h.01"></path>
+    <path d="M16 14h.01"></path>
+    <path d="M8 10h.01"></path>
+    <path d="M8 14h.01"></path>
+  </svg>
+);
+
+export const IconPhone = (props) => (
+  <svg {...defaultProps} {...props}>
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+  </svg>
+);
+
+export const IconMail = (props) => (
+  <svg {...defaultProps} {...props}>
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+    <polyline points="22,6 12,13 2,6"></polyline>
   </svg>
 );
 

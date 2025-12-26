@@ -10,8 +10,7 @@ import {
   IconUser,
   IconChevronRight,
   IconChevronDown,
-  IconTruck,
-  IconBox // Added for Procurement
+  IconTruck
 } from './LabIcons';
 import styles from './Sidebar.module.css';
 
@@ -20,24 +19,21 @@ const Sidebar = () => {
   const location = useLocation();
   const [expanded, setExpanded] = useState({});
 
-  // Navigation Structure
   const navItems = [
     { to: "/", label: "Dashboard", icon: <IconDashboard />, permission: null },
     { to: "/cases", label: "Case Management", icon: <IconCase />, permission: null },
     
-    // Expandable: Production Suite
     {
       id: "production-suite",
       label: "Production",
       icon: <IconMill />,
-      permission: null, // Allow all to see group, sub-items gated
+      permission: null,
       children: [
         { to: "/production/queue", label: "Floor Queue" },
         { to: "/production/procurement", label: "Procurement" }
       ]
     },
 
-    // Expandable: Logistics
     { 
       id: "logistics",
       label: "Logistics", 
@@ -50,7 +46,6 @@ const Sidebar = () => {
       ]
     },
     
-    // Expandable: Finance
     { 
       id: "finance",
       label: "Finance", 
@@ -62,7 +57,6 @@ const Sidebar = () => {
       ]
     },
     
-    // Expandable: Lab Admin
     { 
       id: "lab-admin",
       label: "Lab Admin", 
@@ -70,6 +64,7 @@ const Sidebar = () => {
       permission: "CASE_MANAGE",
       children: [
         { to: "/lab-settings/general", label: "General Info" },
+        { to: "/lab-settings/practices", label: "Practices" }, // Added Practices
         { to: "/lab-settings/catalog", label: "Product Catalog" },
         { to: "/lab-settings/financials", label: "Financial Config" },
         { to: "/lab-settings/price-lists", label: "Price Lists" },
@@ -77,7 +72,6 @@ const Sidebar = () => {
       ]
     },
     
-    // Expandable: User Settings
     { 
       id: "user-settings", 
       label: "Account", 
@@ -90,7 +84,6 @@ const Sidebar = () => {
     } 
   ];
 
-  // Auto-expand menu if we are currently on a sub-route
   useEffect(() => {
     navItems.forEach(item => {
       if (item.children) {
@@ -113,7 +106,6 @@ const Sidebar = () => {
           {navItems.map((item) => {
             if (item.permission && !hasPermission(item.permission)) return null;
 
-            // 1. RENDER EXPANDABLE GROUP
             if (item.children) {
               const isOpen = expanded[item.id];
               const isGroupActive = item.children.some(child => location.pathname.startsWith(child.to));
@@ -152,7 +144,6 @@ const Sidebar = () => {
               );
             }
 
-            // 2. RENDER STANDARD ITEM
             return (
               <li key={item.to}>
                 <NavLink
